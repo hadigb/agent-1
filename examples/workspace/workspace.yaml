@@ -1,0 +1,4 @@
+# apidocgen workspace: several applications shown in one UI
+applications:
+  - name: ESB Core (sample)
+    config: ../sample-esb/apidocgen.yaml

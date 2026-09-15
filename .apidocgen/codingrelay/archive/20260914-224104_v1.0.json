@@ -1,0 +1,39 @@
+{
+ "file": "20260914-224104_v1.0.html",
+ "created_at": 1789413064.568911,
+ "created_jalali": "1405/06/23",
+ "created_iso": "2026-09-14 22:41:04",
+ "version": "1.0",
+ "title": "مستندات API — codingrelay",
+ "label": "انتخابی",
+ "size": 21822,
+ "sha256": "d43c4d0d11a43cbb19ce7f7af4df9a5051230ec0acf876883d1208f4665dafe1",
+ "endpoint_count": 1,
+ "endpoints": [
+  {
+   "id": "PUT /api/v1/participant/opt-out",
+   "title": "سرویس انصراف شرکت‌کننده از مسابقه",
+   "method": "PUT",
+   "path": "/api/v1/participant/opt-out",
+   "anchor": "put-api-v1-participant-opt-out",
+   "hash": "a84c0b73e5b595067e49f4061792876369611957a366e5539ed684882cdc7ff7",
+   "status": "cached",
+   "framework": "spring"
+  }
+ ],
+ "added": [
+  "PUT /api/v1/participant/opt-out"
+ ],
+ "changed": [],
+ "removed": [
+  "PUT /api/v1/admin/competition/start/{id}"
+ ],
+ "usage": {
+  "calls": 60,
+  "input_tokens": 174947,
+  "output_tokens": 66263,
+  "cache_read_tokens": 85609,
+  "cache_write_tokens": 0,
+  "failed": 0
+ }
+}

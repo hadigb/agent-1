@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مستندات API — codingrelay – codingrelay</title>
+<meta name="generator" content="apidocgen 0.1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --green: #2C673E; --green-dark: #1f4d2e; --orange: #E28B3C;
+  --th: #b9e0cb; --th-dark: #8fcfae; --group: #cbe9d8; --border: #6b6b6b; --text: #1e1e1e; --muted: #666;
+  --page-w: 210mm;
+}
+* { box-sizing: border-box; }
+html { background: #e9ecef; }
+body { margin: 0; font-family: 'Vazirmatn', 'Vazirmatn', 'Vazir', 'IRANSans', 'Sahel', Tahoma, 'Segoe UI', Arial, sans-serif; color: var(--text); font-size: 11.5pt; line-height: 1.75; direction: rtl; }
+.page { background: #fff; width: var(--page-w); min-height: 297mm; margin: 12px auto; padding: 22mm 16mm 20mm 16mm; position: relative; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+.page.cover { padding: 0; overflow: hidden; }
+.pagehead { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--orange); padding-bottom: 4px; margin-bottom: 14px; font-size: 9.5pt; }
+.pagehead .hl { display: flex; align-items: center; gap: 10px; }
+.pagehead .doc-title { font-weight: 700; color: var(--green-dark); font-size: 11pt; }
+.pagehead .cls { color: var(--muted); }
+.pagehead .cls b { color: var(--orange); font-weight: 700; }
+.pagehead .ver { color: var(--muted); }
+.pagefoot { border-top: 2px solid var(--orange); margin-top: 24px; padding-top: 4px; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+.logo { height: 34px; }
+.logo.big { height: 80px; }
+h1, h2, h3, h4 { color: var(--green); margin: 18px 0 8px; line-height: 1.5; }
+h1 { font-size: 20pt; } h2 { font-size: 15pt; } h3 { font-size: 12.5pt; color: var(--orange); } h4 { font-size: 11.5pt; }
+p { margin: 6px 0; text-align: justify; }
+.muted { color: var(--muted); }
+.ltr { direction: ltr; text-align: left; unicode-bidi: embed; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+.wrap { word-break: break-all; white-space: pre-wrap; }
+table.tbl { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 10pt; page-break-inside: auto; table-layout: fixed; }
+table.tbl col.c-group { width: 12%; } table.tbl col.c-name { width: 26%; } table.tbl col.c-type { width: 13%; } table.tbl col.c-desc { width: 49%; }
+table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 4px 6px; vertical-align: middle; }
+table.tbl th { background: var(--th); font-weight: 700; text-align: center; }
+table.tbl td.group { background: var(--th-dark); font-weight: 700; text-align: center; width: 13%; }
+table.tbl tr.sub th { background: var(--th-dark); text-align: center; }
+table.tbl td.name { direction: ltr; text-align: center; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; word-break: break-all; }
+table.tbl td.type { direction: ltr; text-align: center; font-size: 9.5pt; word-break: break-word; }
+table.tbl td.desc { text-align: right; word-break: break-word; overflow-wrap: anywhere; }
+table.tbl td.addr { direction: ltr; text-align: left; font-family: Consolas, "Courier New", monospace; word-break: break-all; }
+table.tbl tr { page-break-inside: avoid; }
+table.enum { border-collapse: collapse; margin: 4px auto; font-size: 9pt; width: 100%; max-width: 100%; table-layout: auto; }
+table.enum th { background: var(--th-dark); border: 1px solid var(--border); padding: 2px 6px; white-space: nowrap; }
+table.enum td.code { white-space: nowrap; width: 1%; }
+table.enum td { border: 1px solid var(--border); padding: 2px 6px; text-align: center; word-break: break-word; overflow-wrap: anywhere; }
+table.enum td.ltr { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; }
+table.enum td.ltr { direction: ltr; }
+.caption { font-size: 9.5pt; color: var(--green-dark); margin: 8px 0 2px; font-weight: 700; }
+pre.json { direction: ltr; text-align: left; background: #f6f8f7; border: 1px solid #d8e2dc; border-radius: 4px; padding: 8px 10px; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; white-space: pre-wrap; word-break: break-word; margin: 6px 0 12px; }
+ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-bottom: 4px; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc .row { display: flex; align-items: baseline; gap: 6px; }
+.toc .row .dots { flex: 1; border-bottom: 1px dotted #999; }
+.toc .l2 { padding-right: 24px; }
+.toc .num { color: var(--green); font-weight: 700; min-width: 34px; }
+.page-break { page-break-before: always; }
+.tag { display: inline-block; background: var(--orange); color: #fff; border-radius: 3px; padding: 0 6px; font-size: 8.5pt; margin-right: 6px; }
+.status-note { font-size: 8.5pt; color: var(--muted); }
+/* cover */
+.cover .band { position: absolute; top: 0; right: 0; width: 26%; height: 100%; background: var(--green); }
+.cover .band::after { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 6px, transparent 6px 22px), repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 6px, transparent 6px 22px); }
+.cover .curve { position: absolute; top: 0; right: 24%; width: 5%; height: 100%; background: #fff; border-right: 3px solid var(--orange); border-radius: 0 0 0 80% / 0 0 0 60%; }
+.cover .content { position: absolute; top: 0; right: 30%; left: 0; height: 100%; padding: 40mm 18mm 20mm 18mm; }
+.cover .logo-wrap { text-align: center; margin-bottom: 40mm; }
+.cover .system { font-size: 12pt; color: #333; font-weight: 700; }
+.cover .title { font-size: 28pt; color: var(--green); font-weight: 900; line-height: 1.5; margin: 6px 0 30mm; }
+.cover .meta { font-size: 11pt; color: #333; line-height: 2.1; }
+.cover .cls { position: absolute; bottom: 30mm; right: 18mm; font-size: 12pt; color: #333; }
+.cover .cls b { color: var(--orange); }
+.cover .cls::before { content: "●"; color: var(--orange); margin-left: 8px; font-size: 9pt; }
+@media screen and (max-width: 900px) { .page { width: auto; min-height: auto; padding: 16px; margin: 0; } .cover .content { padding: 20mm 10mm; } }
+@media print {
+  html { background: #fff; }
+  .page { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .pagehead, .pagefoot { display: none; }
+  /* repeating page header / footer: table head & foot sections are repeated by the browser on every printed page */
+  table.print-wrap { display: table; width: 100%; border-collapse: collapse; }
+  table.print-wrap > thead { display: table-header-group; }
+  table.print-wrap > tbody { display: table-row-group; }
+  table.print-wrap > * > tr { display: table-row; }
+  table.print-wrap > * > tr > td { display: table-cell; padding: 0; }
+  .print-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 2px solid var(--orange); font-size: 9pt; padding: 0 1mm 1mm; margin-bottom: 4mm; }
+  .print-head .cls { color: var(--muted); font-size: 8.5pt; }
+  /* Chromium does not repeat <tfoot> when nested tables fragment, so the footer is a fixed element placed at the
+     bottom of the printable area (297mm - 12mm top - 12mm bottom = 273mm high); the cover paints above it. */
+  .print-foot { position: fixed; z-index: 10; top: 265mm; left: 0; right: 0; height: 8mm; border-top: 2px solid var(--orange); font-size: 8pt; color: var(--muted); text-align: center; padding-top: 1mm; background: #fff; }
+  @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
+  @page :first { margin: 0; }
+  .cover { height: 297mm; page-break-after: always; z-index: 20; }
+  .page:not(.cover) { padding-bottom: 9mm; }
+  pre.json { page-break-inside: avoid; }
+}
+.no-print-only { display: none; }
+@media print { .screen-only { display: none; } }
+@media screen { .screen-hide { display: none; } }
+@media screen { table.print-wrap, table.print-wrap > tbody, table.print-wrap > tbody > tr, table.print-wrap > tbody > tr > td { display: block; } table.print-wrap > thead { display: none; } }
+</style>
+</head>
+<body>
+
+
+
+
+
+
+
+<section class="page cover">
+  <div class="band"></div><div class="curve"></div>
+  <div class="content">
+    <div class="logo-wrap"><div style="font-size:26pt;font-weight:900;color:var(--green)"></div></div>
+    <div class="system">codingrelay</div>
+    <div class="title">مستندات API — codingrelay</div>
+    <div class="meta">
+      <div>تهیه‌کننده/ تهیه‌کنندگان: </div>
+      <div>تاریخ: 1405/06/23</div>
+      <div>شماره مستند: ver1.0</div>
+    </div>
+    <div class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</div>
+  </div>
+</section>
+
+<table class="print-wrap">
+<thead><tr><td><div class="print-head"><span><b>مستندات API — codingrelay</b></span><span class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</span><span>شماره مستند: ver1.0</span></div></td></tr></thead>
+<tbody><tr><td>
+<div class="print-foot screen-hide">مستندات API — codingrelay</div>
+
+<section class="page">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">مستندات API — codingrelay</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.0</div>
+</div>
+  <p class="muted" style="text-align:right">تکمیل جداول زیر تنها برای مستندات سیستمی الزامی است.</p>
+  <table class="tbl">
+    <tr><th colspan="2">شناسنامه سند</th></tr>
+    <tr><td class="group" style="width:35%">حوزه کاربردی مستند</td><td>codingrelay</td></tr>
+    <tr><td class="group">زمان بازنگری سند</td><td></td></tr>
+    <tr><td class="group">تاریخ منسوخ شدن سند</td><td></td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th colspan="4">تاییدیه سند</th></tr>
+    <tr><th></th><th>نام و نام خانوادگی</th><th>سمت سازمانی</th><th>تاریخ</th></tr>
+    
+  </table>
+  <table class="tbl">
+    <tr><th colspan="5">جدول تغییرات سند</th></tr>
+    <tr><th style="width:7%">ردیف</th><th style="width:15%">تاریخ ویرایش</th><th style="width:10%">نسخه</th><th style="width:18%">ویرایش کننده</th><th>شرح ویرایش</th></tr>
+    <tr><td style="text-align:center">1</td><td class="ltr" style="text-align:center">1405/06/23</td><td style="text-align:center">1.0</td><td>تولید خودکار</td><td>افزودن سرویس‌های: سرویس id؛ حذف سرویس‌های: سرویس انصراف شرکت‌کننده از مسابقه</td></tr>
+  </table>
+  <div class="pagefoot"><span>مستندات API — codingrelay</span></div>
+</section>
+
+
+<section class="page">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">مستندات API — codingrelay</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.0</div>
+</div>
+  <h1>فهرست مطالب</h1>
+  <div class="toc">
+    <div class="row"><a href="#intro">مقدمه</a><span class="dots"></span></div>
+    
+    <div class="row"><span class="num">1.</span><a href="#put-api-v1-admin-competition-activate-id">سرویس id</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.1</span><a href="#put-api-v1-admin-competition-activate-id-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.2</span><a href="#put-api-v1-admin-competition-activate-id-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.3</span><a href="#put-api-v1-admin-competition-activate-id-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    
+    
+    
+  </div>
+  <h1>فهرست جداول</h1>
+  <div class="toc">
+    <div class="row"><a href="#put-api-v1-admin-competition-activate-id-tbl">جدول 1. ورودی و خروجی سرویس id</a><span class="dots"></span></div><div class="row"><a href="#put-api-v1-admin-competition-activate-id-CompetitionInfoDTO">جدول 2. CompetitionInfoDTO – سرویس id</a><span class="dots"></span></div><div class="row"><a href="#put-api-v1-admin-competition-activate-id-RoundInfoDTO">جدول 3. RoundInfoDTO – سرویس id</a><span class="dots"></span></div><div class="row"><a href="#put-api-v1-admin-competition-activate-id-CompetitionParticipationTypeDTO">جدول 4. CompetitionParticipationTypeDTO – سرویس id</a><span class="dots"></span></div><div class="row"><a href="#put-api-v1-admin-competition-activate-id-errors">جدول 5. لیست خطاهای سرویس id</a><span class="dots"></span></div>
+  </div>
+  <div class="pagefoot"><span>مستندات API — codingrelay</span></div>
+</section>
+
+
+<section class="page" id="intro">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">مستندات API — codingrelay</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.0</div>
+</div>
+  <h1>مقدمه</h1>
+  <p>این مستند به منظور معرفی سرویس‌های <b>codingrelay</b> تهیه شده است و برای هر سرویس، آدرس و متد فراخوانی،
+پارامترهای هدر، پارامترهای درخواست و پاسخ، ساختار خروجی موفق و ناموفق، مراحل فراخوانی و کدهای خطای مرتبط را شرح می‌دهد.</p>
+<p>فیلدهای ستاره‌دار در جداول، اجباری هستند. مقادیر و نام فیلدها باید دقیقاً مطابق با جدول هر سرویس ارسال شوند؛ در غیر این صورت
+سرویس با کد خطای مربوطه پاسخ می‌دهد.</p>
+<p class="muted">این سند به صورت خودکار از روی کد منبع تولید شده است (1 سرویس، تاریخ تولید 1405/06/23).</p>
+
+  <div class="pagefoot"><span>مستندات API — codingrelay</span></div>
+</section>
+
+
+
+<section class="page" id="put-api-v1-admin-competition-activate-id">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">مستندات API — codingrelay</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b>  است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.0</div>
+</div>
+  <h1>1. سرویس id</h1>
+  
+  <h3 id="put-api-v1-admin-competition-activate-id-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="put-api-v1-admin-competition-activate-id-tbl">جدول 1. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/api/v1/admin/competition/activate/{id}</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">PUT</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="2">پارامترهای درخواست</td>
+      <td class="name">id *<div class="muted" style="font-size:8pt">Path</div></td>
+      <td class="type">String</td>
+      <td class="desc"></td></tr>
+    
+    <tr>
+      <td class="name">startDelayTime</td>
+      <td class="type">Long</td>
+      <td class="desc">مدت تأخیر تا شروع رقابت پس از فعال‌سازی؛ در صورت ارسال باید بزرگ‌تر از 0 باشد.</td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="5">پارامترهای پاسخ</td>
+      <td class="name">message</td><td class="type">String</td>
+      <td class="desc">پیغام نتیجه پردازش درخواست.</td></tr>
+    
+    <tr>
+      <td class="name">code</td><td class="type">Int</td>
+      <td class="desc">کد نتیجه پاسخ.</td></tr>
+    
+    <tr>
+      <td class="name">time</td><td class="type">Long</td>
+      <td class="desc">زمان ثبت پاسخ.</td></tr>
+    
+    <tr>
+      <td class="name">successful</td><td class="type">Boolean</td>
+      <td class="desc">نشان می‌دهد درخواست با موفقیت پردازش شده است یا خیر.</td></tr>
+    
+    <tr>
+      <td class="name">data</td><td class="type">CompetitionInfoDTO</td>
+      <td class="desc">داده اختصاصی بازگردانده‌شده توسط سرویس. - مطابق جدول شماره 2</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="put-api-v1-admin-competition-activate-id-CompetitionInfoDTO">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">CompetitionInfoDTO – خروجی موفق - جدول شماره 2 (اطلاعات نمایشی و وضعیت یک رقابت را ارائه می‌کند.)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">id</td>
+  <td class="type">Long</td>
+  <td class="desc">شناسه یکتای رقابت.</td>
+</tr><tr>
+  <td class="name">title</td>
+  <td class="type">String</td>
+  <td class="desc">عنوان رقابت.</td>
+</tr><tr>
+  <td class="name">description</td>
+  <td class="type">String</td>
+  <td class="desc">شرح رقابت.</td>
+</tr><tr>
+  <td class="name">pictureUri</td>
+  <td class="type">String</td>
+  <td class="desc">نشانی تصویر معرفی رقابت.</td>
+</tr><tr>
+  <td class="name">rounds</td>
+  <td class="type">List&lt;RoundInfoDTO&gt;</td>
+  <td class="desc">فهرست اطلاعات دورهای رقابت.<div class="muted" style="font-size:9pt">طبق جدول RoundInfoDTO</div></td>
+</tr><tr>
+  <td class="name">state</td>
+  <td class="type">String</td>
+  <td class="desc">وضعیت جاری چرخه عمر رقابت.<table class="enum">
+  <tr><th>کد</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">CREATED</td><td>رقابت ایجاد شده است</td></tr><tr><td class="code">2</td><td class="ltr">ACTIVE</td><td>رقابت فعال است</td></tr><tr><td class="code">3</td><td class="ltr">FINISH_REGISTRATION</td><td>ثبت‌نام رقابت پایان یافته است</td></tr><tr><td class="code">4</td><td class="ltr">PRESTART</td><td>رقابت در انتظار شروع است</td></tr><tr><td class="code">5</td><td class="ltr">STARTED</td><td>رقابت شروع شده است</td></tr><tr><td class="code">6</td><td class="ltr">FINISHED</td><td>رقابت پایان یافته است</td></tr><tr><td class="code">7</td><td class="ltr">SCORE</td><td>امتیازهای رقابت در حال محاسبه است</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">attenders</td>
+  <td class="type">Long</td>
+  <td class="desc">تعداد حاضران یا شرکت‌کنندگان رقابت.</td>
+</tr><tr>
+  <td class="name">teamsMaximumSize</td>
+  <td class="type">Int</td>
+  <td class="desc">حداکثر اندازه تیم‌ها در رقابت.</td>
+</tr><tr>
+  <td class="name">promoted</td>
+  <td class="type">Boolean</td>
+  <td class="desc">نشان می‌دهد رقابت به‌صورت ویژه نمایش داده می‌شود یا خیر.</td>
+</tr><tr>
+  <td class="name">competitionType</td>
+  <td class="type">String</td>
+  <td class="desc">نوع برگزاری رقابت.<table class="enum">
+  <tr><th>کد</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">SOS</td><td>رقابت SOS</td></tr><tr><td class="code">2</td><td class="ltr">STAGED</td><td>رقابت مرحله‌ای</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">teamsMaxCompetitorsCount</td>
+  <td class="type">Int</td>
+  <td class="desc">حداکثر تعداد شرکت‌کنندگان مجاز در تیم‌ها.</td>
+</tr><tr>
+  <td class="name">roundCount</td>
+  <td class="type">Int</td>
+  <td class="desc">تعداد دورهای رقابت.</td>
+</tr><tr>
+  <td class="name">programmingLanguages</td>
+  <td class="type">List&lt;String&gt;</td>
+  <td class="desc">زبان‌های برنامه‌نویسی مجاز رقابت.<table class="enum">
+  <tr><th>کد</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">JAVA</td><td>Java</td></tr><tr><td class="code">2</td><td class="ltr">PY</td><td>Python</td></tr><tr><td class="code">3</td><td class="ltr">C</td><td>C</td></tr><tr><td class="code">4</td><td class="ltr">CPP</td><td>C++</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">ParticipationTypes</td>
+  <td class="type">List&lt;CompetitionParticipationTypeDTO&gt;</td>
+  <td class="desc">شیوه‌های مشارکت تعریف‌شده برای رقابت.<div class="muted" style="font-size:9pt">طبق جدول CompetitionParticipationTypeDTO</div></td>
+</tr><tr>
+  <td class="name">onSiteCapacity</td>
+  <td class="type">Int</td>
+  <td class="desc">ظرفیت برگزاری حضوری رقابت.</td>
+</tr><tr>
+  <td class="name">endTime</td>
+  <td class="type">Long</td>
+  <td class="desc">زمان پایان رقابت.</td>
+</tr><tr>
+  <td class="name">activeTime</td>
+  <td class="type">Long</td>
+  <td class="desc">زمان فعال‌شدن رقابت.</td>
+</tr><tr>
+  <td class="name">startTime</td>
+  <td class="type">Long</td>
+  <td class="desc">زمان شروع رقابت.</td>
+</tr><tr>
+  <td class="name">address</td>
+  <td class="type">String</td>
+  <td class="desc">نشانی محل برگزاری رقابت.</td>
+</tr><tr>
+  <td class="name">documentKeyTypes</td>
+  <td class="type">List&lt;Int&gt;</td>
+  <td class="desc">کدهای انواع مدارک موردنیاز رقابت.</td>
+</tr><tr>
+  <td class="name">announcedStartDate</td>
+  <td class="type">Long</td>
+  <td class="desc">زمان اعلام‌شده برای شروع رقابت.</td>
+</tr>
+  </table>
+  
+  <table class="tbl" id="put-api-v1-admin-competition-activate-id-RoundInfoDTO">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">RoundInfoDTO – خروجی موفق - جدول شماره 3 (اطلاعات وضعیت و زمان‌بندی یک دور رقابت را نگهداری می‌کند.)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">title</td>
+  <td class="type">String</td>
+  <td class="desc">عنوان دور.</td>
+</tr><tr>
+  <td class="name">state</td>
+  <td class="type">String</td>
+  <td class="desc">وضعیت فعلی دور.</td>
+</tr><tr>
+  <td class="name">roundDuration</td>
+  <td class="type">Long</td>
+  <td class="desc">مدت اجرای دور.</td>
+</tr><tr>
+  <td class="name">roundWaitDuration</td>
+  <td class="type">Long</td>
+  <td class="desc">مدت انتظار پیش از شروع یا میان دورها.</td>
+</tr><tr>
+  <td class="name">attenders</td>
+  <td class="type">Long</td>
+  <td class="desc">تعداد حاضران در این دور.</td>
+</tr>
+  </table>
+  
+  <table class="tbl" id="put-api-v1-admin-competition-activate-id-CompetitionParticipationTypeDTO">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">CompetitionParticipationTypeDTO – خروجی موفق - جدول شماره 4 (شیوه مشارکت قابل انتخاب در یک رقابت و ظرفیت آن را مشخص می‌کند.)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">title</td>
+  <td class="type">String</td>
+  <td class="desc">عنوان نمایشی شیوه مشارکت.</td>
+</tr><tr>
+  <td class="name">size</td>
+  <td class="type">Int</td>
+  <td class="desc">تعداد اعضای مجاز در این شیوه مشارکت.</td>
+</tr><tr>
+  <td class="name">participationType</td>
+  <td class="type">Int</td>
+  <td class="desc">کد شیوه مشارکت برای انتخاب و اعمال آن در رقابت.</td>
+</tr>
+  </table>
+  
+
+  
+
+  
+  <h3 id="put-api-v1-admin-competition-activate-id-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;code&#34;: 1,
+  &#34;time&#34;: 1735689600000,
+  &#34;successful&#34;: true,
+  &#34;data&#34;: {
+    &#34;id&#34;: 101,
+    &#34;title&#34;: &#34;مسابقه بهار&#34;,
+    &#34;description&#34;: &#34;رقابت برنامه‌نویسی تیمی.&#34;,
+    &#34;pictureUri&#34;: &#34;https://example.com/image.png&#34;,
+    &#34;rounds&#34;: [
+      {
+        &#34;title&#34;: &#34;دور اول&#34;,
+        &#34;state&#34;: &#34;STARTED&#34;,
+        &#34;roundDuration&#34;: 3600,
+        &#34;roundWaitDuration&#34;: 300,
+        &#34;attenders&#34;: 10
+      }
+    ],
+    &#34;state&#34;: &#34;ACTIVE&#34;,
+    &#34;attenders&#34;: 20,
+    &#34;teamsMaximumSize&#34;: 3,
+    &#34;promoted&#34;: true,
+    &#34;competitionType&#34;: &#34;STAGED&#34;,
+    &#34;teamsMaxCompetitorsCount&#34;: 3,
+    &#34;roundCount&#34;: 3,
+    &#34;programmingLanguages&#34;: [
+      &#34;JAVA&#34;
+    ],
+    &#34;ParticipationTypes&#34;: [
+      {
+        &#34;title&#34;: &#34;تیمی&#34;,
+        &#34;size&#34;: 3,
+        &#34;participationType&#34;: 1
+      }
+    ],
+    &#34;onSiteCapacity&#34;: 50,
+    &#34;endTime&#34;: 1735700400000,
+    &#34;activeTime&#34;: 1735686000000,
+    &#34;startTime&#34;: 1735689600000,
+    &#34;address&#34;: &#34;تهران&#34;,
+    &#34;documentKeyTypes&#34;: [
+      [
+        1
+      ]
+    ],
+    &#34;announcedStartDate&#34;: 1735689600000
+  }
+}</pre>
+  
+  <h3 id="put-api-v1-admin-competition-activate-id-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;code&#34;: &#34;400&#34;,
+  &#34;message&#34;: &#34;درخواست نامعتبر است&#34;
+}</pre>
+  
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{
+  &#34;code&#34;: 1,
+  &#34;message&#34;: &#34;PARAMETER_{}_IS_INVALID&#34;
+}</pre>
+  
+  
+  
+
+  
+
+  
+  <div class="caption" id="put-api-v1-admin-competition-activate-id-errors">جدول 5. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>PARAMETER_{}_IS_INVALID</td><td></td></tr><tr><td style="text-align:center">6</td><td>CAN_NOT_FIND_COMPETITION</td><td></td></tr><tr><td style="text-align:center">39</td><td>INVALID_COMPETITION_STATE</td><td></td></tr><tr><td style="text-align:center">400</td><td>service_bad_request</td><td></td></tr><tr><td style="text-align:center">46</td><td>INVALID_ROUND_STATE</td><td></td></tr><tr><td style="text-align:center">500</td><td>internal_server_error</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>مستندات API — codingrelay</span></div>
+</section>
+
+
+
+</td></tr></tbody>
+</table>
+</body>
+</html>

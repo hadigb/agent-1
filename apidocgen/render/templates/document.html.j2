@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ meta.title }} – {{ meta.system_name }}</title>
+<meta name="generator" content="apidocgen {{ meta.generator_version }}">
+{% if meta.font_link %}<link rel="preconnect" href="https://fonts.googleapis.com"><link href="{{ meta.font_link }}" rel="stylesheet">{% endif %}
+<style>
+{{ meta.font_css|safe }}
+:root {
+  --green: #2C673E; --green-dark: #1f4d2e; --orange: #E28B3C;
+  --th: #b9e0cb; --th-dark: #8fcfae; --group: #cbe9d8; --border: #6b6b6b; --text: #1e1e1e; --muted: #666;
+  --page-w: 210mm;
+}
+* { box-sizing: border-box; }
+html { background: #e9ecef; }
+body { margin: 0; font-family: {{ meta.font_stack|safe }}; color: var(--text); font-size: 11.5pt; line-height: 1.75; direction: rtl; }
+.page { background: #fff; width: var(--page-w); min-height: 297mm; margin: 12px auto; padding: 22mm 16mm 20mm 16mm; position: relative; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+.page.cover { padding: 0; overflow: hidden; }
+.pagehead { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--orange); padding-bottom: 4px; margin-bottom: 14px; font-size: 9.5pt; }
+.pagehead .hl { display: flex; align-items: center; gap: 10px; }
+.pagehead .doc-title { font-weight: 700; color: var(--green-dark); font-size: 11pt; }
+.pagehead .cls { color: var(--muted); }
+.pagehead .cls b { color: var(--orange); font-weight: 700; }
+.pagehead .ver { color: var(--muted); }
+.pagefoot { border-top: 2px solid var(--orange); margin-top: 24px; padding-top: 4px; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+.logo { height: 34px; }
+.logo.big { height: 80px; }
+h1, h2, h3, h4 { color: var(--green); margin: 18px 0 8px; line-height: 1.5; }
+h1 { font-size: 20pt; } h2 { font-size: 15pt; } h3 { font-size: 12.5pt; color: var(--orange); } h4 { font-size: 11.5pt; }
+p { margin: 6px 0; text-align: justify; }
+.muted { color: var(--muted); }
+.ltr { direction: ltr; text-align: left; unicode-bidi: embed; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+.wrap { word-break: break-all; white-space: pre-wrap; }
+table.tbl { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 10pt; page-break-inside: auto; table-layout: fixed; }
+table.tbl col.c-group { width: 12%; } table.tbl col.c-name { width: 26%; } table.tbl col.c-type { width: 13%; } table.tbl col.c-desc { width: 49%; }
+table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 4px 6px; vertical-align: middle; }
+table.tbl th { background: var(--th); font-weight: 700; text-align: center; }
+table.tbl td.group { background: var(--th-dark); font-weight: 700; text-align: center; width: 13%; }
+table.tbl tr.sub th { background: var(--th-dark); text-align: center; }
+table.tbl td.name { direction: ltr; text-align: center; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; word-break: break-all; }
+table.tbl td.type { direction: ltr; text-align: center; font-size: 9.5pt; word-break: break-word; }
+table.tbl td.desc { text-align: right; word-break: break-word; overflow-wrap: anywhere; }
+table.tbl td.addr { direction: ltr; text-align: left; font-family: Consolas, "Courier New", monospace; word-break: break-all; }
+table.tbl tr { page-break-inside: avoid; }
+table.enum { border-collapse: collapse; margin: 4px auto; font-size: 9pt; width: 100%; max-width: 100%; table-layout: auto; }
+table.enum th { background: var(--th-dark); border: 1px solid var(--border); padding: 2px 6px; white-space: nowrap; }
+table.enum td.code { white-space: nowrap; width: 1%; }
+table.enum td { border: 1px solid var(--border); padding: 2px 6px; text-align: center; word-break: break-word; overflow-wrap: anywhere; }
+table.enum td.ltr { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; }
+table.enum td.ltr { direction: ltr; }
+.caption { font-size: 9.5pt; color: var(--green-dark); margin: 8px 0 2px; font-weight: 700; }
+pre.json { direction: ltr; text-align: left; background: #f6f8f7; border: 1px solid #d8e2dc; border-radius: 4px; padding: 8px 10px; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; white-space: pre-wrap; word-break: break-word; margin: 6px 0 12px; }
+ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-bottom: 4px; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc .row { display: flex; align-items: baseline; gap: 6px; }
+.toc .row .dots { flex: 1; border-bottom: 1px dotted #999; }
+.toc .l2 { padding-right: 24px; }
+.toc .num { color: var(--green); font-weight: 700; min-width: 34px; }
+.page-break { page-break-before: always; }
+.tag { display: inline-block; background: var(--orange); color: #fff; border-radius: 3px; padding: 0 6px; font-size: 8.5pt; margin-right: 6px; }
+.status-note { font-size: 8.5pt; color: var(--muted); }
+/* cover */
+.cover .band { position: absolute; top: 0; right: 0; width: 26%; height: 100%; background: var(--green); }
+.cover .band::after { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 6px, transparent 6px 22px), repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 6px, transparent 6px 22px); }
+.cover .curve { position: absolute; top: 0; right: 24%; width: 5%; height: 100%; background: #fff; border-right: 3px solid var(--orange); border-radius: 0 0 0 80% / 0 0 0 60%; }
+.cover .content { position: absolute; top: 0; right: 30%; left: 0; height: 100%; padding: 40mm 18mm 20mm 18mm; }
+.cover .logo-wrap { text-align: center; margin-bottom: 40mm; }
+.cover .system { font-size: 12pt; color: #333; font-weight: 700; }
+.cover .title { font-size: 28pt; color: var(--green); font-weight: 900; line-height: 1.5; margin: 6px 0 30mm; }
+.cover .meta { font-size: 11pt; color: #333; line-height: 2.1; }
+.cover .cls { position: absolute; bottom: 30mm; right: 18mm; font-size: 12pt; color: #333; }
+.cover .cls b { color: var(--orange); }
+.cover .cls::before { content: "●"; color: var(--orange); margin-left: 8px; font-size: 9pt; }
+@media screen and (max-width: 900px) { .page { width: auto; min-height: auto; padding: 16px; margin: 0; } .cover .content { padding: 20mm 10mm; } }
+@media print {
+  html { background: #fff; }
+  .page { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .pagehead, .pagefoot { display: none; }
+  /* repeating page header / footer: table head & foot sections are repeated by the browser on every printed page */
+  table.print-wrap { display: table; width: 100%; border-collapse: collapse; }
+  table.print-wrap > thead { display: table-header-group; }
+  table.print-wrap > tbody { display: table-row-group; }
+  table.print-wrap > * > tr { display: table-row; }
+  table.print-wrap > * > tr > td { display: table-cell; padding: 0; }
+  .print-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 2px solid var(--orange); font-size: 9pt; padding: 0 1mm 1mm; margin-bottom: 4mm; }
+  .print-head .cls { color: var(--muted); font-size: 8.5pt; }
+  /* Chromium does not repeat <tfoot> when nested tables fragment, so the footer is a fixed element placed at the
+     bottom of the printable area (297mm - 12mm top - 12mm bottom = 273mm high); the cover paints above it. */
+  .print-foot { position: fixed; z-index: 10; top: 265mm; left: 0; right: 0; height: 8mm; border-top: 2px solid var(--orange); font-size: 8pt; color: var(--muted); text-align: center; padding-top: 1mm; background: #fff; }
+  @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
+  @page :first { margin: 0; }
+  .cover { height: 297mm; page-break-after: always; z-index: 20; }
+  .page:not(.cover) { padding-bottom: 9mm; }
+  pre.json { page-break-inside: avoid; }
+}
+.no-print-only { display: none; }
+@media print { .screen-only { display: none; } }
+@media screen { .screen-hide { display: none; } }
+@media screen { table.print-wrap, table.print-wrap > tbody, table.print-wrap > tbody > tr, table.print-wrap > tbody > tr > td { display: block; } table.print-wrap > thead { display: none; } }
+</style>
+</head>
+<body>
+{# ------------------------------------------------------------------ helpers #}
+{% macro pagehead() -%}
+<div class="pagehead">
+  <div class="hl">{% if meta.logo %}<img class="logo" src="{{ meta.logo }}" alt="">{% endif %}<div><div class="doc-title">{{ meta.title }}</div><div class="cls">این سند ازجمله اسناد <b>{{ meta.classification }}</b> {{ meta.organization }} است.</div></div></div>
+  <div class="ver">شماره مستند: ver{{ meta.version }}</div>
+</div>
+{%- endmacro %}
+{% macro pagefoot() -%}
+<div class="pagefoot"><span>{{ meta.footer }}</span></div>
+{%- endmacro %}
+{% macro enum_table(e) -%}
+<table class="enum">
+  <tr><th>{{ 'کد' if e.values and e.values[0].code else 'ردیف' }}</th><th>مقدار</th>{% if e.values|selectattr('label')|list %}<th>شرح</th>{% endif %}</tr>
+  {% set has_label = e.values|selectattr('label')|list %}
+  {% for v in e.values %}<tr><td class="code">{{ v.code if v.code else loop.index }}</td><td class="ltr">{{ v.name }}</td>{% if has_label %}<td>{{ v.label }}</td>{% endif %}</tr>{% endfor %}
+</table>
+{%- endmacro %}
+{% macro field_row(r, doc) -%}
+<tr>
+  <td class="name">{{ r.name }}{% if r.required %} *{% endif %}</td>
+  <td class="type">{{ r.type_str }}</td>
+  <td class="desc">{{ r.description or r.code_description or '' }}{% if r.enum_qname and r.enum_qname in doc.enum_tables %}{{ enum_table(doc.enum_tables[r.enum_qname]) }}{% endif %}{% if r.nested_qname %}<div class="muted" style="font-size:9pt">طبق جدول {{ r.nested_qname.rsplit('.', 1)[-1] }}</div>{% endif %}</td>
+</tr>
+{%- endmacro %}
+
+{# ------------------------------------------------------------------ cover #}
+<section class="page cover">
+  <div class="band"></div><div class="curve"></div>
+  <div class="content">
+    <div class="logo-wrap">{% if meta.logo %}<img class="logo big" src="{{ meta.logo }}" alt="">{% else %}<div style="font-size:26pt;font-weight:900;color:var(--green)">{{ meta.organization }}</div>{% endif %}</div>
+    <div class="system">{{ meta.system_name }}</div>
+    <div class="title">{{ meta.title }}</div>
+    <div class="meta">
+      <div>تهیه‌کننده/ تهیه‌کنندگان: {{ meta.author }}</div>
+      <div>تاریخ: {{ meta.date }}</div>
+      <div>شماره مستند: ver{{ meta.version }}</div>
+    </div>
+    <div class="cls">این سند ازجمله اسناد <b>{{ meta.classification }}</b> {{ meta.organization }} است.</div>
+  </div>
+</section>
+
+<table class="print-wrap">
+<thead><tr><td><div class="print-head"><span><b>{{ meta.title }}</b></span><span class="cls">این سند ازجمله اسناد <b>{{ meta.classification }}</b> {{ meta.organization }} است.</span><span>شماره مستند: ver{{ meta.version }}</span></div></td></tr></thead>
+<tbody><tr><td>
+<div class="print-foot screen-hide">{{ meta.footer }}</div>
+{# ------------------------------------------------------------------ identity / approvals / changelog #}
+<section class="page">
+  {{ pagehead() }}
+  <p class="muted" style="text-align:right">تکمیل جداول زیر تنها برای مستندات سیستمی الزامی است.</p>
+  <table class="tbl">
+    <tr><th colspan="2">شناسنامه سند</th></tr>
+    <tr><td class="group" style="width:35%">حوزه کاربردی مستند</td><td>{{ meta.identity.domain }}</td></tr>
+    <tr><td class="group">زمان بازنگری سند</td><td>{{ meta.identity.review_time }}</td></tr>
+    <tr><td class="group">تاریخ منسوخ شدن سند</td><td>{{ meta.identity.obsolete_date }}</td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th colspan="4">تاییدیه سند</th></tr>
+    <tr><th></th><th>نام و نام خانوادگی</th><th>سمت سازمانی</th><th>تاریخ</th></tr>
+    {% for a in meta.approvals %}<tr><td class="group">{{ a.role }}</td><td>{{ a.name }}</td><td>{{ a.position }}</td><td class="ltr" style="text-align:center">{{ a.date }}</td></tr>{% endfor %}
+  </table>
+  <table class="tbl">
+    <tr><th colspan="5">جدول تغییرات سند</th></tr>
+    <tr><th style="width:7%">ردیف</th><th style="width:15%">تاریخ ویرایش</th><th style="width:10%">نسخه</th><th style="width:18%">ویرایش کننده</th><th>شرح ویرایش</th></tr>
+    {% for c in meta.changelog %}<tr><td style="text-align:center">{{ loop.index }}</td><td class="ltr" style="text-align:center">{{ c.date }}</td><td style="text-align:center">{{ c.version }}</td><td>{{ c.editor }}</td><td>{{ c.description }}</td></tr>{% endfor %}
+  </table>
+  {{ pagefoot() }}
+</section>
+
+{# ------------------------------------------------------------------ TOC #}
+<section class="page">
+  {{ pagehead() }}
+  <h1>فهرست مطالب</h1>
+  <div class="toc">
+    <div class="row"><a href="#intro">مقدمه</a><span class="dots"></span></div>
+    {% for d in docs %}
+    <div class="row"><span class="num">{{ d.number }}.</span><a href="#{{ d.anchor }}">{{ d.title }}</a><span class="dots"></span></div>
+    {% for sub in d.toc %}<div class="row l2"><span class="num">{{ d.number }}.{{ loop.index }}</span><a href="#{{ sub.anchor }}">{{ sub.title }}</a><span class="dots"></span></div>
+    {% endfor %}
+    {% endfor %}
+    {% if meta.appendix_html %}<div class="row"><a href="#appendix">پیوست</a><span class="dots"></span></div>{% endif %}
+  </div>
+  <h1>فهرست جداول</h1>
+  <div class="toc">
+    {% for t in tables_index %}<div class="row"><a href="#{{ t.anchor }}">جدول {{ t.number }}. {{ t.title }}</a><span class="dots"></span></div>{% endfor %}
+  </div>
+  {{ pagefoot() }}
+</section>
+
+{# ------------------------------------------------------------------ intro #}
+<section class="page" id="intro">
+  {{ pagehead() }}
+  <h1>مقدمه</h1>
+  {{ meta.intro_html|safe }}
+  {{ pagefoot() }}
+</section>
+
+{# ------------------------------------------------------------------ endpoints #}
+{% for d in docs %}
+<section class="page" id="{{ d.anchor }}">
+  {{ pagehead() }}
+  <h1>{{ d.number }}. {{ d.title }}{% if d.spec.deprecated %} <span class="tag">منسوخ</span>{% endif %}</h1>
+  {% if d.description %}<p>{{ d.description }}</p>{% endif %}
+  <h3 id="{{ d.anchor }}-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="{{ d.anchor }}-tbl">جدول {{ d.table_numbers.main }}. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">{{ d.address }}</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">{{ d.http_method }}</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    {% if d.header_rows %}
+    {% for r in d.header_rows %}
+    <tr>{% if loop.first %}<td class="group" rowspan="{{ d.header_rows|length }}">پارامترهای هدر</td>{% endif %}
+      <td class="name">{{ r.name }}{% if r.required %} *{% endif %}</td><td class="type">{{ r.type_str }}</td><td class="desc">{{ r.description or r.code_description }}</td></tr>
+    {% endfor %}
+    {% endif %}
+    {% set req_count = d.request_rows|length + (d.request_tables|map(attribute='fields')|map('length')|sum) + d.request_tables|length %}
+    {% if d.request_rows or d.request_tables %}
+    {% set outer = namespace(first=true) %}
+    {% for r in d.request_rows %}
+    <tr>{% if outer.first %}<td class="group" rowspan="{{ req_count }}">پارامترهای درخواست</td>{% set outer.first = false %}{% endif %}
+      <td class="name">{{ r.name }}{% if r.required %} *{% endif %}{% if r.location in ('query','path','form','cookie') %}<div class="muted" style="font-size:8pt">{{ {'query':'Query','path':'Path','form':'Form','cookie':'Cookie'}[r.location] }}</div>{% endif %}</td>
+      <td class="type">{{ r.type_str }}</td>
+      <td class="desc">{{ r.description or r.code_description }}{% if r.enum_qname and r.enum_qname in d.enum_tables %}{{ enum_table(d.enum_tables[r.enum_qname]) }}{% endif %}{% if r.nested_qname %}<div class="muted" style="font-size:9pt">طبق جدول زیر</div>{% endif %}</td></tr>
+    {% endfor %}
+    {% for t in d.request_tables %}
+    <tr class="sub">{% if outer.first %}<td class="group" rowspan="{{ req_count }}">پارامترهای درخواست</td>{% set outer.first = false %}{% endif %}<th colspan="3" id="{{ d.anchor }}-{{ t.name }}">{{ t.name }}{% if t.description %} – {{ t.description }}{% endif %}</th></tr>
+    {% for r in t.fields %}{{ field_row(r, d) }}{% endfor %}
+    {% endfor %}
+    {% else %}
+    <tr><td class="group">پارامترهای درخواست</td><td colspan="3" class="muted">—</td></tr>
+    {% endif %}
+    {% if d.response_rows %}
+    {% for r in d.response_rows %}
+    <tr>{% if loop.first %}<td class="group" rowspan="{{ d.response_rows|length }}">پارامترهای پاسخ</td>{% endif %}
+      <td class="name">{{ r.name }}</td><td class="type">{{ r.type_str }}</td>
+      <td class="desc">{{ r.description or r.code_description }}{% if r.enum_qname and r.enum_qname in d.enum_tables %}{{ enum_table(d.enum_tables[r.enum_qname]) }}{% endif %}{% if r.nested_qname and r.nested_qname in d.response_table_numbers and 'جدول' not in (r.description or r.code_description or '') %} - مطابق جدول شماره {{ d.response_table_numbers[r.nested_qname] }}{% endif %}</td></tr>
+    {% endfor %}
+    {% elif d.response_extra %}
+    {% for r in d.response_extra %}
+    <tr>{% if loop.first %}<td class="group" rowspan="{{ d.response_extra|length }}">پارامترهای پاسخ</td>{% endif %}
+      <td class="name">{{ r.name }}</td><td class="type">{{ r.type }}</td><td class="desc">{{ r.description }}</td></tr>
+    {% endfor %}
+    {% else %}
+    <tr><td class="group">پارامترهای پاسخ</td><td colspan="3" class="muted">—</td></tr>
+    {% endif %}
+  </table>
+
+  {% for t in d.response_tables %}
+  <table class="tbl" id="{{ d.anchor }}-{{ t.name }}">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">{{ t.name }} – {{ 'خروجی ناموفق' if t.name.lower().startswith('error') else 'خروجی موفق' }} - جدول شماره {{ d.response_table_numbers[t.qname] }}{% if t.description %} ({{ t.description }}){% endif %}</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    {% for r in t.fields %}{{ field_row(r, d) }}{% endfor %}
+  </table>
+  {% endfor %}
+
+  {% if d.notes %}
+  <h4>نکات:</h4>
+  <ul class="notes">{% for n in d.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if meta.show_samples and d.success_sample %}
+  <h3 id="{{ d.anchor }}-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{{ d.success_sample }}</pre>
+  {% if d.failure_samples %}
+  <h3 id="{{ d.anchor }}-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{{ d.failure_samples[0] }}</pre>
+  {% if d.failure_samples|length > 1 %}
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{{ d.failure_samples[1] }}</pre>
+  {% endif %}
+  {% endif %}
+  {% endif %}
+
+  {% if meta.show_call_steps %}
+  <h3 id="{{ d.anchor }}-steps">مراحل فراخوانی سرویس:</h3>
+  {{ d.call_steps_html|safe }}
+  {% endif %}
+
+  {% if meta.show_error_table and d.error_rows %}
+  <div class="caption" id="{{ d.anchor }}-errors">جدول {{ d.table_numbers.errors }}. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    {% for e in d.error_rows %}<tr><td style="text-align:center">{{ e.code }}</td><td>{{ e.title }}</td><td>{{ e.note }}</td></tr>{% endfor %}
+  </table>
+  {% endif %}
+  {% if meta.show_status and d.analysis_status != 'cached' %}<p class="status-note">وضعیت تحلیل: {{ d.analysis_status }}</p>{% endif %}
+  {{ pagefoot() }}
+</section>
+{% endfor %}
+
+{% if meta.appendix_html %}
+<section class="page" id="appendix">
+  {{ pagehead() }}
+  <h1>پیوست</h1>
+  {{ meta.appendix_html|safe }}
+  {{ pagefoot() }}
+</section>
+{% endif %}
+</td></tr></tbody>
+</table>
+</body>
+</html>

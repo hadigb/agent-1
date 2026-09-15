@@ -1,0 +1,223 @@
+{
+ "entries": [
+  {
+   "file": "20260913-164039_v1.17.html",
+   "created_at": 1789305039.847662,
+   "created_jalali": "1405/06/22",
+   "created_iso": "2026-09-13 16:40:39",
+   "version": "1.17",
+   "title": "سرویس ثبت سند حسابداری",
+   "label": "",
+   "size": 120225,
+   "sha256": "c2e58be28c242138e756835b2cacf1721092afaf395ec9d78a18498e5802c5ef",
+   "endpoint_count": 8,
+   "endpoints": [
+    {
+     "id": "POST /Api/GenerateBillSerialNumber",
+     "title": "سرویس دریافت شماره سریال قبض سپرده",
+     "method": "POST",
+     "path": "/Api/GenerateBillSerialNumber",
+     "anchor": "post-api-generatebillserialnumber",
+     "hash": "dcf9114eef9be8abd67e418b6b44a2c8fd481cff243fc0ce90c7f1996d2d1091",
+     "status": "none",
+     "framework": "jaxrs"
+    },
+    {
+     "id": "POST /Api/GetBillStructureForDeposite",
+     "title": "سرویس نمایش نوع مشخصه عملیات مالی",
+     "method": "POST",
+     "path": "/Api/GetBillStructureForDeposite",
+     "anchor": "post-api-getbillstructurefordeposite",
+     "hash": "e03d60e19d34b6456f78af52e6251d99e05dc7540197909cefb5688f722b4609",
+     "status": "none",
+     "framework": "jaxrs"
+    },
+    {
+     "id": "POST /API/IssueDocument",
+     "title": "سرویس ثبت سند حسابداری",
+     "method": "POST",
+     "path": "/API/IssueDocument",
+     "anchor": "post-api-issuedocument",
+     "hash": "07d844f636bc938500cdc1526299701ea051d05e71c14b8a5a6ca8bf71f8d3c0",
+     "status": "none",
+     "framework": "spring"
+    },
+    {
+     "id": "GET /API/IssueDocument/{transactionId}",
+     "title": "سرویس استعلام سند حسابداری",
+     "method": "GET",
+     "path": "/API/IssueDocument/{transactionId}",
+     "anchor": "get-api-issuedocument-transactionid",
+     "hash": "9b791a07ac04ec8e3092b8e9920b64b4f3ef3dac3012d7dd484438808843aabb",
+     "status": "none",
+     "framework": "spring"
+    },
+    {
+     "id": "POST /Api/Reverse",
+     "title": "سرویس برگشت تراکنش",
+     "method": "POST",
+     "path": "/Api/Reverse",
+     "anchor": "post-api-reverse",
+     "hash": "49f0dc4cba4459ec238f43b4c94b6ba7c7d904b46d10b84655ea423063712bd7",
+     "status": "none",
+     "framework": "custom:dispatcher"
+    },
+    {
+     "id": "POST /functional/documents",
+     "title": "سرویس ثبت سند (نسخه Reactive)",
+     "method": "POST",
+     "path": "/functional/documents",
+     "anchor": "post-functional-documents",
+     "hash": "7abcf1cdc2f26d1722fa7c69bb515f865d7b2771acf52303e1190d2021b24781",
+     "status": "none",
+     "framework": "spring-functional"
+    },
+    {
+     "id": "GET /functional/documents/{id}",
+     "title": "سرویس دریافت سند با شناسه",
+     "method": "GET",
+     "path": "/functional/documents/{id}",
+     "anchor": "get-functional-documents-id",
+     "hash": "fc85550981ffa45cf3188d4a2d8c055a41147a96c2112a336e8fe02045e90b45",
+     "status": "none",
+     "framework": "spring-functional"
+    },
+    {
+     "id": "GET /legacy/status",
+     "title": "سرویس استعلام وضعیت تراکنش (قدیمی)",
+     "method": "GET",
+     "path": "/legacy/status",
+     "anchor": "get-legacy-status",
+     "hash": "cfdb4f6d49c7170057bc81b39408df4677171d3ed41c92657c5917832c49f262",
+     "status": "none",
+     "framework": "servlet"
+    }
+   ],
+   "added": [],
+   "changed": [],
+   "removed": [],
+   "usage": {
+    "calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "failed": 0
+   }
+  },
+  {
+   "file": "20260913-163909_v1.17.html",
+   "created_at": 1789304949.877318,
+   "created_jalali": "1405/06/22",
+   "created_iso": "2026-09-13 16:39:09",
+   "version": "1.17",
+   "title": "سرویس ثبت سند حسابداری",
+   "label": "",
+   "size": 120225,
+   "sha256": "c2e58be28c242138e756835b2cacf1721092afaf395ec9d78a18498e5802c5ef",
+   "endpoint_count": 8,
+   "endpoints": [
+    {
+     "id": "POST /Api/GenerateBillSerialNumber",
+     "title": "سرویس دریافت شماره سریال قبض سپرده",
+     "method": "POST",
+     "path": "/Api/GenerateBillSerialNumber",
+     "anchor": "post-api-generatebillserialnumber",
+     "hash": "dcf9114eef9be8abd67e418b6b44a2c8fd481cff243fc0ce90c7f1996d2d1091",
+     "status": "none",
+     "framework": "jaxrs"
+    },
+    {
+     "id": "POST /Api/GetBillStructureForDeposite",
+     "title": "سرویس نمایش نوع مشخصه عملیات مالی",
+     "method": "POST",
+     "path": "/Api/GetBillStructureForDeposite",
+     "anchor": "post-api-getbillstructurefordeposite",
+     "hash": "e03d60e19d34b6456f78af52e6251d99e05dc7540197909cefb5688f722b4609",
+     "status": "none",
+     "framework": "jaxrs"
+    },
+    {
+     "id": "POST /API/IssueDocument",
+     "title": "سرویس ثبت سند حسابداری",
+     "method": "POST",
+     "path": "/API/IssueDocument",
+     "anchor": "post-api-issuedocument",
+     "hash": "07d844f636bc938500cdc1526299701ea051d05e71c14b8a5a6ca8bf71f8d3c0",
+     "status": "none",
+     "framework": "spring"
+    },
+    {
+     "id": "GET /API/IssueDocument/{transactionId}",
+     "title": "سرویس استعلام سند حسابداری",
+     "method": "GET",
+     "path": "/API/IssueDocument/{transactionId}",
+     "anchor": "get-api-issuedocument-transactionid",
+     "hash": "9b791a07ac04ec8e3092b8e9920b64b4f3ef3dac3012d7dd484438808843aabb",
+     "status": "none",
+     "framework": "spring"
+    },
+    {
+     "id": "POST /Api/Reverse",
+     "title": "سرویس برگشت تراکنش",
+     "method": "POST",
+     "path": "/Api/Reverse",
+     "anchor": "post-api-reverse",
+     "hash": "49f0dc4cba4459ec238f43b4c94b6ba7c7d904b46d10b84655ea423063712bd7",
+     "status": "none",
+     "framework": "custom:dispatcher"
+    },
+    {
+     "id": "POST /functional/documents",
+     "title": "سرویس ثبت سند (نسخه Reactive)",
+     "method": "POST",
+     "path": "/functional/documents",
+     "anchor": "post-functional-documents",
+     "hash": "7abcf1cdc2f26d1722fa7c69bb515f865d7b2771acf52303e1190d2021b24781",
+     "status": "none",
+     "framework": "spring-functional"
+    },
+    {
+     "id": "GET /functional/documents/{id}",
+     "title": "سرویس دریافت سند با شناسه",
+     "method": "GET",
+     "path": "/functional/documents/{id}",
+     "anchor": "get-functional-documents-id",
+     "hash": "fc85550981ffa45cf3188d4a2d8c055a41147a96c2112a336e8fe02045e90b45",
+     "status": "none",
+     "framework": "spring-functional"
+    },
+    {
+     "id": "GET /legacy/status",
+     "title": "سرویس استعلام وضعیت تراکنش (قدیمی)",
+     "method": "GET",
+     "path": "/legacy/status",
+     "anchor": "get-legacy-status",
+     "hash": "cfdb4f6d49c7170057bc81b39408df4677171d3ed41c92657c5917832c49f262",
+     "status": "none",
+     "framework": "servlet"
+    }
+   ],
+   "added": [
+    "POST /Api/GenerateBillSerialNumber",
+    "POST /Api/GetBillStructureForDeposite",
+    "POST /API/IssueDocument",
+    "GET /API/IssueDocument/{transactionId}",
+    "POST /Api/Reverse",
+    "POST /functional/documents",
+    "GET /functional/documents/{id}",
+    "GET /legacy/status"
+   ],
+   "changed": [],
+   "removed": [],
+   "usage": {
+    "calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "failed": 0
+   }
+  }
+ ]
+}

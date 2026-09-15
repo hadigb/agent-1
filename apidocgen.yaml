@@ -1,0 +1,38 @@
+project:
+  name: codingrelay
+  description: "سامانهٔ برگزاری مسابقات برنامه‌نویسی، مدیریت رقابت‌ها، تیم‌ها، شرکت‌کنندگان، دورها، ارسال کد و نتایج."
+  paths:
+    - /Volumes/Code/Samples/codingrelay
+  db: .apidocgen/codingrelay/graph.db
+
+analysis:
+  call_depth: 2
+  max_slice_tokens: 10000
+  cache_key_includes_model: true
+  stale_fallback: false
+  error_catalog_regex: "(?i).*(ErrorCode|ResultCode|RsCode).*"
+
+llm:
+  provider: openai
+  model: gpt-5.6-terra
+  base_url: https://api.openai.com/v1
+  api_key_env: OPENAI_API_KEY
+  api_key_file: .apidocgen/openai-key
+  temperature: null
+  max_output_tokens: 16000
+  timeout_seconds: 180
+
+doc:
+  title: "مستندات API — codingrelay"
+  system_name: codingrelay
+  organization: ""
+  author: ""
+  version: "1.0"
+  output: docs/codingrelay-api.html
+  identity:
+    domain: codingrelay
+  approvals: []
+  changelog: []
+  common_headers: []
+  common_error_codes: []
+  footer: "مستندات API — codingrelay"

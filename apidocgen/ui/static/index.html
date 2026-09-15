@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apidocgen</title>
+<style>
+:root {
+  --green: #2C673E; --green-2: #3d8a55; --green-soft: #e3efe7; --orange: #E28B3C; --orange-soft: #fbead9;
+  --bg: #f6f8f7; --panel: #ffffff; --panel-2: #f0f4f1; --text: #1d2420; --muted: #66716b; --border: #d9e1dc;
+  --shadow: 0 1px 3px rgba(0,0,0,.08); --code: #f2f5f3; --new: #c45c16; --danger: #b8433a;
+  --get: #2C673E; --post: #E28B3C; --put: #2f6fb3; --delete: #b8433a; --patch: #7b4fb3; --other: #6a7570;
+}
+[data-theme="dark"] {
+  --green: #4fa56c; --green-2: #6bc088; --green-soft: #1d2b22; --orange: #f0a35d; --orange-soft: #3a2a1b;
+  --bg: #111614; --panel: #1a211d; --panel-2: #222b26; --text: #e6ece8; --muted: #9aa69f; --border: #2c3630;
+  --shadow: 0 1px 3px rgba(0,0,0,.4); --code: #151b18; --new: #f0a35d; --danger: #e2736a;
+  --get: #4fa56c; --post: #f0a35d; --put: #6ea6e8; --delete: #e2736a; --patch: #b48be8; --other: #8b968f;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.6 -apple-system, "Segoe UI", Roboto, "Vazirmatn", Tahoma, sans-serif; }
+a { color: var(--green); }
+button { font: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 6px; padding: 6px 12px; }
+button:hover { border-color: var(--green); }
+button.primary { background: var(--green); color: #fff; border-color: var(--green); }
+button.accent { background: var(--orange); color: #fff; border-color: var(--orange); }
+button.ghost { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); }
+button.danger { color: var(--danger); border-color: transparent; background: transparent; }
+button.danger:hover { border-color: var(--danger); background: #fdeeee; }
+button:disabled { opacity: .5; cursor: default; }
+input[type=text], select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); width: 100%; }
+textarea { min-height: 110px; resize: vertical; }
+header { display: flex; align-items: center; gap: 16px; padding: 10px 18px; background: var(--green); color: #fff; box-shadow: var(--shadow); }
+header .brand { font-weight: 700; font-size: 17px; letter-spacing: .3px; cursor: pointer; }
+header .brand span { color: var(--orange); }
+header .page-title { font-size: 16px; font-weight: 600; margin: 0; }
+header .spacer { flex: 1; }
+header .theme { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); }
+.nav { display: flex; gap: 6px; }
+.nav button { background: rgba(255,255,255,.12); color: #fff; border-color: transparent; }
+.nav button.active { background: #fff; color: var(--green); }
+.home { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+.home-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.home-head h1 { margin: 0 0 6px; font-size: 24px; }
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.project-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); cursor: pointer; text-align: right; display: flex; flex-direction: column; gap: 8px; min-height: 140px; }
+.project-card:hover { border-color: var(--green); }
+.project-card .name { font-weight: 700; font-size: 18px; }
+.project-card .path { font-size: 12px; color: var(--muted); direction: ltr; text-align: left; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.project-card .foot { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.add-card { border-style: dashed; align-items: center; justify-content: center; color: var(--green); font-weight: 600; }
+.add-card:hover { background: var(--green-soft); }
+main { padding: 16px 20px; min-width: 0; max-width: 1200px; margin: 0 auto; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.grow { flex: 1; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat { font-size: 26px; font-weight: 700; color: var(--green); }
+.stat small { font-size: 12px; color: var(--muted); font-weight: 400; display: block; }
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; color: #fff; min-width: 46px; text-align: center; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.badge.GET { background: var(--get); } .badge.POST { background: var(--post); } .badge.PUT { background: var(--put); }
+.badge.DELETE { background: var(--delete); } .badge.PATCH { background: var(--patch); } .badge.other { background: var(--other); }
+.pill { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+.pill.ok { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tree ul { list-style: none; margin: 0; padding-right: 14px; border-right: 1px dashed var(--border); }
+.tree > ul { padding-right: 0; border: none; }
+.tree .ep, .tree .meth { padding: 4px 6px; display: flex; gap: 8px; align-items: center; }
+.tree .ep .p, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; direction: ltr; }
+label.choice { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.muted { color: var(--muted); }
+.empty { color: var(--muted); padding: 24px; text-align: center; }
+.log { background: var(--code); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; max-height: 280px; overflow: auto; direction: ltr; text-align: left; }
+iframe.doc { width: 100%; min-height: 70vh; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: s 1s linear infinite; }
+@keyframes s { to { transform: rotate(360deg); } }
+.hint { font-size: 12px; color: var(--new); }
+.svc-list { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.svc-pick { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.svc-pick:last-child { border-bottom: none; }
+.svc-pick label { display: flex; gap: 10px; align-items: center; cursor: pointer; flex: 1; min-width: 0; }
+.svc-pick .p { flex: 1; }
+#doc-search { flex: 1; min-width: 180px; width: auto; margin: 0; }
+.arch-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.arch-item:last-child { border-bottom: none; }
+.toast { position: fixed; bottom: 18px; left: 18px; background: var(--panel); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow); }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="/static/select2.min.css">
+<style>
+.select2-container { width: 100% !important; font: inherit; }
+.select2-container--default .select2-selection--single {
+  height: 42px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel-2); box-shadow: none; outline: none;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: var(--text); line-height: 40px; padding: 0 14px 0 36px;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; direction: ltr; text-align: left;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--muted); direction: rtl; text-align: right; font-family: inherit; }
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 40px; width: 28px; left: 6px; right: auto; top: 1px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--green) transparent transparent transparent; border-width: 6px 5px 0 5px; margin-left: -5px;
+}
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+  border-color: transparent transparent var(--orange) transparent; border-width: 0 5px 6px 5px;
+}
+.select2-container--default .select2-selection--single .select2-selection__clear {
+  color: var(--muted); float: left; margin-right: 0; margin-left: 8px; font-size: 16px;
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+  border-color: var(--green); background: var(--panel); box-shadow: 0 0 0 3px var(--green-soft);
+}
+.select2-dropdown {
+  border: 1px solid var(--green); border-radius: 8px; background: var(--panel); color: var(--text);
+  box-shadow: 0 10px 28px rgba(44, 103, 62, .18); z-index: 80; overflow: hidden;
+}
+.select2-container--open .select2-dropdown--below { border-top: 0; border-radius: 0 0 8px 8px; }
+.select2-container--open .select2-dropdown--above { border-bottom: 0; border-radius: 8px 8px 0 0; }
+.select2-search--dropdown { padding: 10px; background: var(--green-soft); }
+.select2-container--default .select2-search--dropdown .select2-search__field {
+  border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text);
+  font: inherit; padding: 8px 10px; outline: none;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+  border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange-soft);
+}
+.select2-container--default .select2-results > .select2-results__options { max-height: 260px; background: var(--panel); }
+.select2-container--default .select2-results__option {
+  padding: 9px 12px; color: var(--text); background: var(--panel);
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px;
+  direction: ltr; text-align: left;
+}
+.select2-container--default .select2-results__option[aria-selected=true] {
+  background: var(--green-soft) !important; color: var(--green) !important; font-weight: 600;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option--highlighted[aria-selected=false] {
+  background: var(--green) !important; color: #fff !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected=true] {
+  background: var(--green-2) !important; color: #fff !important;
+}
+.select2-container--default .select2-results__message { color: var(--muted); text-align: center; font-family: inherit; direction: rtl; }
+.select2-container--default .select2-results__option[aria-disabled=true] { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <button class="ghost" id="back-btn" hidden>← پروژه‌ها</button>
+  <div class="brand" id="brand">api<span>doc</span>gen</div>
+  <h1 class="page-title" id="page-title" hidden></h1>
+  <div class="nav" id="app-nav" hidden>
+    <button data-menu="scan" class="active">اسکن</button>
+    <button data-menu="analysis">تحلیل</button>
+    <button data-menu="docs">مستند</button>
+  </div>
+  <div class="spacer"></div>
+  <span id="busy"></span>
+  <button class="theme" id="theme-btn">🌙</button>
+</header>
+
+<section id="view-home" class="home">
+  <div class="home-head">
+    <div class="grow">
+      <h1>پروژه‌ها</h1>
+      <div class="muted">هر پروژه یک پوشهٔ کد جاوا است. با دکمهٔ افزودن، پوشه را انتخاب کنید.</div>
+    </div>
+    <button class="primary" id="b-add">افزودن پروژه</button>
+  </div>
+  <div id="project-grid" class="project-grid"></div>
+</section>
+
+<section id="view-app" hidden>
+  <main>
+    <div class="toolbar">
+      <div>
+        <div class="muted" id="app-sub" style="font-size:12px"></div>
+      </div>
+      <div class="grow"></div>
+    </div>
+
+    <section id="menu-scan">
+      <div class="card">
+        <div class="toolbar" style="margin:0">
+          <div>
+            <b>اسکن کد</b>
+            <div class="muted">فایل‌های بدون تغییر هش دوباره ذخیره نمی‌شوند. گراف از متد کنترلر شروع می‌شود.</div>
+          </div>
+          <div class="grow"></div>
+          <button id="b-scan" class="primary">شروع اسکن</button>
+        </div>
+      </div>
+      <div class="cards" id="scan-stats"></div>
+      <div class="grid2">
+        <div class="card">
+          <b>سرویس‌ها</b>
+          <div class="tree" id="tree"><div class="empty">ابتدا اسکن کنید.</div></div>
+        </div>
+        <div class="card">
+          <b>گراف متدها از کنترلر</b>
+          <div class="tree" id="cgraph"><div class="empty">پس از اسکن، زنجیرهٔ فراخوانی از هر کنترلر اینجا دیده می‌شود.</div></div>
+        </div>
+      </div>
+      <div class="card" id="jobs-mini"><div class="muted">هنوز کاری اجرا نشده است.</div></div>
+    </section>
+
+    <section id="menu-analysis" hidden>
+      <div class="card">
+        <b>تحلیل موارد کاربرد</b>
+        <p class="muted">عامل، کد را از کنترلر تا متدهای وابسته اسکن می‌کند و مشخصات Use Case می‌سازد. نیازمندی جدید با رنگ متمایز مشخص می‌شود.</p>
+        <label class="choice"><input type="radio" name="mode" value="new" checked> تحلیل جدید</label>
+        <label class="choice"><input type="radio" name="mode" value="existing"> سرویس قدیمی</label>
+        <div id="existing-box" hidden>
+          <label>مسیر سرویس
+            <select id="svc-path"><option value="">انتخاب مسیر…</option></select>
+          </label>
+          <label>تحلیل قبلی
+            <textarea id="prev" placeholder="متن تحلیل قبلی را اینجا بگذارید"></textarea>
+          </label>
+        </div>
+        <label>نیازمندی جدید
+          <textarea id="req" placeholder="نیازمندی جدید کسب‌وکار را بنویسید"></textarea>
+        </label>
+        <p class="hint">بندهای متأثر از نیازمندی جدید در سند با پس‌زمینهٔ نارنجی مشخص می‌شوند.</p>
+        <div class="toolbar">
+          <button id="b-ucs" class="accent">شروع تحلیل</button>
+        </div>
+      </div>
+      <iframe class="doc" id="ucs-frame" hidden></iframe>
+      <div class="card" id="ucs-log" hidden><div class="log" id="ucs-log-body"></div></div>
+    </section>
+
+    <section id="menu-docs" hidden>
+      <div class="card">
+        <b>تولید مستند</b>
+        <p class="muted">از سرویس‌هایی که قبلاً اسکن شده‌اند انتخاب کنید تا مستند HTML جدید ساخته شود.</p>
+        <div class="toolbar">
+          <input type="text" id="doc-search" placeholder="جستجوی سرویس…" autocomplete="off">
+          <button type="button" id="b-docs-all">همه</button>
+          <button type="button" id="b-docs-none">هیچ‌کدام</button>
+          <button id="b-docs" class="primary">تولید مستند</button>
+        </div>
+        <div class="svc-list" id="doc-services"><div class="empty">ابتدا اسکن کنید.</div></div>
+      </div>
+      <iframe class="doc" id="doc-frame" hidden></iframe>
+      <div class="card" id="docs-log" hidden><div class="log" id="docs-log-body"></div></div>
+      <div class="card">
+        <b>مستندهای قبلی</b>
+        <div id="doc-archive"><div class="muted">هنوز مستندی ساخته نشده است.</div></div>
+      </div>
+    </section>
+  </main>
+</section>
+
+<script src="/static/jquery.min.js"></script>
+<script src="/static/select2.min.js"></script>
+<script>
+jQuery.noConflict();
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n = x => (x ?? 0).toLocaleString('fa-IR');
+let apps = [], current = null, menu = 'scan', pollTimer = null, lastScan = null;
+
+const applyTheme = t => { document.documentElement.dataset.theme = t; $('#theme-btn').textContent = t === 'dark' ? '☀️' : '🌙'; };
+try { applyTheme(localStorage.getItem('theme') || 'light'); } catch (e) { applyTheme('light'); }
+$('#theme-btn').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; applyTheme(t); try { localStorage.setItem('theme', t); } catch (e) {} };
+
+document.querySelectorAll('.nav button').forEach(b => b.onclick = () => showMenu(b.dataset.menu));
+function showMenu(m) {
+  menu = m;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.menu === m));
+  $('#menu-scan').hidden = m !== 'scan';
+  $('#menu-analysis').hidden = m !== 'analysis';
+  $('#menu-docs').hidden = m !== 'docs';
+  if (m === 'analysis') loadServicePaths();
+  if (m === 'docs') loadDocs();
+}
+
+function appKey(a) { return a.slug || a.name; }
+function appHash(a) { return '#/' + encodeURIComponent(appKey(a)); }
+function appPath(suffix) { return '/api/apps/' + encodeURIComponent(appKey(current)) + suffix; }
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function goHome() { location.hash = '#/'; }
+$('#brand').onclick = goHome;
+$('#back-btn').onclick = goHome;
+
+function showHomeView() {
+  current = null;
+  $('#view-home').hidden = false;
+  $('#view-app').hidden = true;
+  $('#back-btn').hidden = true;
+  $('#app-nav').hidden = true;
+  $('#page-title').hidden = true;
+  $('#page-title').textContent = '';
+  $('#busy').innerHTML = '';
+  document.title = 'پروژه‌ها — apidocgen';
+}
+
+function showAppView(a) {
+  current = a;
+  $('#view-home').hidden = true;
+  $('#view-app').hidden = false;
+  $('#back-btn').hidden = false;
+  $('#app-nav').hidden = false;
+  $('#page-title').hidden = false;
+  $('#page-title').textContent = a.name;
+  document.title = a.name + ' — apidocgen';
+  renderHeader();
+}
+
+function renderHeader() {
+  const a = current;
+  if (!a) return;
+  $('#page-title').textContent = a.name;
+  $('#app-sub').textContent = a.ok ? (a.root || a.config) : (a.error || '');
+  $('#busy').innerHTML = a.busy ? '<span class="spin"></span> در حال اجرا' : '';
+  ['b-scan','b-ucs','b-docs'].forEach(id => { const el = $('#'+id); if (el) el.disabled = !!a.busy; });
+}
+
+function renderHome() {
+  const box = $('#project-grid');
+  box.innerHTML = '';
+  apps.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'project-card';
+    const meta = a.ok
+      ? `${n(a.endpoints)} سرویس · ${n(a.files)} فایل${a.busy ? ' · در حال اجرا' : ''}`
+      : 'خطای پیکربندی';
+    d.innerHTML = `<div class="name">${esc(a.name)}</div>
+      <div class="path">${esc(a.root || a.config)}</div>
+      <div class="foot"><span class="pill${a.ok ? ' ok' : ''}">${esc(meta)}</span>
+      <button class="danger" data-del="${a.id}">حذف از لیست</button></div>`;
+    d.onclick = () => { location.hash = appHash(a); };
+    d.querySelector('[data-del]').onclick = ev => { ev.stopPropagation(); removeApp(appKey(a), a.name); };
+    box.appendChild(d);
+  });
+  const add = document.createElement('div');
+  add.className = 'project-card add-card';
+  add.innerHTML = '<div>+ افزودن پروژه</div><div class="muted" style="font-weight:400">انتخاب پوشه پروژه</div>';
+  add.onclick = addProject;
+  box.appendChild(add);
+}
+
+async function loadWorkspace() {
+  const ws = await api('/api/workspace');
+  apps = ws.apps || [];
+  renderHome();
+  if (current) {
+    current = apps.find(a => appKey(a) === appKey(current) || a.id === current.id) || null;
+    if (current) renderHeader();
+  }
+}
+
+async function addProject() {
+  const btn = $('#b-add');
+  btn.disabled = true;
+  btn.textContent = 'در انتظار انتخاب پوشه…';
+  try {
+    const r = await fetch('/api/pick-folder', {method:'POST'});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    if (j.cancelled || !j.path) return;
+    await api('/api/apps', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: j.path})});
+    await loadWorkspace();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'افزودن پروژه';
+  }
+}
+$('#b-add').onclick = addProject;
+
+async function removeApp(key, name) {
+  if (!confirm('«' + name + '» از لیست برداشته شود؟ فایل‌های پروژه پاک نمی‌شوند.')) return;
+  try {
+    await api('/api/apps/' + encodeURIComponent(key), {method:'DELETE'});
+    if (current && appKey(current) === key) goHome();
+    await loadWorkspace();
+    route();
+  } catch (e) { alert(e.message); }
+}
+
+function findApp(token) {
+  return apps.find(x => x.slug === token || x.name === token || String(x.id) === token);
+}
+
+function route() {
+  const raw = decodeURIComponent((location.hash || '').replace(/^#\/?/, ''));
+  const token = raw.replace(/^app\//, '');
+  if (!token) { showHomeView(); return; }
+  const a = findApp(token);
+  if (!a) { showHomeView(); return; }
+  showAppView(a);
+  loadScan();
+  if (menu === 'analysis') loadServicePaths();
+  if (menu === 'docs') loadDocs();
+}
+
+async function loadScan() {
+  if (!current || !current.ok) return;
+  try {
+    const g = await api(appPath('/graph'));
+    lastScan = g;
+    renderTree(g.endpoints || []);
+    renderGraph(g.controllers || []);
+    $('#scan-stats').innerHTML = `
+      <div class="card"><div class="stat">${n((g.endpoints||[]).length)}<small>سرویس</small></div></div>
+      <div class="card"><div class="stat">${n((g.controllers||[]).reduce((s,c)=>s+(c.methods||[]).length,0))}<small>متد از کنترلر</small></div></div>
+      <div class="card"><div class="stat">${n(current.files)}<small>فایل (هش پایدار)</small></div></div>`;
+  } catch (e) {
+    $('#tree').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+function renderTree(list) {
+  const box = $('#tree');
+  if (!list.length) { box.innerHTML = '<div class="empty">اندپوینتی نیست. اسکن کنید.</div>'; return; }
+  box.innerHTML = '<ul>' + list.map(e => `<li class="ep"><span class="badge ${['GET','POST','PUT','DELETE','PATCH'].includes(e.method)?e.method:'other'}">${esc(e.method)}</span><span class="p">${esc(e.path)}</span></li>`).join('') + '</ul>';
+}
+function renderGraph(controllers) {
+  const box = $('#cgraph');
+  if (!controllers.length) { box.innerHTML = '<div class="empty">گراف خالی است.</div>'; return; }
+  box.innerHTML = controllers.map(c => `<details open><summary><span class="badge ${['GET','POST','PUT','DELETE','PATCH'].includes(c.method)?c.method:'other'}">${esc(c.method)}</span> <span class="mono">${esc(c.path)}</span></summary><ul>${(c.methods||[]).map(m => `<li class="meth mono">${'— '.repeat(m.depth||0)}${esc(m.qname)}</li>`).join('')}</ul></details>`).join('');
+}
+
+document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => {
+  const existing = document.querySelector('input[name=mode]:checked').value === 'existing';
+  $('#existing-box').hidden = !existing;
+  if (existing) loadServicePaths();
+});
+function enhanceSvcSelect() {
+  if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+  const el = jQuery('#svc-path');
+  if (el.hasClass('select2-hidden-accessible')) el.select2('destroy');
+  el.select2({
+    dir: 'rtl',
+    width: '100%',
+    placeholder: 'جستجو و انتخاب سرویس…',
+    allowClear: true,
+    language: { noResults: () => 'موردی پیدا نشد', searching: () => 'جستجو…' }
+  });
+}
+async function loadServicePaths() {
+  const sel = $('#svc-path');
+  const keep = sel.value;
+  if (typeof jQuery !== 'undefined' && jQuery.fn.select2 && jQuery(sel).hasClass('select2-hidden-accessible')) {
+    jQuery(sel).select2('destroy');
+  }
+  sel.innerHTML = '<option value=""></option>';
+  if (!current) { enhanceSvcSelect(); return; }
+  try {
+    const g = await api(appPath('/graph'));
+    (g.endpoints || []).forEach(e => {
+      const o = document.createElement('option'); o.value = e.id; o.textContent = e.id; sel.appendChild(o);
+    });
+    if (keep) sel.value = keep;
+  } catch (e) {}
+  enhanceSvcSelect();
+}
+
+async function startJob(action, options={}) {
+  try {
+    const j = await api(appPath('/jobs'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action, options})});
+    current.busy = true; renderHeader(); pollJob(j.id, action);
+  } catch (e) { alert(e.message); }
+}
+function pollJob(id, action) {
+  clearTimeout(pollTimer);
+  const tick = async () => {
+    const j = await api(appPath('/jobs/' + id));
+    const log = (j.log || []).join('\n') + (j.error ? '\n' + j.error : '');
+    if (action === 'ucs') {
+      $('#ucs-log').hidden = false; $('#ucs-log-body').textContent = log;
+      if (j.result && j.result.ucs && j.result.ucs.html) {
+        $('#ucs-frame').hidden = false;
+        $('#ucs-frame').srcdoc = j.result.ucs.html;
+      }
+    } else if (action === 'render') {
+      $('#docs-log').hidden = false; $('#docs-log-body').textContent = log;
+      const file = j.result && j.result.render && j.result.render.archive && j.result.render.archive.file;
+      if (file) {
+        $('#doc-frame').hidden = false;
+        $('#doc-frame').src = '/archive/' + encodeURIComponent(appKey(current)) + '/' + file;
+      }
+    } else {
+      $('#jobs-mini').innerHTML = `<div class="log">${esc(log)}</div>`;
+    }
+    if (j.status === 'running' || j.status === 'queued') pollTimer = setTimeout(tick, 1000);
+    else { await loadWorkspace(); route(); }
+  };
+  tick();
+}
+$('#b-scan').onclick = () => startJob('scan');
+$('#b-ucs').onclick = () => {
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  startJob('ucs', {
+    mode,
+    endpoint_id: mode === 'existing' ? (typeof jQuery !== 'undefined' ? jQuery('#svc-path').val() : $('#svc-path').value) : '',
+    previous_analysis: mode === 'existing' ? $('#prev').value : '',
+    new_requirement: $('#req').value
+  });
+};
+
+function selectedServices() {
+  return [...document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]:checked')].map(el => el.value);
+}
+function filterDocServices() {
+  const q = ($('#doc-search').value || '').trim().toLowerCase();
+  const rows = [...document.querySelectorAll('#doc-services .svc-pick')];
+  let shown = 0;
+  rows.forEach(row => {
+    const hit = !q || (row.textContent || '').toLowerCase().includes(q);
+    row.hidden = !hit;
+    if (hit) shown += 1;
+  });
+  let empty = $('#doc-services .empty-filter');
+  if (rows.length && q && !shown) {
+    if (!empty) {
+      empty = document.createElement('div');
+      empty.className = 'empty empty-filter';
+      empty.textContent = 'سرویسی با این جستجو پیدا نشد.';
+      $('#doc-services').appendChild(empty);
+    }
+    empty.hidden = false;
+  } else if (empty) empty.hidden = true;
+}
+async function loadDocs() {
+  if (!current || !current.ok) return;
+  try {
+    const eps = await api(appPath('/endpoints'));
+    const box = $('#doc-services');
+    const list = eps.list || [];
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">سرویسی از اسکن قبلی نیست. ابتدا اسکن کنید.</div>';
+    } else {
+      const keep = new Set([...document.querySelectorAll('#doc-services input[type=checkbox]:checked')].map(el => el.value));
+      box.innerHTML = list.map(e => {
+        const meth = ['GET','POST','PUT','DELETE','PATCH'].includes(e.method) ? e.method : 'other';
+        const title = e.summary ? ` <span class="muted">${esc(e.summary)}</span>` : '';
+        const checked = keep.has(e.id) ? ' checked' : '';
+        return `<div class="svc-pick"><label><input type="checkbox" value="${esc(e.id)}"${checked}>
+          <span class="badge ${meth}">${esc(e.method)}</span><span class="p">${esc(e.path)}</span>${title}</label></div>`;
+      }).join('');
+      filterDocServices();
+    }
+    const arch = await api(appPath('/archive'));
+    const wrap = $('#doc-archive');
+    const entries = arch.entries || [];
+    if (!entries.length) {
+      wrap.innerHTML = '<div class="muted">هنوز مستندی ساخته نشده است.</div>';
+    } else {
+      wrap.innerHTML = entries.map(en => {
+        const label = en.label ? esc(en.label) : 'بدون برچسب';
+        const when = en.created_jalali || en.created_iso || '';
+        const href = '/archive/' + encodeURIComponent(appKey(current)) + '/' + encodeURIComponent(en.file);
+        return `<div class="arch-item"><div class="grow"><b>${label}</b>
+          <div class="muted">${esc(when)} · ${n(en.endpoint_count)} سرویس</div></div>
+          <button type="button" data-doc="${esc(href)}">مشاهده</button></div>`;
+      }).join('');
+      wrap.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => {
+        $('#doc-frame').hidden = false;
+        $('#doc-frame').src = b.dataset.doc;
+      });
+    }
+  } catch (e) {
+    $('#doc-services').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+$('#b-docs-all').onclick = () => document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]').forEach(el => { el.checked = true; });
+$('#b-docs-none').onclick = () => document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]').forEach(el => { el.checked = false; });
+$('#doc-search').oninput = filterDocServices;
+$('#b-docs').onclick = () => {
+  const only = selectedServices();
+  if (!only.length) { alert('حداقل یک سرویس را انتخاب کنید.'); return; }
+  startJob('render', { only, label: 'انتخابی' });
+};
+
+window.addEventListener('hashchange', route);
+loadWorkspace().then(route);
+setInterval(() => { if (!document.hidden) loadWorkspace(); }, 15000);
+</script>
+</body>
+</html>

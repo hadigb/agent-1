@@ -1,0 +1,500 @@
+{
+ "endpoints": [
+  {
+   "id": "PUT /api/v1/admin/competition/activate/{id}",
+   "number": 1,
+   "title": "سرویس id",
+   "description": "",
+   "method": "PUT",
+   "path": "/api/v1/admin/competition/activate/{id}",
+   "address": "http://[IP]:[PORT]/api/v1/admin/competition/activate/{id}",
+   "framework": "spring",
+   "handler": "ir.dotin.crr.controller.AdminController#activateCompetition(String,ActivateCompetitionRequestDTO)",
+   "file": "/Volumes/Code/Samples/codingrelay/src/main/java/ir/dotin/crr/controller/AdminController.java",
+   "anchor": "put-api-v1-admin-competition-activate-id",
+   "analysis_status": "partial",
+   "headers": [],
+   "request": [
+    {
+     "name": "id",
+     "type": "String",
+     "required": true,
+     "description": "",
+     "location": "path",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "startDelayTime",
+     "type": "Long",
+     "required": false,
+     "description": "مدت تأخیر تا شروع رقابت پس از فعال‌سازی؛ در صورت ارسال باید بزرگ‌تر از 0 باشد.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام نتیجه پردازش درخواست.",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "code",
+     "type": "Int",
+     "required": false,
+     "description": "کد نتیجه پاسخ.",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "time",
+     "type": "Long",
+     "required": false,
+     "description": "زمان ثبت پاسخ.",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "successful",
+     "type": "Boolean",
+     "required": false,
+     "description": "نشان می‌دهد درخواست با موفقیت پردازش شده است یا خیر.",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "data",
+     "type": "CompetitionInfoDTO",
+     "required": false,
+     "description": "داده اختصاصی بازگردانده‌شده توسط سرویس.",
+     "location": "response",
+     "nested": "ir.dotin.crr.dto.competition.CompetitionInfoDTO",
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "ir.dotin.crr.dto.competition.CompetitionInfoDTO",
+     "name": "CompetitionInfoDTO",
+     "side": "response",
+     "description": "اطلاعات نمایشی و وضعیت یک رقابت را ارائه می‌کند.",
+     "fields": [
+      {
+       "name": "id",
+       "type": "Long",
+       "required": false,
+       "description": "شناسه یکتای رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "title",
+       "type": "String",
+       "required": false,
+       "description": "عنوان رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "description",
+       "type": "String",
+       "required": false,
+       "description": "شرح رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "pictureUri",
+       "type": "String",
+       "required": false,
+       "description": "نشانی تصویر معرفی رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "rounds",
+       "type": "List<RoundInfoDTO>",
+       "required": false,
+       "description": "فهرست اطلاعات دورهای رقابت.",
+       "location": "response",
+       "nested": "ir.dotin.crr.dto.round.RoundInfoDTO",
+       "enum": null
+      },
+      {
+       "name": "state",
+       "type": "String",
+       "required": false,
+       "description": "وضعیت جاری چرخه عمر رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": "ir.dotin.crr.enums.CompetitionState"
+      },
+      {
+       "name": "attenders",
+       "type": "Long",
+       "required": false,
+       "description": "تعداد حاضران یا شرکت‌کنندگان رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "teamsMaximumSize",
+       "type": "Int",
+       "required": false,
+       "description": "حداکثر اندازه تیم‌ها در رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "promoted",
+       "type": "Boolean",
+       "required": false,
+       "description": "نشان می‌دهد رقابت به‌صورت ویژه نمایش داده می‌شود یا خیر.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "competitionType",
+       "type": "String",
+       "required": false,
+       "description": "نوع برگزاری رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": "ir.dotin.crr.enums.CompetitionType"
+      },
+      {
+       "name": "teamsMaxCompetitorsCount",
+       "type": "Int",
+       "required": false,
+       "description": "حداکثر تعداد شرکت‌کنندگان مجاز در تیم‌ها.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "roundCount",
+       "type": "Int",
+       "required": false,
+       "description": "تعداد دورهای رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "programmingLanguages",
+       "type": "List<String>",
+       "required": false,
+       "description": "زبان‌های برنامه‌نویسی مجاز رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": "ir.dotin.crr.enums.ProgrammingLanguageType"
+      },
+      {
+       "name": "ParticipationTypes",
+       "type": "List<CompetitionParticipationTypeDTO>",
+       "required": false,
+       "description": "شیوه‌های مشارکت تعریف‌شده برای رقابت.",
+       "location": "response",
+       "nested": "ir.dotin.crr.dto.competition.CompetitionParticipationTypeDTO",
+       "enum": null
+      },
+      {
+       "name": "onSiteCapacity",
+       "type": "Int",
+       "required": false,
+       "description": "ظرفیت برگزاری حضوری رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "endTime",
+       "type": "Long",
+       "required": false,
+       "description": "زمان پایان رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "activeTime",
+       "type": "Long",
+       "required": false,
+       "description": "زمان فعال‌شدن رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "startTime",
+       "type": "Long",
+       "required": false,
+       "description": "زمان شروع رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "address",
+       "type": "String",
+       "required": false,
+       "description": "نشانی محل برگزاری رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "documentKeyTypes",
+       "type": "List<Int>",
+       "required": false,
+       "description": "کدهای انواع مدارک موردنیاز رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "announcedStartDate",
+       "type": "Long",
+       "required": false,
+       "description": "زمان اعلام‌شده برای شروع رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "ir.dotin.crr.dto.round.RoundInfoDTO",
+     "name": "RoundInfoDTO",
+     "side": "response",
+     "description": "اطلاعات وضعیت و زمان‌بندی یک دور رقابت را نگهداری می‌کند.",
+     "fields": [
+      {
+       "name": "title",
+       "type": "String",
+       "required": false,
+       "description": "عنوان دور.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "state",
+       "type": "String",
+       "required": false,
+       "description": "وضعیت فعلی دور.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "roundDuration",
+       "type": "Long",
+       "required": false,
+       "description": "مدت اجرای دور.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "roundWaitDuration",
+       "type": "Long",
+       "required": false,
+       "description": "مدت انتظار پیش از شروع یا میان دورها.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "attenders",
+       "type": "Long",
+       "required": false,
+       "description": "تعداد حاضران در این دور.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "ir.dotin.crr.dto.competition.CompetitionParticipationTypeDTO",
+     "name": "CompetitionParticipationTypeDTO",
+     "side": "response",
+     "description": "شیوه مشارکت قابل انتخاب در یک رقابت و ظرفیت آن را مشخص می‌کند.",
+     "fields": [
+      {
+       "name": "title",
+       "type": "String",
+       "required": false,
+       "description": "عنوان نمایشی شیوه مشارکت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "size",
+       "type": "Int",
+       "required": false,
+       "description": "تعداد اعضای مجاز در این شیوه مشارکت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "participationType",
+       "type": "Int",
+       "required": false,
+       "description": "کد شیوه مشارکت برای انتخاب و اعمال آن در رقابت.",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {
+    "ir.dotin.crr.enums.CompetitionState": [
+     {
+      "name": "CREATED",
+      "label": "رقابت ایجاد شده است",
+      "code": "1"
+     },
+     {
+      "name": "ACTIVE",
+      "label": "رقابت فعال است",
+      "code": "2"
+     },
+     {
+      "name": "FINISH_REGISTRATION",
+      "label": "ثبت‌نام رقابت پایان یافته است",
+      "code": "3"
+     },
+     {
+      "name": "PRESTART",
+      "label": "رقابت در انتظار شروع است",
+      "code": "4"
+     },
+     {
+      "name": "STARTED",
+      "label": "رقابت شروع شده است",
+      "code": "5"
+     },
+     {
+      "name": "FINISHED",
+      "label": "رقابت پایان یافته است",
+      "code": "6"
+     },
+     {
+      "name": "SCORE",
+      "label": "امتیازهای رقابت در حال محاسبه است",
+      "code": "7"
+     }
+    ],
+    "ir.dotin.crr.enums.CompetitionType": [
+     {
+      "name": "SOS",
+      "label": "رقابت SOS",
+      "code": "1"
+     },
+     {
+      "name": "STAGED",
+      "label": "رقابت مرحله‌ای",
+      "code": "2"
+     }
+    ],
+    "ir.dotin.crr.enums.ProgrammingLanguageType": [
+     {
+      "name": "JAVA",
+      "label": "Java",
+      "code": "1"
+     },
+     {
+      "name": "PY",
+      "label": "Python",
+      "code": "2"
+     },
+     {
+      "name": "C",
+      "label": "C",
+      "code": "3"
+     },
+     {
+      "name": "CPP",
+      "label": "C++",
+      "code": "4"
+     }
+    ]
+   },
+   "notes": [],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "PARAMETER_{}_IS_INVALID",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "6",
+     "title": "CAN_NOT_FIND_COMPETITION",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "39",
+     "title": "INVALID_COMPETITION_STATE",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "400",
+     "title": "service_bad_request",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "46",
+     "title": "INVALID_ROUND_STATE",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "500",
+     "title": "internal_server_error",
+     "note": "",
+     "source": "code"
+    }
+   ],
+   "success_sample": "{\n  \"message\": \"عملیات با موفقیت انجام شد\",\n  \"code\": 1,\n  \"time\": 1735689600000,\n  \"successful\": true,\n  \"data\": {\n    \"id\": 101,\n    \"title\": \"مسابقه بهار\",\n    \"description\": \"رقابت برنامه‌نویسی تیمی.\",\n    \"pictureUri\": \"https://example.com/image.png\",\n    \"rounds\": [\n      {\n        \"title\": \"دور اول\",\n        \"state\": \"STARTED\",\n        \"roundDuration\": 3600,\n        \"roundWaitDuration\": 300,\n        \"attenders\": 10\n      }\n    ],\n    \"state\": \"ACTIVE\",\n    \"attenders\": 20,\n    \"teamsMaximumSize\": 3,\n    \"promoted\": true,\n    \"competitionType\": \"STAGED\",\n    \"teamsMaxCompetitorsCount\": 3,\n    \"roundCount\": 3,\n    \"programmingLanguages\": [\n      \"JAVA\"\n    ],\n    \"ParticipationTypes\": [\n      {\n        \"title\": \"تیمی\",\n        \"size\": 3,\n        \"participationType\": 1\n      }\n    ],\n    \"onSiteCapacity\": 50,\n    \"endTime\": 1735700400000,\n    \"activeTime\": 1735686000000,\n    \"startTime\": 1735689600000,\n    \"address\": \"تهران\",\n    \"documentKeyTypes\": [\n      [\n        1\n      ]\n    ],\n    \"announcedStartDate\": 1735689600000\n  }\n}",
+   "failure_samples": [
+    "{\n  \"code\": \"400\",\n  \"message\": \"درخواست نامعتبر است\"\n}",
+    "{\n  \"code\": 1,\n  \"message\": \"PARAMETER_{}_IS_INVALID\"\n}"
+   ],
+   "type_closure": [
+    "ir.dotin.crr.dto.competition.request.ActivateCompetitionRequestDTO",
+    "ir.dotin.crr.dto.BaseResponseDTO",
+    "ir.dotin.crr.dto.competition.CompetitionInfoDTO",
+    "ir.dotin.crr.dto.round.RoundInfoDTO",
+    "ir.dotin.crr.dto.competition.CompetitionParticipationTypeDTO",
+    "ir.dotin.crr.enums.CompetitionState",
+    "ir.dotin.crr.enums.CompetitionType",
+    "ir.dotin.crr.enums.ProgrammingLanguageType"
+   ]
+  }
+ ]
+}

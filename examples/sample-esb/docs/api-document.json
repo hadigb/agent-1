@@ -1,0 +1,2825 @@
+{
+ "endpoints": [
+  {
+   "id": "POST /Api/GenerateBillSerialNumber",
+   "number": 1,
+   "title": "سرویس دریافت شماره سریال قبض سپرده",
+   "description": "دریافت شماره سریال قبض سپرده. این سرویس با دریافت اطلاعات سپرده، شناسه قبض سپرده را در خروجی نمایش می‌دهد.",
+   "method": "POST",
+   "path": "/Api/GenerateBillSerialNumber",
+   "address": "http://[IP]:[PORT]/Api/GenerateBillSerialNumber",
+   "framework": "jaxrs",
+   "handler": "com.datin.esb.controller.BillResource#generateBillSerialNumber(GenerateBillSerialRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/controller/BillResource.java",
+   "anchor": "post-api-generatebillserialnumber",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "DepositNumber",
+     "type": "String",
+     "required": true,
+     "description": "شماره سپرده",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsDebtor",
+     "type": "Boolean",
+     "required": false,
+     "description": "بستانکار/بدهکار (در حالت دیفالت false است) 0: بستانکار 1: بدهکار",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Amount",
+     "type": "BigDecimal",
+     "required": true,
+     "description": "مبلغ",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Key",
+     "type": "String",
+     "required": true,
+     "description": "کلید (شناسه قبض)",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Value",
+     "type": "String",
+     "required": true,
+     "description": "مقدار شناسه قبض",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد وضعیت",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ResultData",
+     "type": "SerialNumberResult",
+     "required": false,
+     "description": "خروجی موفق - مطابق جدول شماره 1",
+     "location": "response",
+     "nested": "com.datin.esb.dto.SerialNumberResult",
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - مطابق جدول شماره 2",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.SerialNumberResult",
+     "name": "SerialNumberResult",
+     "side": "response",
+     "description": "",
+     "fields": [
+      {
+       "name": "SerialNumber",
+       "type": "String",
+       "required": false,
+       "description": "شماره سریال قبض",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {},
+   "notes": [],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"RsCode\": 1,\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"ResultData\": {\n    \"SerialNumber\": \"12081651201\"\n  }\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"DepositNumber\",\n      \"ParamPath\": \"DepositNumber\"\n    }\n  ]\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.GenerateBillSerialRequest",
+    "com.datin.esb.dto.ApiResponse",
+    "com.datin.esb.dto.SerialNumberResult",
+    "com.datin.esb.dto.ErrorItem"
+   ]
+  },
+  {
+   "id": "POST /Api/GetBillStructureForDeposite",
+   "number": 2,
+   "title": "سرویس نمایش نوع مشخصه عملیات مالی",
+   "description": "نمایش نوع مشخصه عملیات مالی. این سرویس با ورود شماره سپرده دارای شناسه قبض، ساختار قبض سپرده را نمایش می‌دهد.",
+   "method": "POST",
+   "path": "/Api/GetBillStructureForDeposite",
+   "address": "http://[IP]:[PORT]/Api/GetBillStructureForDeposite",
+   "framework": "jaxrs",
+   "handler": "com.datin.esb.controller.BillResource#getBillStructure(String,BillStructureRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/controller/BillResource.java",
+   "anchor": "post-api-getbillstructurefordeposite",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "DepositNumber",
+     "type": "String",
+     "required": true,
+     "description": "شماره سپرده",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد وضعیت",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ResultData",
+     "type": "BillStructureResult",
+     "required": false,
+     "description": "خروجی موفق - مطابق جدول شماره 1",
+     "location": "response",
+     "nested": "com.datin.esb.dto.BillStructureResult",
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - مطابق جدول شماره 2",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.BillStructureResult",
+     "name": "BillStructureResult",
+     "side": "response",
+     "description": "",
+     "fields": [
+      {
+       "name": "TransferMoneyBillStructure",
+       "type": "String",
+       "required": false,
+       "description": "نوع مشخصه عملیات مالی در اطلاعات قبض عملیات مالی",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {},
+   "notes": [],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "2941",
+     "title": "مقداری برای پارامتر ورودی اجباری ارسال نشده است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "1079",
+     "title": "شماره سپرده نادرست است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"RsCode\": 1,\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"ResultData\": {\n    \"TransferMoneyBillStructure\": \"string\"\n  }\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"DepositNumber\",\n      \"ParamPath\": \"DepositNumber\"\n    }\n  ]\n}",
+    "{\n  \"RsCode\": 1079,\n  \"Message\": \"شماره سپرده نادرست است\",\n  \"IsSuccess\": false\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.BillStructureRequest",
+    "com.datin.esb.dto.ApiResponse",
+    "com.datin.esb.dto.BillStructureResult",
+    "com.datin.esb.dto.ErrorItem"
+   ]
+  },
+  {
+   "id": "POST /API/IssueDocument",
+   "number": 3,
+   "title": "سرویس ثبت سند حسابداری",
+   "description": "با استفاده از این سرویس انتقال وجه در چند بند انجام و سند حسابداری مربوطه ثبت می‌گردد. در این سرویس امکان درج تعداد بیش از یک بدهکار و بیش از یک بستانکار وجود دارد. این سرویس برای انتقال وجه به حساب‌های دیجیتال (سپرده/شبا) نیز قابل استفاده است.",
+   "method": "POST",
+   "path": "/API/IssueDocument",
+   "address": "http://[IP]:[PORT]/API/IssueDocument",
+   "framework": "spring",
+   "handler": "com.datin.esb.controller.IssueDocumentController#issueDocument(String,String,IssueDocumentRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/controller/IssueDocumentController.java",
+   "anchor": "post-api-issuedocument",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "AccessToken",
+     "type": "String",
+     "required": false,
+     "description": "توکن دسترسی با ساختار sso",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "BusinessToken",
+     "type": "String",
+     "required": false,
+     "description": "توکن دسترسی پاد / برای تراکنش با مبدا پاد",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": true,
+     "description": "شناسه یکتا تراکنش",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ShowDocumentNumber",
+     "type": "Boolean",
+     "required": false,
+     "description": "نمایش شماره سند؛ مقدار پیش‌فرض false است. در صورت true بودن، فیلد DocumentNumber در خروجی نمایش داده می‌شود.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransferBillNumber",
+     "type": "String",
+     "required": false,
+     "description": "شناسه واریز (رجوع شود به نکات)",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentTitle",
+     "type": "String",
+     "required": true,
+     "description": "عنوان سند",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TerminalCode",
+     "type": "String",
+     "required": false,
+     "description": "کد ترمینال",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionChannel",
+     "type": "String",
+     "required": false,
+     "description": "کانال تراکنش",
+     "location": "body",
+     "nested": null,
+     "enum": "com.datin.esb.enums.TransactionChannel"
+    },
+    {
+     "name": "FromCMS",
+     "type": "Boolean",
+     "required": false,
+     "description": "آیا درخواست از CMS ارسال می‌شود؟",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentTemplateCode",
+     "type": "String",
+     "required": false,
+     "description": "",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentExtraInfoIgnoreSayahBizCheck",
+     "type": "String",
+     "required": false,
+     "description": "عدم کنترل اطلاعات سیاح",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionType",
+     "type": "String",
+     "required": false,
+     "description": "نوع تراکنش پاد",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "BusinessCode",
+     "type": "String",
+     "required": false,
+     "description": "کد صنف",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsPod",
+     "type": "Boolean",
+     "required": false,
+     "description": "حساب پادی هست یا خیر. این فیلد اختیاری است؛ چنانچه سپرده/شبای مبدا سنتی باشد مقدار false و چنانچه سپرده/شبای مبدا دیجیتال باشد مقدار true باید ارسال شود.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "CauseTypeCode",
+     "type": "String",
+     "required": false,
+     "description": "بابت (طبق جدول شماره 3)",
+     "location": "body",
+     "nested": null,
+     "enum": "com.datin.esb.enums.CauseTypeCode"
+    },
+    {
+     "name": "IssueType",
+     "type": "String",
+     "required": false,
+     "description": "درگاه تراکنش. مقدار قابل قبول برای این فیلد: CashingCheque (وصول چک)",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "GuildCode",
+     "type": "String",
+     "required": false,
+     "description": "کد صنفی کسب و کار",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Wallet",
+     "type": "String",
+     "required": false,
+     "description": "شناسه کیف پول",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentItem",
+     "type": "List<DocumentItem>",
+     "required": true,
+     "description": "بندهای سند",
+     "location": "body",
+     "nested": "com.datin.esb.dto.DocumentItem",
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد استاندارد طبق جدول پیوست",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - لیست خطاها",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    },
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": false,
+     "description": "شناسه یکتا تراکنش",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Transactiondate",
+     "type": "String",
+     "required": false,
+     "description": "تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionCode",
+     "type": "String",
+     "required": false,
+     "description": "کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentNumber",
+     "type": "String",
+     "required": false,
+     "description": "شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.DocumentItem",
+     "name": "DocumentItem",
+     "side": "request",
+     "description": "بند سند",
+     "fields": [
+      {
+       "name": "IsDebtor",
+       "type": "Boolean",
+       "required": true,
+       "description": "بستانکار: False / بدهکار: True",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "PersonnelCode",
+       "type": "String",
+       "required": false,
+       "description": "کد کاربری که حساب مجازی صندوق او در ارز ریال مد نظر می‌باشد (در صورتی که DocumentItemType برابر VIRTUALBOX باشد اجباری است)",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "AccountNumber",
+       "type": "String",
+       "required": true,
+       "description": "شماره حساب / سپرده / سرفصل. در صورتی که DocumentItemType مخالف VIRTUALBOX و BOX باشد این فیلد اجباری است",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "DocumentItemType",
+       "type": "String",
+       "required": true,
+       "description": "",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.DocumentItemType"
+      },
+      {
+       "name": "BranchCode",
+       "type": "String",
+       "required": false,
+       "description": "در صورتی که DocumentItemType از نوع TOPIC یا VIRTUALBOX باشد، اجباری می‌باشد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Amount",
+       "type": "Long",
+       "required": true,
+       "description": "مبلغ. این فیلد مقدار اعشاری را نیز ساپورت می‌کند",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "WithdrawalTool",
+       "type": "String",
+       "required": false,
+       "description": "ابزار برداشت",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.WithdrawalTool"
+      },
+      {
+       "name": "Comment",
+       "type": "String",
+       "required": true,
+       "description": "شرح بند",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "SecondaryBillSerialNumber",
+       "type": "String",
+       "required": false,
+       "description": "شناسه قبض ثانویه",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ItemSOC",
+       "type": "String",
+       "required": false,
+       "description": "نوع منشا وجه. این فیلد اختیاری شرطی است: در صورت ارسال مقدار برای IsoCode ارسال این فیلد حتما لازم است",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.ItemSOC"
+      },
+      {
+       "name": "IsoCode",
+       "type": "String",
+       "required": false,
+       "description": "ارز مورد نظر",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "BillNumber",
+       "type": "String",
+       "required": false,
+       "description": "شناسه قبض سپرده؛ در صورتی که سپرده وارد شده قبضی باشد ارسال آن الزامی است",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "CustomerNumbers",
+       "type": "List<String>",
+       "required": false,
+       "description": "لیست مشتریان سپرده (اختیاری - به بخش نکات شرایط برداشت مراجعه شود)",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ItemUserMetaData",
+       "type": "List<MetaData>",
+       "required": false,
+       "description": "داده‌های کاربر",
+       "location": "body",
+       "nested": "com.datin.esb.dto.MetaData",
+       "enum": null
+      },
+      {
+       "name": "SystemMetaData",
+       "type": "List<MetaData>",
+       "required": false,
+       "description": "داده‌های سیستم؛ مقادیر مجاز key مطابق با فایل اکسل دریافتی",
+       "location": "body",
+       "nested": "com.datin.esb.dto.MetaData",
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.MetaData",
+     "name": "MetaData",
+     "side": "request",
+     "description": "زوج کلید/مقدار داده‌های اکسترا اینفو",
+     "fields": [
+      {
+       "name": "Key",
+       "type": "String",
+       "required": false,
+       "description": "فیلد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Value",
+       "type": "String",
+       "required": false,
+       "description": "مقدار فیلد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {
+    "com.datin.esb.enums.TransactionChannel": [
+     {
+      "name": "POS",
+      "label": "",
+      "code": "1"
+     },
+     {
+      "name": "ATM",
+      "label": "",
+      "code": "2"
+     },
+     {
+      "name": "BATCH",
+      "label": "",
+      "code": "3"
+     },
+     {
+      "name": "TELLER",
+      "label": "",
+      "code": "4"
+     },
+     {
+      "name": "INTERNET",
+      "label": "",
+      "code": "5"
+     },
+     {
+      "name": "TELEPHONE",
+      "label": "",
+      "code": "6"
+     },
+     {
+      "name": "MOBILE",
+      "label": "",
+      "code": "7"
+     },
+     {
+      "name": "PINPAD",
+      "label": "",
+      "code": "8"
+     },
+     {
+      "name": "KIOSK",
+      "label": "",
+      "code": "9"
+     },
+     {
+      "name": "CARDPRESENTKIOSK",
+      "label": "",
+      "code": "10"
+     }
+    ],
+    "com.datin.esb.enums.CauseTypeCode": [
+     {
+      "name": "POSA_TRANSACTION_CAUSE_TYPE",
+      "label": "واریز حقوق",
+      "code": null
+     },
+     {
+      "name": "IOSP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور بیمه خدمات",
+      "code": null
+     },
+     {
+      "name": "HIPA_TRANSACTION_CAUSE_TYPE",
+      "label": "امور درمانی",
+      "code": null
+     },
+     {
+      "name": "ISAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور سرمایه گذاری و بورس",
+      "code": null
+     },
+     {
+      "name": "FXAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور ارزی در چهارچوب ضوابط و مقررات",
+      "code": null
+     },
+     {
+      "name": "DRPA_TRANSACTION_CAUSE_TYPE",
+      "label": "پرداخت قرض و تادیه دیون (قرض الحسنه، بدهی، ...)",
+      "code": null
+     },
+     {
+      "name": "RTAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور بازنشستگی",
+      "code": null
+     },
+     {
+      "name": "MPTP_TRANSACTION_CAUSE_TYPE",
+      "label": "معاملات اموال منقول",
+      "code": null
+     },
+     {
+      "name": "IMPT_TRANSACTION_CAUSE_TYPE",
+      "label": "معاملات اموال غیرمنقول",
+      "code": null
+     },
+     {
+      "name": "LMAP_TRANSACTION_CAUSE_TYPE",
+      "label": "مدیریت نقدینگی",
+      "code": null
+     },
+     {
+      "name": "CDAP_TRANSACTION_CAUSE_TYPE",
+      "label": "عوارض گمرکی",
+      "code": null
+     },
+     {
+      "name": "TCAP_TRANSACTION_CAUSE_TYPE",
+      "label": "تسویه مالیاتی",
+      "code": null
+     },
+     {
+      "name": "GEAC_TRANSACTION_CAUSE_TYPE",
+      "label": "سایر خدمات دولتی",
+      "code": null
+     },
+     {
+      "name": "LRPA_TRANSACTION_CAUSE_TYPE",
+      "label": "تسهیلات و تعهدات",
+      "code": null
+     },
+     {
+      "name": "CCPA_TRANSACTION_CAUSE_TYPE",
+      "label": "تودیع وثیقه",
+      "code": null
+     },
+     {
+      "name": "GPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "هزینه عمومی و امور روزمره",
+      "code": null
+     },
+     {
+      "name": "CPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "کمک‌های خیریه",
+      "code": null
+     },
+     {
+      "name": "GPPC_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید کالا",
+      "code": null
+     },
+     {
+      "name": "SPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید خدمات",
+      "code": null
+     },
+     {
+      "name": "GASP_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید کالا و خدمات",
+      "code": null
+     },
+     {
+      "name": "FRTX_TRANSACTION_CAUSE_TYPE",
+      "label": "سایر امور",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.DocumentItemType": [
+     {
+      "name": "BOX",
+      "label": "صندوق",
+      "code": null
+     },
+     {
+      "name": "VIRTUALBOX",
+      "label": "صندوق مجازی",
+      "code": null
+     },
+     {
+      "name": "TOPIC",
+      "label": "سرفصل",
+      "code": null
+     },
+     {
+      "name": "ACCOUNT",
+      "label": "حساب",
+      "code": null
+     },
+     {
+      "name": "DEPOSIT",
+      "label": "سپرده",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.WithdrawalTool": [
+     {
+      "name": "chequeTool",
+      "label": "دسته چک",
+      "code": null
+     },
+     {
+      "name": "orderedPaymentTool",
+      "label": "دستور پرداخت",
+      "code": null
+     },
+     {
+      "name": "cardTool",
+      "label": "کارت",
+      "code": null
+     },
+     {
+      "name": "internalDocumentTool",
+      "label": "سند داخلی",
+      "code": null
+     },
+     {
+      "name": "internetTool",
+      "label": "اینترنتی",
+      "code": null
+     },
+     {
+      "name": "telephoneTool",
+      "label": "تلفنی",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.ItemSOC": [
+     {
+      "name": "UNKNOWN_RESOURCE",
+      "label": "نامعلوم",
+      "code": null
+     },
+     {
+      "name": "PAPER_MONEY",
+      "label": "اسکناس",
+      "code": null
+     },
+     {
+      "name": "INTERNAL_DRAFT",
+      "label": "حواله داخلی",
+      "code": null
+     },
+     {
+      "name": "EXTERNAL_DRAFT",
+      "label": "حواله خارجی",
+      "code": null
+     },
+     {
+      "name": "PURCHASE_FROM_FREE_MARKET",
+      "label": "خرید از بازار فرعی",
+      "code": null
+     },
+     {
+      "name": "BANK_CURRENCY_RESOURCE",
+      "label": "مبادلات موقت بانک",
+      "code": null
+     }
+    ]
+   },
+   "notes": [
+    "به منظور تراز بودن سند حسابداری باید جمع مقادیر مبلغ وارد شده در ورودی برای حساب‌های Debtor و Creditor با هم برابر باشد.",
+    "در صورتی‌که سپرده ارسال شده در ورودی از نوع قبضی باشد شماره قبض سپرده در فیلد BillNumber در ورودی ارسال می‌گردد.",
+    "چنانچه از حالت نقدی (DocumentItemType = BOX) در بخش بدهکار یا بستانکار استفاده شود نیازی به ارسال مقدار برای فیلد AccountNumber نمی‌باشد."
+   ],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "1735",
+     "title": "تراکنش قبلا انجام شده و موفقیت آمیز بوده است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "1038",
+     "title": "اطلاعات ورودی اشتباه است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "2941",
+     "title": "مقداری برای پارامتر ورودی اجباری ارسال نشده است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "4642",
+     "title": "مجموع مبالغ برداشتی با مجموع مبالغ واریزی برابر نمی باشد",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "1773",
+     "title": "خطا در کر",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"RsCode\": 1,\n  \"TransactionId\": \"C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391\",\n  \"Transactiondate\": \"1400/11/11 - 06:11:16\",\n  \"TransactionCode\": \"1\",\n  \"DocumentNumber\": \"12081651201\"\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"TransactionId\",\n      \"ParamPath\": \"TransactionId\"\n    }\n  ]\n}",
+    "{\n  \"RsCode\": 1735,\n  \"Message\": \"تراکنش قبلا انجام شده و موفقیت آمیز بوده است\",\n  \"IsSuccess\": false\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.IssueDocumentRequest",
+    "com.datin.esb.dto.IssueDocumentResponse",
+    "com.datin.esb.dto.DocumentItem",
+    "com.datin.esb.dto.MetaData",
+    "com.datin.esb.dto.ErrorItem",
+    "com.datin.esb.enums.TransactionChannel",
+    "com.datin.esb.enums.CauseTypeCode",
+    "com.datin.esb.enums.DocumentItemType",
+    "com.datin.esb.enums.WithdrawalTool",
+    "com.datin.esb.enums.ItemSOC"
+   ]
+  },
+  {
+   "id": "GET /API/IssueDocument/{transactionId}",
+   "number": 4,
+   "title": "سرویس استعلام سند حسابداری",
+   "description": "استعلام وضعیت سند ثبت شده.",
+   "method": "GET",
+   "path": "/API/IssueDocument/{transactionId}",
+   "address": "http://[IP]:[PORT]/API/IssueDocument/{transactionId}",
+   "framework": "spring",
+   "handler": "com.datin.esb.controller.IssueDocumentController#getDocument(String,boolean)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/controller/IssueDocumentController.java",
+   "anchor": "get-api-issuedocument-transactionid",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "transactionId",
+     "type": "String",
+     "required": true,
+     "description": "شناسه یکتا تراکنش ثبت شده",
+     "location": "path",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "showDocumentNumber",
+     "type": "Boolean",
+     "required": false,
+     "description": "نمایش شماره سند در خروجی",
+     "location": "query",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد استاندارد طبق جدول پیوست",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - لیست خطاها",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    },
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": false,
+     "description": "شناسه یکتا تراکنش ثبت شده",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Transactiondate",
+     "type": "String",
+     "required": false,
+     "description": "تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionCode",
+     "type": "String",
+     "required": false,
+     "description": "کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentNumber",
+     "type": "String",
+     "required": false,
+     "description": "شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {},
+   "notes": [],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "1644",
+     "title": "شناسه ی تراکنش صحیح نمی باشد",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"RsCode\": 1,\n  \"TransactionId\": \"C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391\",\n  \"Transactiondate\": \"1400/11/11 - 06:11:16\",\n  \"TransactionCode\": \"1\",\n  \"DocumentNumber\": \"12081651201\"\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"TransactionId\",\n      \"ParamPath\": \"TransactionId\"\n    }\n  ]\n}",
+    "{\n  \"RsCode\": 1644,\n  \"Message\": \"شناسه ی تراکنش صحیح نمی باشد\",\n  \"IsSuccess\": false\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.IssueDocumentResponse",
+    "com.datin.esb.dto.ErrorItem"
+   ]
+  },
+  {
+   "id": "POST /Api/Reverse",
+   "number": 5,
+   "title": "سرویس برگشت تراکنش",
+   "description": "سرویس برگشت تراکنش. از این سرویس جهت برگشت تراکنش‌های انتقال، واریز و برداشت و ... استفاده می‌گردد.",
+   "method": "POST",
+   "path": "/Api/Reverse",
+   "address": "http://[IP]:[PORT]/Api/Reverse",
+   "framework": "custom:dispatcher",
+   "handler": "com.datin.esb.handler.ReverseHandler#execute(ReverseRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/handler/ReverseHandler.java",
+   "anchor": "post-api-reverse",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": true,
+     "description": "شناسه یکتای تراکنش",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsAsync",
+     "type": "Boolean",
+     "required": false,
+     "description": "false: عملیات ریورس به صورت همزمان انجام شده و پاسخ عملیات در خروجی بازگردانی می‌شود. true: عملیات ریورس به صورت غیرهمزمان انجام خواهد شد و نتیجه سرویس به صورت موفق بازگردانده می‌شود.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد استاندارد طبق جدول پیوست",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - لیست خطاها",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {},
+   "notes": [
+    "درصورت عدم ارسال IsAsync مقدار این پارامتر true در نظر گرفته می‌شود.",
+    "در صورتیکه فیلد IsAsync مقدار false دریافت کند، در همان زمان فراخوانی، تراکنش ریورس شده و نتیجه تلاش نمایش داده می‌شود."
+   ],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "1038",
+     "title": "اطلاعات ورودی اشتباه است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "1418",
+     "title": "شماره تراکنش نامعتبر است",
+     "note": "",
+     "source": "code"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"RsCode\": 1\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"TransactionId\",\n      \"ParamPath\": \"TransactionId\"\n    }\n  ]\n}",
+    "{\n  \"RsCode\": 1418,\n  \"Message\": \"شماره تراکنش نامعتبر است\",\n  \"IsSuccess\": false\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.ReverseRequest",
+    "com.datin.esb.dto.BaseResponse",
+    "com.datin.esb.dto.ErrorItem"
+   ]
+  },
+  {
+   "id": "POST /functional/documents",
+   "number": 6,
+   "title": "سرویس ثبت سند (نسخه Reactive)",
+   "description": "ایجاد سند (نسخه reactive)",
+   "method": "POST",
+   "path": "/functional/documents",
+   "address": "http://[IP]:[PORT]/functional/documents",
+   "framework": "spring-functional",
+   "handler": "com.datin.esb.functional.DocumentHandler#create(ServerRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/functional/RouterConfig.java",
+   "anchor": "post-functional-documents",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": true,
+     "description": "شناسه یکتا تراکنش",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ShowDocumentNumber",
+     "type": "Boolean",
+     "required": false,
+     "description": "نمایش شماره سند؛ مقدار پیش‌فرض false است. در صورت true بودن، فیلد DocumentNumber در خروجی نمایش داده می‌شود.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransferBillNumber",
+     "type": "String",
+     "required": false,
+     "description": "شناسه واریز (رجوع شود به نکات)",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentTitle",
+     "type": "String",
+     "required": true,
+     "description": "عنوان سند",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TerminalCode",
+     "type": "String",
+     "required": false,
+     "description": "کد ترمینال",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionChannel",
+     "type": "String",
+     "required": false,
+     "description": "کانال تراکنش",
+     "location": "body",
+     "nested": null,
+     "enum": "com.datin.esb.enums.TransactionChannel"
+    },
+    {
+     "name": "FromCMS",
+     "type": "Boolean",
+     "required": false,
+     "description": "آیا درخواست از CMS ارسال می‌شود؟",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentTemplateCode",
+     "type": "String",
+     "required": false,
+     "description": "",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentExtraInfoIgnoreSayahBizCheck",
+     "type": "String",
+     "required": false,
+     "description": "عدم کنترل اطلاعات سیاح",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionType",
+     "type": "String",
+     "required": false,
+     "description": "نوع تراکنش پاد",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "BusinessCode",
+     "type": "String",
+     "required": false,
+     "description": "کد صنف",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "IsPod",
+     "type": "Boolean",
+     "required": false,
+     "description": "حساب پادی هست یا خیر. این فیلد اختیاری است؛ چنانچه سپرده/شبای مبدا سنتی باشد مقدار false و چنانچه سپرده/شبای مبدا دیجیتال باشد مقدار true باید ارسال شود.",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "CauseTypeCode",
+     "type": "String",
+     "required": false,
+     "description": "بابت (طبق جدول شماره 3)",
+     "location": "body",
+     "nested": null,
+     "enum": "com.datin.esb.enums.CauseTypeCode"
+    },
+    {
+     "name": "IssueType",
+     "type": "String",
+     "required": false,
+     "description": "درگاه تراکنش. مقدار قابل قبول برای این فیلد: CashingCheque (وصول چک)",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "GuildCode",
+     "type": "String",
+     "required": false,
+     "description": "کد صنفی کسب و کار",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Wallet",
+     "type": "String",
+     "required": false,
+     "description": "شناسه کیف پول",
+     "location": "body",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentItem",
+     "type": "List<DocumentItem>",
+     "required": true,
+     "description": "بندهای سند",
+     "location": "body",
+     "nested": "com.datin.esb.dto.DocumentItem",
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد استاندارد طبق جدول پیوست",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - لیست خطاها",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    },
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": false,
+     "description": "شناسه یکتا تراکنش",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Transactiondate",
+     "type": "String",
+     "required": false,
+     "description": "تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionCode",
+     "type": "String",
+     "required": false,
+     "description": "کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentNumber",
+     "type": "String",
+     "required": false,
+     "description": "شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.DocumentItem",
+     "name": "DocumentItem",
+     "side": "request",
+     "description": "بند سند",
+     "fields": [
+      {
+       "name": "IsDebtor",
+       "type": "Boolean",
+       "required": true,
+       "description": "بستانکار: False / بدهکار: True",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "PersonnelCode",
+       "type": "String",
+       "required": false,
+       "description": "کد کاربری که حساب مجازی صندوق او در ارز ریال مد نظر می‌باشد (در صورتی که DocumentItemType برابر VIRTUALBOX باشد اجباری است)",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "AccountNumber",
+       "type": "String",
+       "required": true,
+       "description": "شماره حساب / سپرده / سرفصل. در صورتی که DocumentItemType مخالف VIRTUALBOX و BOX باشد این فیلد اجباری است",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "DocumentItemType",
+       "type": "String",
+       "required": true,
+       "description": "",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.DocumentItemType"
+      },
+      {
+       "name": "BranchCode",
+       "type": "String",
+       "required": false,
+       "description": "در صورتی که DocumentItemType از نوع TOPIC یا VIRTUALBOX باشد، اجباری می‌باشد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Amount",
+       "type": "Long",
+       "required": true,
+       "description": "مبلغ. این فیلد مقدار اعشاری را نیز ساپورت می‌کند",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "WithdrawalTool",
+       "type": "String",
+       "required": false,
+       "description": "ابزار برداشت",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.WithdrawalTool"
+      },
+      {
+       "name": "Comment",
+       "type": "String",
+       "required": true,
+       "description": "شرح بند",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "SecondaryBillSerialNumber",
+       "type": "String",
+       "required": false,
+       "description": "شناسه قبض ثانویه",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ItemSOC",
+       "type": "String",
+       "required": false,
+       "description": "نوع منشا وجه. این فیلد اختیاری شرطی است: در صورت ارسال مقدار برای IsoCode ارسال این فیلد حتما لازم است",
+       "location": "body",
+       "nested": null,
+       "enum": "com.datin.esb.enums.ItemSOC"
+      },
+      {
+       "name": "IsoCode",
+       "type": "String",
+       "required": false,
+       "description": "ارز مورد نظر",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "BillNumber",
+       "type": "String",
+       "required": false,
+       "description": "شناسه قبض سپرده؛ در صورتی که سپرده وارد شده قبضی باشد ارسال آن الزامی است",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "CustomerNumbers",
+       "type": "List<String>",
+       "required": false,
+       "description": "لیست مشتریان سپرده (اختیاری - به بخش نکات شرایط برداشت مراجعه شود)",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ItemUserMetaData",
+       "type": "List<MetaData>",
+       "required": false,
+       "description": "داده‌های کاربر",
+       "location": "body",
+       "nested": "com.datin.esb.dto.MetaData",
+       "enum": null
+      },
+      {
+       "name": "SystemMetaData",
+       "type": "List<MetaData>",
+       "required": false,
+       "description": "داده‌های سیستم؛ مقادیر مجاز key مطابق با فایل اکسل دریافتی",
+       "location": "body",
+       "nested": "com.datin.esb.dto.MetaData",
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.MetaData",
+     "name": "MetaData",
+     "side": "request",
+     "description": "زوج کلید/مقدار داده‌های اکسترا اینفو",
+     "fields": [
+      {
+       "name": "Key",
+       "type": "String",
+       "required": false,
+       "description": "فیلد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Value",
+       "type": "String",
+       "required": false,
+       "description": "مقدار فیلد",
+       "location": "body",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    },
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {
+    "com.datin.esb.enums.TransactionChannel": [
+     {
+      "name": "POS",
+      "label": "",
+      "code": "1"
+     },
+     {
+      "name": "ATM",
+      "label": "",
+      "code": "2"
+     },
+     {
+      "name": "BATCH",
+      "label": "",
+      "code": "3"
+     },
+     {
+      "name": "TELLER",
+      "label": "",
+      "code": "4"
+     },
+     {
+      "name": "INTERNET",
+      "label": "",
+      "code": "5"
+     },
+     {
+      "name": "TELEPHONE",
+      "label": "",
+      "code": "6"
+     },
+     {
+      "name": "MOBILE",
+      "label": "",
+      "code": "7"
+     },
+     {
+      "name": "PINPAD",
+      "label": "",
+      "code": "8"
+     },
+     {
+      "name": "KIOSK",
+      "label": "",
+      "code": "9"
+     },
+     {
+      "name": "CARDPRESENTKIOSK",
+      "label": "",
+      "code": "10"
+     }
+    ],
+    "com.datin.esb.enums.CauseTypeCode": [
+     {
+      "name": "POSA_TRANSACTION_CAUSE_TYPE",
+      "label": "واریز حقوق",
+      "code": null
+     },
+     {
+      "name": "IOSP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور بیمه خدمات",
+      "code": null
+     },
+     {
+      "name": "HIPA_TRANSACTION_CAUSE_TYPE",
+      "label": "امور درمانی",
+      "code": null
+     },
+     {
+      "name": "ISAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور سرمایه گذاری و بورس",
+      "code": null
+     },
+     {
+      "name": "FXAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور ارزی در چهارچوب ضوابط و مقررات",
+      "code": null
+     },
+     {
+      "name": "DRPA_TRANSACTION_CAUSE_TYPE",
+      "label": "پرداخت قرض و تادیه دیون (قرض الحسنه، بدهی، ...)",
+      "code": null
+     },
+     {
+      "name": "RTAP_TRANSACTION_CAUSE_TYPE",
+      "label": "امور بازنشستگی",
+      "code": null
+     },
+     {
+      "name": "MPTP_TRANSACTION_CAUSE_TYPE",
+      "label": "معاملات اموال منقول",
+      "code": null
+     },
+     {
+      "name": "IMPT_TRANSACTION_CAUSE_TYPE",
+      "label": "معاملات اموال غیرمنقول",
+      "code": null
+     },
+     {
+      "name": "LMAP_TRANSACTION_CAUSE_TYPE",
+      "label": "مدیریت نقدینگی",
+      "code": null
+     },
+     {
+      "name": "CDAP_TRANSACTION_CAUSE_TYPE",
+      "label": "عوارض گمرکی",
+      "code": null
+     },
+     {
+      "name": "TCAP_TRANSACTION_CAUSE_TYPE",
+      "label": "تسویه مالیاتی",
+      "code": null
+     },
+     {
+      "name": "GEAC_TRANSACTION_CAUSE_TYPE",
+      "label": "سایر خدمات دولتی",
+      "code": null
+     },
+     {
+      "name": "LRPA_TRANSACTION_CAUSE_TYPE",
+      "label": "تسهیلات و تعهدات",
+      "code": null
+     },
+     {
+      "name": "CCPA_TRANSACTION_CAUSE_TYPE",
+      "label": "تودیع وثیقه",
+      "code": null
+     },
+     {
+      "name": "GPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "هزینه عمومی و امور روزمره",
+      "code": null
+     },
+     {
+      "name": "CPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "کمک‌های خیریه",
+      "code": null
+     },
+     {
+      "name": "GPPC_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید کالا",
+      "code": null
+     },
+     {
+      "name": "SPAC_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید خدمات",
+      "code": null
+     },
+     {
+      "name": "GASP_TRANSACTION_CAUSE_TYPE",
+      "label": "خرید کالا و خدمات",
+      "code": null
+     },
+     {
+      "name": "FRTX_TRANSACTION_CAUSE_TYPE",
+      "label": "سایر امور",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.DocumentItemType": [
+     {
+      "name": "BOX",
+      "label": "صندوق",
+      "code": null
+     },
+     {
+      "name": "VIRTUALBOX",
+      "label": "صندوق مجازی",
+      "code": null
+     },
+     {
+      "name": "TOPIC",
+      "label": "سرفصل",
+      "code": null
+     },
+     {
+      "name": "ACCOUNT",
+      "label": "حساب",
+      "code": null
+     },
+     {
+      "name": "DEPOSIT",
+      "label": "سپرده",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.WithdrawalTool": [
+     {
+      "name": "chequeTool",
+      "label": "دسته چک",
+      "code": null
+     },
+     {
+      "name": "orderedPaymentTool",
+      "label": "دستور پرداخت",
+      "code": null
+     },
+     {
+      "name": "cardTool",
+      "label": "کارت",
+      "code": null
+     },
+     {
+      "name": "internalDocumentTool",
+      "label": "سند داخلی",
+      "code": null
+     },
+     {
+      "name": "internetTool",
+      "label": "اینترنتی",
+      "code": null
+     },
+     {
+      "name": "telephoneTool",
+      "label": "تلفنی",
+      "code": null
+     }
+    ],
+    "com.datin.esb.enums.ItemSOC": [
+     {
+      "name": "UNKNOWN_RESOURCE",
+      "label": "نامعلوم",
+      "code": null
+     },
+     {
+      "name": "PAPER_MONEY",
+      "label": "اسکناس",
+      "code": null
+     },
+     {
+      "name": "INTERNAL_DRAFT",
+      "label": "حواله داخلی",
+      "code": null
+     },
+     {
+      "name": "EXTERNAL_DRAFT",
+      "label": "حواله خارجی",
+      "code": null
+     },
+     {
+      "name": "PURCHASE_FROM_FREE_MARKET",
+      "label": "خرید از بازار فرعی",
+      "code": null
+     },
+     {
+      "name": "BANK_CURRENCY_RESOURCE",
+      "label": "مبادلات موقت بانک",
+      "code": null
+     }
+    ]
+   },
+   "notes": [
+    "مسیر با RouterFunction تعریف شده است"
+   ],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"RsCode\": 1,\n  \"TransactionId\": \"C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391\",\n  \"Transactiondate\": \"1400/11/11 - 06:11:16\",\n  \"TransactionCode\": \"1\",\n  \"DocumentNumber\": \"12081651201\"\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"TransactionId\",\n      \"ParamPath\": \"TransactionId\"\n    }\n  ]\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.IssueDocumentRequest",
+    "com.datin.esb.dto.IssueDocumentResponse",
+    "com.datin.esb.dto.DocumentItem",
+    "com.datin.esb.dto.MetaData",
+    "com.datin.esb.dto.ErrorItem",
+    "com.datin.esb.enums.TransactionChannel",
+    "com.datin.esb.enums.CauseTypeCode",
+    "com.datin.esb.enums.DocumentItemType",
+    "com.datin.esb.enums.WithdrawalTool",
+    "com.datin.esb.enums.ItemSOC"
+   ]
+  },
+  {
+   "id": "GET /functional/documents/{id}",
+   "number": 7,
+   "title": "سرویس دریافت سند با شناسه",
+   "description": "دریافت سند با شناسه",
+   "method": "GET",
+   "path": "/functional/documents/{id}",
+   "address": "http://[IP]:[PORT]/functional/documents/{id}",
+   "framework": "spring-functional",
+   "handler": "com.datin.esb.functional.DocumentHandler#get(ServerRequest)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/functional/RouterConfig.java",
+   "anchor": "get-functional-documents-id",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "id",
+     "type": "String",
+     "required": true,
+     "description": "",
+     "location": "path",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [
+    {
+     "name": "IsSuccess",
+     "type": "Boolean",
+     "required": false,
+     "description": "نتیجه موفق یا ناموفق",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Message",
+     "type": "String",
+     "required": false,
+     "description": "پیغام",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "RsCode",
+     "type": "Int",
+     "required": false,
+     "description": "کد استاندارد طبق جدول پیوست",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ErrorList",
+     "type": "List<ErrorItem>",
+     "required": false,
+     "description": "خروجی ناموفق - لیست خطاها",
+     "location": "response",
+     "nested": "com.datin.esb.dto.ErrorItem",
+     "enum": null
+    },
+    {
+     "name": "TransactionId",
+     "type": "String",
+     "required": false,
+     "description": "شناسه یکتا تراکنش",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Transactiondate",
+     "type": "String",
+     "required": false,
+     "description": "تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "TransactionCode",
+     "type": "String",
+     "required": false,
+     "description": "کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "DocumentNumber",
+     "type": "String",
+     "required": false,
+     "description": "شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود",
+     "location": "response",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "nested_types": [
+    {
+     "qname": "com.datin.esb.dto.ErrorItem",
+     "name": "ErrorItem",
+     "side": "response",
+     "description": "جزئیات خطا",
+     "fields": [
+      {
+       "name": "Code",
+       "type": "Int",
+       "required": false,
+       "description": "کد خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "Desc",
+       "type": "String",
+       "required": false,
+       "description": "پیغام خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamName",
+       "type": "String",
+       "required": false,
+       "description": "نام پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      },
+      {
+       "name": "ParamPath",
+       "type": "String",
+       "required": false,
+       "description": "مسیر پارامتر دارای خطا",
+       "location": "response",
+       "nested": null,
+       "enum": null
+      }
+     ]
+    }
+   ],
+   "enums": {},
+   "notes": [
+    "مسیر با RouterFunction تعریف شده است"
+   ],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "{\n  \"IsSuccess\": true,\n  \"Message\": \"عملیات با موفقیت انجام شد\",\n  \"RsCode\": 1,\n  \"TransactionId\": \"C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391\",\n  \"Transactiondate\": \"1400/11/11 - 06:11:16\",\n  \"TransactionCode\": \"1\",\n  \"DocumentNumber\": \"12081651201\"\n}",
+   "failure_samples": [
+    "{\n  \"RsCode\": 1038,\n  \"Message\": \"اطلاعات ورودی اشتباه است\",\n  \"IsSuccess\": false,\n  \"ErrorList\": [\n    {\n      \"Code\": 2941,\n      \"Desc\": \"مقداری برای پارامتر ورودی اجباری ارسال نشده است\",\n      \"ParamName\": \"TransactionId\",\n      \"ParamPath\": \"TransactionId\"\n    }\n  ]\n}"
+   ],
+   "type_closure": [
+    "com.datin.esb.dto.IssueDocumentResponse",
+    "com.datin.esb.dto.ErrorItem"
+   ]
+  },
+  {
+   "id": "GET /legacy/status",
+   "number": 8,
+   "title": "سرویس استعلام وضعیت تراکنش (قدیمی)",
+   "description": "استعلام وضعیت تراکنش (سرولت قدیمی)",
+   "method": "GET",
+   "path": "/legacy/status",
+   "address": "http://[IP]:[PORT]/legacy/status",
+   "framework": "servlet",
+   "handler": "com.datin.esb.legacy.StatusServlet#doGet(HttpServletRequest,HttpServletResponse)",
+   "file": "/Users/manakhoshbatn/Downloads/apidocgen/examples/sample-esb/src/main/java/com/datin/esb/legacy/StatusServlet.java",
+   "anchor": "get-legacy-status",
+   "analysis_status": "none",
+   "headers": [
+    {
+     "name": "Content-Type",
+     "type": "String",
+     "required": true,
+     "description": "فرمت محتوی درخواست Application/json",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "ApiKey",
+     "type": "String",
+     "required": true,
+     "description": "کلید منحصر به فرد هر کلاینت در سامانه ESB",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Signature",
+     "type": "String",
+     "required": true,
+     "description": "امضای دیجیتال سرویس گیرنده",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    },
+    {
+     "name": "Accept-Version",
+     "type": "String",
+     "required": false,
+     "description": "Accept-Version - مقدار 7",
+     "location": "header",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "request": [
+    {
+     "name": "transactionId",
+     "type": "String",
+     "required": false,
+     "description": "",
+     "location": "query",
+     "nested": null,
+     "enum": null
+    }
+   ],
+   "response": [],
+   "nested_types": [],
+   "enums": {},
+   "notes": [],
+   "error_codes": [
+    {
+     "code": "1",
+     "title": "عملیات با موفقیت انجام شد",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "804",
+     "title": "مدت زمان پردازش پیام منقضی شده است",
+     "note": "",
+     "source": "config"
+    },
+    {
+     "code": "805",
+     "title": "خطا در فراخوانی سرویس",
+     "note": "",
+     "source": "config"
+    }
+   ],
+   "success_sample": "",
+   "failure_samples": [],
+   "type_closure": []
+  }
+ ]
+}

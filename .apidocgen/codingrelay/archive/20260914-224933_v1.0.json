@@ -1,0 +1,39 @@
+{
+ "file": "20260914-224933_v1.0.html",
+ "created_at": 1789413573.524362,
+ "created_jalali": "1405/06/23",
+ "created_iso": "2026-09-14 22:49:33",
+ "version": "1.0",
+ "title": "مستندات API — codingrelay",
+ "label": "انتخابی",
+ "size": 28366,
+ "sha256": "0e5b6aed3d65be659c74bca65516e6265b52e53950ffe5e5be89d17d217f6e8d",
+ "endpoint_count": 1,
+ "endpoints": [
+  {
+   "id": "PUT /api/v1/admin/competition/activate/{id}",
+   "title": "سرویس id",
+   "method": "PUT",
+   "path": "/api/v1/admin/competition/activate/{id}",
+   "anchor": "put-api-v1-admin-competition-activate-id",
+   "hash": "8a51cd4804eda25fd896dc75bdef4ce7ce98ef38748a9b326db91b2592b2af7f",
+   "status": "partial",
+   "framework": "spring"
+  }
+ ],
+ "added": [
+  "PUT /api/v1/admin/competition/activate/{id}"
+ ],
+ "changed": [],
+ "removed": [
+  "PUT /api/v1/participant/opt-out"
+ ],
+ "usage": {
+  "calls": 60,
+  "input_tokens": 174947,
+  "output_tokens": 66263,
+  "cache_read_tokens": 85609,
+  "cache_write_tokens": 0,
+  "failed": 0
+ }
+}

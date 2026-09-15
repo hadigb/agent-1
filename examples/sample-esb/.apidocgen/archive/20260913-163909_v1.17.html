@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سرویس ثبت سند حسابداری – سامانه بانکداری باز</title>
+<meta name="generator" content="apidocgen 0.1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --green: #2C673E; --green-dark: #1f4d2e; --orange: #E28B3C;
+  --th: #b9e0cb; --th-dark: #8fcfae; --group: #cbe9d8; --border: #6b6b6b; --text: #1e1e1e; --muted: #666;
+  --page-w: 210mm;
+}
+* { box-sizing: border-box; }
+html { background: #e9ecef; }
+body { margin: 0; font-family: 'Vazirmatn', 'Vazirmatn', 'Vazir', 'IRANSans', 'Sahel', Tahoma, 'Segoe UI', Arial, sans-serif; color: var(--text); font-size: 11.5pt; line-height: 1.75; direction: rtl; }
+.page { background: #fff; width: var(--page-w); min-height: 297mm; margin: 12px auto; padding: 22mm 16mm 20mm 16mm; position: relative; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+.page.cover { padding: 0; overflow: hidden; }
+.pagehead { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--orange); padding-bottom: 4px; margin-bottom: 14px; font-size: 9.5pt; }
+.pagehead .hl { display: flex; align-items: center; gap: 10px; }
+.pagehead .doc-title { font-weight: 700; color: var(--green-dark); font-size: 11pt; }
+.pagehead .cls { color: var(--muted); }
+.pagehead .cls b { color: var(--orange); font-weight: 700; }
+.pagehead .ver { color: var(--muted); }
+.pagefoot { border-top: 2px solid var(--orange); margin-top: 24px; padding-top: 4px; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+.logo { height: 34px; }
+.logo.big { height: 80px; }
+h1, h2, h3, h4 { color: var(--green); margin: 18px 0 8px; line-height: 1.5; }
+h1 { font-size: 20pt; } h2 { font-size: 15pt; } h3 { font-size: 12.5pt; color: var(--orange); } h4 { font-size: 11.5pt; }
+p { margin: 6px 0; text-align: justify; }
+.muted { color: var(--muted); }
+.ltr { direction: ltr; text-align: left; unicode-bidi: embed; }
+.mono { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+.wrap { word-break: break-all; white-space: pre-wrap; }
+table.tbl { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 10pt; page-break-inside: auto; table-layout: fixed; }
+table.tbl col.c-group { width: 12%; } table.tbl col.c-name { width: 26%; } table.tbl col.c-type { width: 13%; } table.tbl col.c-desc { width: 49%; }
+table.tbl th, table.tbl td { border: 1px solid var(--border); padding: 4px 6px; vertical-align: middle; }
+table.tbl th { background: var(--th); font-weight: 700; text-align: center; }
+table.tbl td.group { background: var(--th-dark); font-weight: 700; text-align: center; width: 13%; }
+table.tbl tr.sub th { background: var(--th-dark); text-align: center; }
+table.tbl td.name { direction: ltr; text-align: center; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; word-break: break-all; }
+table.tbl td.type { direction: ltr; text-align: center; font-size: 9.5pt; word-break: break-word; }
+table.tbl td.desc { text-align: right; word-break: break-word; overflow-wrap: anywhere; }
+table.tbl td.addr { direction: ltr; text-align: left; font-family: Consolas, "Courier New", monospace; word-break: break-all; }
+table.tbl tr { page-break-inside: avoid; }
+table.enum { border-collapse: collapse; margin: 4px auto; font-size: 9pt; width: 100%; max-width: 100%; table-layout: auto; }
+table.enum th { background: var(--th-dark); border: 1px solid var(--border); padding: 2px 6px; white-space: nowrap; }
+table.enum td.code { white-space: nowrap; width: 1%; }
+table.enum td { border: 1px solid var(--border); padding: 2px 6px; text-align: center; word-break: break-word; overflow-wrap: anywhere; }
+table.enum td.ltr { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; }
+table.enum td.ltr { direction: ltr; }
+.caption { font-size: 9.5pt; color: var(--green-dark); margin: 8px 0 2px; font-weight: 700; }
+pre.json { direction: ltr; text-align: left; background: #f6f8f7; border: 1px solid #d8e2dc; border-radius: 4px; padding: 8px 10px; font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; white-space: pre-wrap; word-break: break-word; margin: 6px 0 12px; }
+ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-bottom: 4px; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc .row { display: flex; align-items: baseline; gap: 6px; }
+.toc .row .dots { flex: 1; border-bottom: 1px dotted #999; }
+.toc .l2 { padding-right: 24px; }
+.toc .num { color: var(--green); font-weight: 700; min-width: 34px; }
+.page-break { page-break-before: always; }
+.tag { display: inline-block; background: var(--orange); color: #fff; border-radius: 3px; padding: 0 6px; font-size: 8.5pt; margin-right: 6px; }
+.status-note { font-size: 8.5pt; color: var(--muted); }
+/* cover */
+.cover .band { position: absolute; top: 0; right: 0; width: 26%; height: 100%; background: var(--green); }
+.cover .band::after { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 6px, transparent 6px 22px), repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 6px, transparent 6px 22px); }
+.cover .curve { position: absolute; top: 0; right: 24%; width: 5%; height: 100%; background: #fff; border-right: 3px solid var(--orange); border-radius: 0 0 0 80% / 0 0 0 60%; }
+.cover .content { position: absolute; top: 0; right: 30%; left: 0; height: 100%; padding: 40mm 18mm 20mm 18mm; }
+.cover .logo-wrap { text-align: center; margin-bottom: 40mm; }
+.cover .system { font-size: 12pt; color: #333; font-weight: 700; }
+.cover .title { font-size: 28pt; color: var(--green); font-weight: 900; line-height: 1.5; margin: 6px 0 30mm; }
+.cover .meta { font-size: 11pt; color: #333; line-height: 2.1; }
+.cover .cls { position: absolute; bottom: 30mm; right: 18mm; font-size: 12pt; color: #333; }
+.cover .cls b { color: var(--orange); }
+.cover .cls::before { content: "●"; color: var(--orange); margin-left: 8px; font-size: 9pt; }
+@media screen and (max-width: 900px) { .page { width: auto; min-height: auto; padding: 16px; margin: 0; } .cover .content { padding: 20mm 10mm; } }
+@media print {
+  html { background: #fff; }
+  .page { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .pagehead, .pagefoot { display: none; }
+  /* repeating page header / footer: table head & foot sections are repeated by the browser on every printed page */
+  table.print-wrap { display: table; width: 100%; border-collapse: collapse; }
+  table.print-wrap > thead { display: table-header-group; }
+  table.print-wrap > tbody { display: table-row-group; }
+  table.print-wrap > * > tr { display: table-row; }
+  table.print-wrap > * > tr > td { display: table-cell; padding: 0; }
+  .print-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 2px solid var(--orange); font-size: 9pt; padding: 0 1mm 1mm; margin-bottom: 4mm; }
+  .print-head .cls { color: var(--muted); font-size: 8.5pt; }
+  /* Chromium does not repeat <tfoot> when nested tables fragment, so the footer is a fixed element placed at the
+     bottom of the printable area (297mm - 12mm top - 12mm bottom = 273mm high); the cover paints above it. */
+  .print-foot { position: fixed; z-index: 10; top: 265mm; left: 0; right: 0; height: 8mm; border-top: 2px solid var(--orange); font-size: 8pt; color: var(--muted); text-align: center; padding-top: 1mm; background: #fff; }
+  @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
+  @page :first { margin: 0; }
+  .cover { height: 297mm; page-break-after: always; z-index: 20; }
+  .page:not(.cover) { padding-bottom: 9mm; }
+  pre.json { page-break-inside: avoid; }
+}
+.no-print-only { display: none; }
+@media print { .screen-only { display: none; } }
+@media screen { .screen-hide { display: none; } }
+@media screen { table.print-wrap, table.print-wrap > tbody, table.print-wrap > tbody > tr, table.print-wrap > tbody > tr > td { display: block; } table.print-wrap > thead { display: none; } }
+</style>
+</head>
+<body>
+
+
+
+
+
+
+
+<section class="page cover">
+  <div class="band"></div><div class="curve"></div>
+  <div class="content">
+    <div class="logo-wrap"><div style="font-size:26pt;font-weight:900;color:var(--green)">داتین</div></div>
+    <div class="system">سامانه بانکداری باز</div>
+    <div class="title">سرویس ثبت سند حسابداری</div>
+    <div class="meta">
+      <div>تهیه‌کننده/ تهیه‌کنندگان: نسیم حمیدیان</div>
+      <div>تاریخ: 1405/06/22</div>
+      <div>شماره مستند: ver1.17</div>
+    </div>
+    <div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div>
+  </div>
+</section>
+
+<table class="print-wrap">
+<thead><tr><td><div class="print-head"><span><b>سرویس ثبت سند حسابداری</b></span><span class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</span><span>شماره مستند: ver1.17</span></div></td></tr></thead>
+<tbody><tr><td>
+<div class="print-foot screen-hide">این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</div>
+
+<section class="page">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <p class="muted" style="text-align:right">تکمیل جداول زیر تنها برای مستندات سیستمی الزامی است.</p>
+  <table class="tbl">
+    <tr><th colspan="2">شناسنامه سند</th></tr>
+    <tr><td class="group" style="width:35%">حوزه کاربردی مستند</td><td>سامانه بانکداری باز</td></tr>
+    <tr><td class="group">زمان بازنگری سند</td><td></td></tr>
+    <tr><td class="group">تاریخ منسوخ شدن سند</td><td></td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th colspan="4">تاییدیه سند</th></tr>
+    <tr><th></th><th>نام و نام خانوادگی</th><th>سمت سازمانی</th><th>تاریخ</th></tr>
+    <tr><td class="group">تدوین کننده</td><td>نسیم حمیدیان</td><td>کارشناس</td><td class="ltr" style="text-align:center">1403/10/22</td></tr><tr><td class="group">تأییدکننده</td><td>آذین چراغی</td><td>کارشناس ارشد</td><td class="ltr" style="text-align:center">1403/10/30</td></tr><tr><td class="group">تصویب‌کننده</td><td></td><td></td><td class="ltr" style="text-align:center"></td></tr>
+  </table>
+  <table class="tbl">
+    <tr><th colspan="5">جدول تغییرات سند</th></tr>
+    <tr><th style="width:7%">ردیف</th><th style="width:15%">تاریخ ویرایش</th><th style="width:10%">نسخه</th><th style="width:18%">ویرایش کننده</th><th>شرح ویرایش</th></tr>
+    <tr><td style="text-align:center">1</td><td class="ltr" style="text-align:center">1399/10/13</td><td style="text-align:center">1.1</td><td>اکرم احمدیان مهرگو</td><td>اضافه شدن فیلد Personnelcode در ورودی</td></tr><tr><td style="text-align:center">2</td><td class="ltr" style="text-align:center">1404/03/10</td><td style="text-align:center">1.17</td><td>آذین چراغی</td><td>اضافه شده دو فیلد GuildCode و Wallet به ورودی سرویس ثبت سند حسابداری</td></tr>
+  </table>
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+
+<section class="page">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>فهرست مطالب</h1>
+  <div class="toc">
+    <div class="row"><a href="#intro">مقدمه</a><span class="dots"></span></div>
+    
+    <div class="row"><span class="num">1.</span><a href="#post-api-generatebillserialnumber">سرویس دریافت شماره سریال قبض سپرده</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.1</span><a href="#post-api-generatebillserialnumber-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.2</span><a href="#post-api-generatebillserialnumber-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.3</span><a href="#post-api-generatebillserialnumber-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">1.4</span><a href="#post-api-generatebillserialnumber-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">2.</span><a href="#post-api-getbillstructurefordeposite">سرویس نمایش نوع مشخصه عملیات مالی</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">2.1</span><a href="#post-api-getbillstructurefordeposite-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">2.2</span><a href="#post-api-getbillstructurefordeposite-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">2.3</span><a href="#post-api-getbillstructurefordeposite-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">2.4</span><a href="#post-api-getbillstructurefordeposite-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">3.</span><a href="#post-api-issuedocument">سرویس ثبت سند حسابداری</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">3.1</span><a href="#post-api-issuedocument-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">3.2</span><a href="#post-api-issuedocument-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">3.3</span><a href="#post-api-issuedocument-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">3.4</span><a href="#post-api-issuedocument-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">4.</span><a href="#get-api-issuedocument-transactionid">سرویس استعلام سند حسابداری</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">4.1</span><a href="#get-api-issuedocument-transactionid-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">4.2</span><a href="#get-api-issuedocument-transactionid-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">4.3</span><a href="#get-api-issuedocument-transactionid-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">4.4</span><a href="#get-api-issuedocument-transactionid-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">5.</span><a href="#post-api-reverse">سرویس برگشت تراکنش</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">5.1</span><a href="#post-api-reverse-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">5.2</span><a href="#post-api-reverse-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">5.3</span><a href="#post-api-reverse-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">5.4</span><a href="#post-api-reverse-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">6.</span><a href="#post-functional-documents">سرویس ثبت سند (نسخه Reactive)</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">6.1</span><a href="#post-functional-documents-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">6.2</span><a href="#post-functional-documents-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">6.3</span><a href="#post-functional-documents-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">6.4</span><a href="#post-functional-documents-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">7.</span><a href="#get-functional-documents-id">سرویس دریافت سند با شناسه</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">7.1</span><a href="#get-functional-documents-id-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">7.2</span><a href="#get-functional-documents-id-success">ساختار خروجی موفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">7.3</span><a href="#get-functional-documents-id-failure">ساختار خروجی ناموفق</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">7.4</span><a href="#get-functional-documents-id-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    <div class="row"><span class="num">8.</span><a href="#get-legacy-status">سرویس استعلام وضعیت تراکنش (قدیمی)</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">8.1</span><a href="#get-legacy-status-params">پارامترهای ورودی و خروجی سرویس</a><span class="dots"></span></div>
+    <div class="row l2"><span class="num">8.2</span><a href="#get-legacy-status-steps">مراحل فراخوانی سرویس</a><span class="dots"></span></div>
+    
+    
+    
+  </div>
+  <h1>فهرست جداول</h1>
+  <div class="toc">
+    <div class="row"><a href="#post-api-generatebillserialnumber-tbl">جدول 1. ورودی و خروجی سرویس دریافت شماره سریال قبض سپرده</a><span class="dots"></span></div><div class="row"><a href="#post-api-generatebillserialnumber-SerialNumberResult">جدول 2. SerialNumberResult – سرویس دریافت شماره سریال قبض سپرده</a><span class="dots"></span></div><div class="row"><a href="#post-api-generatebillserialnumber-ErrorItem">جدول 3. ErrorItem – سرویس دریافت شماره سریال قبض سپرده</a><span class="dots"></span></div><div class="row"><a href="#post-api-generatebillserialnumber-errors">جدول 4. لیست خطاهای سرویس دریافت شماره سریال قبض سپرده</a><span class="dots"></span></div><div class="row"><a href="#post-api-getbillstructurefordeposite-tbl">جدول 5. ورودی و خروجی سرویس نمایش نوع مشخصه عملیات مالی</a><span class="dots"></span></div><div class="row"><a href="#post-api-getbillstructurefordeposite-BillStructureResult">جدول 6. BillStructureResult – سرویس نمایش نوع مشخصه عملیات مالی</a><span class="dots"></span></div><div class="row"><a href="#post-api-getbillstructurefordeposite-ErrorItem">جدول 7. ErrorItem – سرویس نمایش نوع مشخصه عملیات مالی</a><span class="dots"></span></div><div class="row"><a href="#post-api-getbillstructurefordeposite-errors">جدول 8. لیست خطاهای سرویس نمایش نوع مشخصه عملیات مالی</a><span class="dots"></span></div><div class="row"><a href="#post-api-issuedocument-tbl">جدول 9. ورودی و خروجی سرویس ثبت سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#post-api-issuedocument-ErrorItem">جدول 10. ErrorItem – سرویس ثبت سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#post-api-issuedocument-errors">جدول 11. لیست خطاهای سرویس ثبت سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#get-api-issuedocument-transactionid-tbl">جدول 12. ورودی و خروجی سرویس استعلام سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#get-api-issuedocument-transactionid-ErrorItem">جدول 13. ErrorItem – سرویس استعلام سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#get-api-issuedocument-transactionid-errors">جدول 14. لیست خطاهای سرویس استعلام سند حسابداری</a><span class="dots"></span></div><div class="row"><a href="#post-api-reverse-tbl">جدول 15. ورودی و خروجی سرویس برگشت تراکنش</a><span class="dots"></span></div><div class="row"><a href="#post-api-reverse-ErrorItem">جدول 16. ErrorItem – سرویس برگشت تراکنش</a><span class="dots"></span></div><div class="row"><a href="#post-api-reverse-errors">جدول 17. لیست خطاهای سرویس برگشت تراکنش</a><span class="dots"></span></div><div class="row"><a href="#post-functional-documents-tbl">جدول 18. ورودی و خروجی سرویس ثبت سند (نسخه Reactive)</a><span class="dots"></span></div><div class="row"><a href="#post-functional-documents-ErrorItem">جدول 19. ErrorItem – سرویس ثبت سند (نسخه Reactive)</a><span class="dots"></span></div><div class="row"><a href="#post-functional-documents-errors">جدول 20. لیست خطاهای سرویس ثبت سند (نسخه Reactive)</a><span class="dots"></span></div><div class="row"><a href="#get-functional-documents-id-tbl">جدول 21. ورودی و خروجی سرویس دریافت سند با شناسه</a><span class="dots"></span></div><div class="row"><a href="#get-functional-documents-id-ErrorItem">جدول 22. ErrorItem – سرویس دریافت سند با شناسه</a><span class="dots"></span></div><div class="row"><a href="#get-functional-documents-id-errors">جدول 23. لیست خطاهای سرویس دریافت سند با شناسه</a><span class="dots"></span></div><div class="row"><a href="#get-legacy-status-tbl">جدول 24. ورودی و خروجی سرویس استعلام وضعیت تراکنش (قدیمی)</a><span class="dots"></span></div><div class="row"><a href="#get-legacy-status-errors">جدول 25. لیست خطاهای سرویس استعلام وضعیت تراکنش (قدیمی)</a><span class="dots"></span></div>
+  </div>
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+
+<section class="page" id="intro">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>مقدمه</h1>
+  <p>این مستند به منظور معرفی سرویس‌های <b>سامانه بانکداری باز</b> تهیه شده است و برای هر سرویس، آدرس و متد فراخوانی،
+پارامترهای هدر، پارامترهای درخواست و پاسخ، ساختار خروجی موفق و ناموفق، مراحل فراخوانی و کدهای خطای مرتبط را شرح می‌دهد.</p>
+<p>فیلدهای ستاره‌دار در جداول، اجباری هستند. مقادیر و نام فیلدها باید دقیقاً مطابق با جدول هر سرویس ارسال شوند؛ در غیر این صورت
+سرویس با کد خطای مربوطه پاسخ می‌دهد.</p>
+<p class="muted">این سند به صورت خودکار از روی کد منبع تولید شده است (8 سرویس، تاریخ تولید 1405/06/22).</p>
+
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+
+
+<section class="page" id="post-api-generatebillserialnumber">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>1. سرویس دریافت شماره سریال قبض سپرده</h1>
+  <p>دریافت شماره سریال قبض سپرده. این سرویس با دریافت اطلاعات سپرده، شناسه قبض سپرده را در خروجی نمایش می‌دهد.</p>
+  <h3 id="post-api-generatebillserialnumber-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="post-api-generatebillserialnumber-tbl">جدول 1. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/Api/GenerateBillSerialNumber</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">POST</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="5">پارامترهای درخواست</td>
+      <td class="name">DepositNumber *</td>
+      <td class="type">String</td>
+      <td class="desc">شماره سپرده</td></tr>
+    
+    <tr>
+      <td class="name">IsDebtor</td>
+      <td class="type">Boolean</td>
+      <td class="desc">بستانکار/بدهکار (در حالت دیفالت false است) 0: بستانکار 1: بدهکار</td></tr>
+    
+    <tr>
+      <td class="name">Amount *</td>
+      <td class="type">BigDecimal</td>
+      <td class="desc">مبلغ</td></tr>
+    
+    <tr>
+      <td class="name">Key *</td>
+      <td class="type">String</td>
+      <td class="desc">کلید (شناسه قبض)</td></tr>
+    
+    <tr>
+      <td class="name">Value *</td>
+      <td class="type">String</td>
+      <td class="desc">مقدار شناسه قبض</td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="5">پارامترهای پاسخ</td>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد وضعیت</td></tr>
+    
+    <tr>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">ResultData</td><td class="type">SerialNumberResult</td>
+      <td class="desc">خروجی موفق - مطابق جدول شماره 1</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - مطابق جدول شماره 2</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="post-api-generatebillserialnumber-SerialNumberResult">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">SerialNumberResult – خروجی موفق - جدول شماره 2</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">SerialNumber</td>
+  <td class="type">String</td>
+  <td class="desc">شماره سریال قبض</td>
+</tr>
+  </table>
+  
+  <table class="tbl" id="post-api-generatebillserialnumber-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 3 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+
+  
+  <h3 id="post-api-generatebillserialnumber-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1,
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;ResultData&#34;: {
+    &#34;SerialNumber&#34;: &#34;12081651201&#34;
+  }
+}</pre>
+  
+  <h3 id="post-api-generatebillserialnumber-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;DepositNumber&#34;,
+      &#34;ParamPath&#34;: &#34;DepositNumber&#34;
+    }
+  ]
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="post-api-generatebillserialnumber-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">POST#/Api/GenerateBillSerialNumber#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#{&quot;DepositNumber&quot;: &quot;1.20.10504.1&quot;,&quot;IsDebtor&quot;: true,&quot;Amount&quot;: 100000,&quot;Key&quot;: &quot;key&quot;,&quot;Value&quot;: &quot;value&quot;}</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="post-api-generatebillserialnumber-errors">جدول 4. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="post-api-getbillstructurefordeposite">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>2. سرویس نمایش نوع مشخصه عملیات مالی</h1>
+  <p>نمایش نوع مشخصه عملیات مالی. این سرویس با ورود شماره سپرده دارای شناسه قبض، ساختار قبض سپرده را نمایش می‌دهد.</p>
+  <h3 id="post-api-getbillstructurefordeposite-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="post-api-getbillstructurefordeposite-tbl">جدول 5. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/Api/GetBillStructureForDeposite</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">POST</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="1">پارامترهای درخواست</td>
+      <td class="name">DepositNumber *</td>
+      <td class="type">String</td>
+      <td class="desc">شماره سپرده</td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="5">پارامترهای پاسخ</td>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد وضعیت</td></tr>
+    
+    <tr>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">ResultData</td><td class="type">BillStructureResult</td>
+      <td class="desc">خروجی موفق - مطابق جدول شماره 1</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - مطابق جدول شماره 2</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="post-api-getbillstructurefordeposite-BillStructureResult">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">BillStructureResult – خروجی موفق - جدول شماره 6</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">TransferMoneyBillStructure</td>
+  <td class="type">String</td>
+  <td class="desc">نوع مشخصه عملیات مالی در اطلاعات قبض عملیات مالی</td>
+</tr>
+  </table>
+  
+  <table class="tbl" id="post-api-getbillstructurefordeposite-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 7 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+
+  
+  <h3 id="post-api-getbillstructurefordeposite-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1,
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;ResultData&#34;: {
+    &#34;TransferMoneyBillStructure&#34;: &#34;string&#34;
+  }
+}</pre>
+  
+  <h3 id="post-api-getbillstructurefordeposite-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;DepositNumber&#34;,
+      &#34;ParamPath&#34;: &#34;DepositNumber&#34;
+    }
+  ]
+}</pre>
+  
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1079,
+  &#34;Message&#34;: &#34;شماره سپرده نادرست است&#34;,
+  &#34;IsSuccess&#34;: false
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="post-api-getbillstructurefordeposite-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">POST#/Api/GetBillStructureForDeposite#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#{&quot;DepositNumber&quot;: &quot;1.20.10504.1&quot;}</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="post-api-getbillstructurefordeposite-errors">جدول 8. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">2941</td><td>مقداری برای پارامتر ورودی اجباری ارسال نشده است</td><td></td></tr><tr><td style="text-align:center">1079</td><td>شماره سپرده نادرست است</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="post-api-issuedocument">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>3. سرویس ثبت سند حسابداری</h1>
+  <p>با استفاده از این سرویس انتقال وجه در چند بند انجام و سند حسابداری مربوطه ثبت می‌گردد. در این سرویس امکان درج تعداد بیش از یک بدهکار و بیش از یک بستانکار وجود دارد. این سرویس برای انتقال وجه به حساب‌های دیجیتال (سپرده/شبا) نیز قابل استفاده است.</p>
+  <h3 id="post-api-issuedocument-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="post-api-issuedocument-tbl">جدول 9. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/API/IssueDocument</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">POST</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="6">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    <tr>
+      <td class="name">AccessToken</td><td class="type">String</td><td class="desc">توکن دسترسی با ساختار sso</td></tr>
+    
+    <tr>
+      <td class="name">BusinessToken</td><td class="type">String</td><td class="desc">توکن دسترسی پاد / برای تراکنش با مبدا پاد</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="36">پارامترهای درخواست</td>
+      <td class="name">TransactionId *</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">ShowDocumentNumber</td>
+      <td class="type">Boolean</td>
+      <td class="desc">نمایش شماره سند؛ مقدار پیش‌فرض false است. در صورت true بودن، فیلد DocumentNumber در خروجی نمایش داده می‌شود.</td></tr>
+    
+    <tr>
+      <td class="name">TransferBillNumber</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه واریز (رجوع شود به نکات)</td></tr>
+    
+    <tr>
+      <td class="name">DocumentTitle *</td>
+      <td class="type">String</td>
+      <td class="desc">عنوان سند</td></tr>
+    
+    <tr>
+      <td class="name">TerminalCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد ترمینال</td></tr>
+    
+    <tr>
+      <td class="name">TransactionChannel</td>
+      <td class="type">String</td>
+      <td class="desc">کانال تراکنش<table class="enum">
+  <tr><th>کد</th><th>مقدار</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">POS</td></tr><tr><td class="code">2</td><td class="ltr">ATM</td></tr><tr><td class="code">3</td><td class="ltr">BATCH</td></tr><tr><td class="code">4</td><td class="ltr">TELLER</td></tr><tr><td class="code">5</td><td class="ltr">INTERNET</td></tr><tr><td class="code">6</td><td class="ltr">TELEPHONE</td></tr><tr><td class="code">7</td><td class="ltr">MOBILE</td></tr><tr><td class="code">8</td><td class="ltr">PINPAD</td></tr><tr><td class="code">9</td><td class="ltr">KIOSK</td></tr><tr><td class="code">10</td><td class="ltr">CARDPRESENTKIOSK</td></tr>
+</table></td></tr>
+    
+    <tr>
+      <td class="name">FromCMS</td>
+      <td class="type">Boolean</td>
+      <td class="desc">آیا درخواست از CMS ارسال می‌شود؟</td></tr>
+    
+    <tr>
+      <td class="name">DocumentTemplateCode</td>
+      <td class="type">String</td>
+      <td class="desc"></td></tr>
+    
+    <tr>
+      <td class="name">DocumentExtraInfoIgnoreSayahBizCheck</td>
+      <td class="type">String</td>
+      <td class="desc">عدم کنترل اطلاعات سیاح</td></tr>
+    
+    <tr>
+      <td class="name">TransactionType</td>
+      <td class="type">String</td>
+      <td class="desc">نوع تراکنش پاد</td></tr>
+    
+    <tr>
+      <td class="name">BusinessCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد صنف</td></tr>
+    
+    <tr>
+      <td class="name">IsPod</td>
+      <td class="type">Boolean</td>
+      <td class="desc">حساب پادی هست یا خیر. این فیلد اختیاری است؛ چنانچه سپرده/شبای مبدا سنتی باشد مقدار false و چنانچه سپرده/شبای مبدا دیجیتال باشد مقدار true باید ارسال شود.</td></tr>
+    
+    <tr>
+      <td class="name">CauseTypeCode</td>
+      <td class="type">String</td>
+      <td class="desc">بابت (طبق جدول شماره 3)<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">POSA_TRANSACTION_CAUSE_TYPE</td><td>واریز حقوق</td></tr><tr><td class="code">2</td><td class="ltr">IOSP_TRANSACTION_CAUSE_TYPE</td><td>امور بیمه خدمات</td></tr><tr><td class="code">3</td><td class="ltr">HIPA_TRANSACTION_CAUSE_TYPE</td><td>امور درمانی</td></tr><tr><td class="code">4</td><td class="ltr">ISAP_TRANSACTION_CAUSE_TYPE</td><td>امور سرمایه گذاری و بورس</td></tr><tr><td class="code">5</td><td class="ltr">FXAP_TRANSACTION_CAUSE_TYPE</td><td>امور ارزی در چهارچوب ضوابط و مقررات</td></tr><tr><td class="code">6</td><td class="ltr">DRPA_TRANSACTION_CAUSE_TYPE</td><td>پرداخت قرض و تادیه دیون (قرض الحسنه، بدهی، ...)</td></tr><tr><td class="code">7</td><td class="ltr">RTAP_TRANSACTION_CAUSE_TYPE</td><td>امور بازنشستگی</td></tr><tr><td class="code">8</td><td class="ltr">MPTP_TRANSACTION_CAUSE_TYPE</td><td>معاملات اموال منقول</td></tr><tr><td class="code">9</td><td class="ltr">IMPT_TRANSACTION_CAUSE_TYPE</td><td>معاملات اموال غیرمنقول</td></tr><tr><td class="code">10</td><td class="ltr">LMAP_TRANSACTION_CAUSE_TYPE</td><td>مدیریت نقدینگی</td></tr><tr><td class="code">11</td><td class="ltr">CDAP_TRANSACTION_CAUSE_TYPE</td><td>عوارض گمرکی</td></tr><tr><td class="code">12</td><td class="ltr">TCAP_TRANSACTION_CAUSE_TYPE</td><td>تسویه مالیاتی</td></tr><tr><td class="code">13</td><td class="ltr">GEAC_TRANSACTION_CAUSE_TYPE</td><td>سایر خدمات دولتی</td></tr><tr><td class="code">14</td><td class="ltr">LRPA_TRANSACTION_CAUSE_TYPE</td><td>تسهیلات و تعهدات</td></tr><tr><td class="code">15</td><td class="ltr">CCPA_TRANSACTION_CAUSE_TYPE</td><td>تودیع وثیقه</td></tr><tr><td class="code">16</td><td class="ltr">GPAC_TRANSACTION_CAUSE_TYPE</td><td>هزینه عمومی و امور روزمره</td></tr><tr><td class="code">17</td><td class="ltr">CPAC_TRANSACTION_CAUSE_TYPE</td><td>کمک‌های خیریه</td></tr><tr><td class="code">18</td><td class="ltr">GPPC_TRANSACTION_CAUSE_TYPE</td><td>خرید کالا</td></tr><tr><td class="code">19</td><td class="ltr">SPAC_TRANSACTION_CAUSE_TYPE</td><td>خرید خدمات</td></tr><tr><td class="code">20</td><td class="ltr">GASP_TRANSACTION_CAUSE_TYPE</td><td>خرید کالا و خدمات</td></tr><tr><td class="code">21</td><td class="ltr">FRTX_TRANSACTION_CAUSE_TYPE</td><td>سایر امور</td></tr>
+</table></td></tr>
+    
+    <tr>
+      <td class="name">IssueType</td>
+      <td class="type">String</td>
+      <td class="desc">درگاه تراکنش. مقدار قابل قبول برای این فیلد: CashingCheque (وصول چک)</td></tr>
+    
+    <tr>
+      <td class="name">GuildCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد صنفی کسب و کار</td></tr>
+    
+    <tr>
+      <td class="name">Wallet</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه کیف پول</td></tr>
+    
+    <tr>
+      <td class="name">DocumentItem *</td>
+      <td class="type">List&lt;DocumentItem&gt;</td>
+      <td class="desc">بندهای سند<div class="muted" style="font-size:9pt">طبق جدول زیر</div></td></tr>
+    
+    
+    <tr class="sub"><th colspan="3" id="post-api-issuedocument-DocumentItem">DocumentItem – بند سند</th></tr>
+    <tr>
+  <td class="name">IsDebtor *</td>
+  <td class="type">Boolean</td>
+  <td class="desc">بستانکار: False / بدهکار: True</td>
+</tr><tr>
+  <td class="name">PersonnelCode</td>
+  <td class="type">String</td>
+  <td class="desc">کد کاربری که حساب مجازی صندوق او در ارز ریال مد نظر می‌باشد (در صورتی که DocumentItemType برابر VIRTUALBOX باشد اجباری است)</td>
+</tr><tr>
+  <td class="name">AccountNumber *</td>
+  <td class="type">String</td>
+  <td class="desc">شماره حساب / سپرده / سرفصل. در صورتی که DocumentItemType مخالف VIRTUALBOX و BOX باشد این فیلد اجباری است</td>
+</tr><tr>
+  <td class="name">DocumentItemType *</td>
+  <td class="type">String</td>
+  <td class="desc"><table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">BOX</td><td>صندوق</td></tr><tr><td class="code">2</td><td class="ltr">VIRTUALBOX</td><td>صندوق مجازی</td></tr><tr><td class="code">3</td><td class="ltr">TOPIC</td><td>سرفصل</td></tr><tr><td class="code">4</td><td class="ltr">ACCOUNT</td><td>حساب</td></tr><tr><td class="code">5</td><td class="ltr">DEPOSIT</td><td>سپرده</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">BranchCode</td>
+  <td class="type">String</td>
+  <td class="desc">در صورتی که DocumentItemType از نوع TOPIC یا VIRTUALBOX باشد، اجباری می‌باشد</td>
+</tr><tr>
+  <td class="name">Amount *</td>
+  <td class="type">Long</td>
+  <td class="desc">مبلغ. این فیلد مقدار اعشاری را نیز ساپورت می‌کند</td>
+</tr><tr>
+  <td class="name">WithdrawalTool</td>
+  <td class="type">String</td>
+  <td class="desc">ابزار برداشت<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">chequeTool</td><td>دسته چک</td></tr><tr><td class="code">2</td><td class="ltr">orderedPaymentTool</td><td>دستور پرداخت</td></tr><tr><td class="code">3</td><td class="ltr">cardTool</td><td>کارت</td></tr><tr><td class="code">4</td><td class="ltr">internalDocumentTool</td><td>سند داخلی</td></tr><tr><td class="code">5</td><td class="ltr">internetTool</td><td>اینترنتی</td></tr><tr><td class="code">6</td><td class="ltr">telephoneTool</td><td>تلفنی</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">Comment *</td>
+  <td class="type">String</td>
+  <td class="desc">شرح بند</td>
+</tr><tr>
+  <td class="name">SecondaryBillSerialNumber</td>
+  <td class="type">String</td>
+  <td class="desc">شناسه قبض ثانویه</td>
+</tr><tr>
+  <td class="name">ItemSOC</td>
+  <td class="type">String</td>
+  <td class="desc">نوع منشا وجه. این فیلد اختیاری شرطی است: در صورت ارسال مقدار برای IsoCode ارسال این فیلد حتما لازم است<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">UNKNOWN_RESOURCE</td><td>نامعلوم</td></tr><tr><td class="code">2</td><td class="ltr">PAPER_MONEY</td><td>اسکناس</td></tr><tr><td class="code">3</td><td class="ltr">INTERNAL_DRAFT</td><td>حواله داخلی</td></tr><tr><td class="code">4</td><td class="ltr">EXTERNAL_DRAFT</td><td>حواله خارجی</td></tr><tr><td class="code">5</td><td class="ltr">PURCHASE_FROM_FREE_MARKET</td><td>خرید از بازار فرعی</td></tr><tr><td class="code">6</td><td class="ltr">BANK_CURRENCY_RESOURCE</td><td>مبادلات موقت بانک</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">IsoCode</td>
+  <td class="type">String</td>
+  <td class="desc">ارز مورد نظر</td>
+</tr><tr>
+  <td class="name">BillNumber</td>
+  <td class="type">String</td>
+  <td class="desc">شناسه قبض سپرده؛ در صورتی که سپرده وارد شده قبضی باشد ارسال آن الزامی است</td>
+</tr><tr>
+  <td class="name">CustomerNumbers</td>
+  <td class="type">List&lt;String&gt;</td>
+  <td class="desc">لیست مشتریان سپرده (اختیاری - به بخش نکات شرایط برداشت مراجعه شود)</td>
+</tr><tr>
+  <td class="name">ItemUserMetaData</td>
+  <td class="type">List&lt;MetaData&gt;</td>
+  <td class="desc">داده‌های کاربر<div class="muted" style="font-size:9pt">طبق جدول MetaData</div></td>
+</tr><tr>
+  <td class="name">SystemMetaData</td>
+  <td class="type">List&lt;MetaData&gt;</td>
+  <td class="desc">داده‌های سیستم؛ مقادیر مجاز key مطابق با فایل اکسل دریافتی<div class="muted" style="font-size:9pt">طبق جدول MetaData</div></td>
+</tr>
+    
+    <tr class="sub"><th colspan="3" id="post-api-issuedocument-MetaData">MetaData – زوج کلید/مقدار داده‌های اکسترا اینفو</th></tr>
+    <tr>
+  <td class="name">Key</td>
+  <td class="type">String</td>
+  <td class="desc">فیلد</td>
+</tr><tr>
+  <td class="name">Value</td>
+  <td class="type">String</td>
+  <td class="desc">مقدار فیلد</td>
+</tr>
+    
+    
+    
+    
+    <tr><td class="group" rowspan="8">پارامترهای پاسخ</td>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد استاندارد طبق جدول پیوست</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - لیست خطاها - مطابق جدول شماره 10</td></tr>
+    
+    <tr>
+      <td class="name">TransactionId</td><td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">Transactiondate</td><td class="type">String</td>
+      <td class="desc">تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss</td></tr>
+    
+    <tr>
+      <td class="name">TransactionCode</td><td class="type">String</td>
+      <td class="desc">کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود</td></tr>
+    
+    <tr>
+      <td class="name">DocumentNumber</td><td class="type">String</td>
+      <td class="desc">شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="post-api-issuedocument-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 10 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+  <h4>نکات:</h4>
+  <ul class="notes"><li>به منظور تراز بودن سند حسابداری باید جمع مقادیر مبلغ وارد شده در ورودی برای حساب‌های Debtor و Creditor با هم برابر باشد.</li><li>در صورتی‌که سپرده ارسال شده در ورودی از نوع قبضی باشد شماره قبض سپرده در فیلد BillNumber در ورودی ارسال می‌گردد.</li><li>چنانچه از حالت نقدی (DocumentItemType = BOX) در بخش بدهکار یا بستانکار استفاده شود نیازی به ارسال مقدار برای فیلد AccountNumber نمی‌باشد.</li></ul>
+  
+
+  
+  <h3 id="post-api-issuedocument-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;RsCode&#34;: 1,
+  &#34;TransactionId&#34;: &#34;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&#34;,
+  &#34;Transactiondate&#34;: &#34;1400/11/11 - 06:11:16&#34;,
+  &#34;TransactionCode&#34;: &#34;1&#34;,
+  &#34;DocumentNumber&#34;: &#34;12081651201&#34;
+}</pre>
+  
+  <h3 id="post-api-issuedocument-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;TransactionId&#34;,
+      &#34;ParamPath&#34;: &#34;TransactionId&#34;
+    }
+  ]
+}</pre>
+  
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1735,
+  &#34;Message&#34;: &#34;تراکنش قبلا انجام شده و موفقیت آمیز بوده است&#34;,
+  &#34;IsSuccess&#34;: false
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="post-api-issuedocument-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">POST#/API/IssueDocument#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#{&quot;TransactionId&quot;: &quot;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&quot;,&quot;ShowDocumentNumber&quot;: true,&quot;TransferBillNumber&quot;: &quot;12081651201&quot;,&quot;DocumentTitle&quot;: &quot;شرح نمونه&quot;,&quot;TerminalCode&quot;: &quot;1&quot;,&quot;TransactionChannel&quot;: &quot;POS&quot;,&quot;FromCMS&quot;: true,&quot;DocumentTemplateCode&quot;: &quot;1&quot;,&quot;DocumentExtraInfoIgnoreSayahBizCheck&quot;: &quot;string&quot;,&quot;TransactionType&quot;: &quot;string&quot;,&quot;BusinessCode&quot;: &quot;1&quot;,&quot;IsPod&quot;: true,&quot;CauseTypeCode&quot;: &quot;POSA_TRANSACTION_CAUSE_TYPE&quot;,&quot;IssueType&quot;: &quot;string&quot;,&quot;GuildCode&quot;: &quot;1&quot;,&quot;Wallet&quot;: &quot;string&quot;,&quot;DocumentItem&quot;: [{&quot;IsDebtor&quot;: true,&quot;PersonnelCode&quot;: &quot;1&quot;,&quot;AccountNumber&quot;: &quot;1.20.10504.1&quot;,&quot;DocumentItemType&quot;: &quot;BOX&quot;,&quot;BranchCode&quot;: &quot;1&quot;,&quot;Amount&quot;: 100000,&quot;WithdrawalTool&quot;: &quot;chequeTool&quot;,&quot;Comment&quot;: &quot;شرح نمونه&quot;,&quot;SecondaryBillSerialNumber&quot;: &quot;12081651201&quot;,&quot;ItemSOC&quot;: &quot;UNKNOWN_RESOURCE&quot;,&quot;IsoCode&quot;: &quot;1&quot;,&quot;BillNumber&quot;: &quot;12081651201&quot;,&quot;CustomerNumbers&quot;: [&quot;string&quot;],&quot;ItemUserMetaData&quot;: [{&quot;Key&quot;: &quot;key&quot;,&quot;Value&quot;: &quot;value&quot;}],&quot;SystemMetaData&quot;: [{&quot;Key&quot;: &quot;key&quot;,&quot;Value&quot;: &quot;value&quot;}]}]}</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="post-api-issuedocument-errors">جدول 11. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">1735</td><td>تراکنش قبلا انجام شده و موفقیت آمیز بوده است</td><td></td></tr><tr><td style="text-align:center">1038</td><td>اطلاعات ورودی اشتباه است</td><td></td></tr><tr><td style="text-align:center">2941</td><td>مقداری برای پارامتر ورودی اجباری ارسال نشده است</td><td></td></tr><tr><td style="text-align:center">4642</td><td>مجموع مبالغ برداشتی با مجموع مبالغ واریزی برابر نمی باشد</td><td></td></tr><tr><td style="text-align:center">1773</td><td>خطا در کر</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="get-api-issuedocument-transactionid">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>4. سرویس استعلام سند حسابداری</h1>
+  <p>استعلام وضعیت سند ثبت شده.</p>
+  <h3 id="get-api-issuedocument-transactionid-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="get-api-issuedocument-transactionid-tbl">جدول 12. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/API/IssueDocument/{transactionId}</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">GET</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="2">پارامترهای درخواست</td>
+      <td class="name">transactionId *<div class="muted" style="font-size:8pt">Path</div></td>
+      <td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش ثبت شده</td></tr>
+    
+    <tr>
+      <td class="name">showDocumentNumber<div class="muted" style="font-size:8pt">Query</div></td>
+      <td class="type">Boolean</td>
+      <td class="desc">نمایش شماره سند در خروجی</td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="8">پارامترهای پاسخ</td>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد استاندارد طبق جدول پیوست</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - لیست خطاها - مطابق جدول شماره 13</td></tr>
+    
+    <tr>
+      <td class="name">TransactionId</td><td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش ثبت شده</td></tr>
+    
+    <tr>
+      <td class="name">Transactiondate</td><td class="type">String</td>
+      <td class="desc">تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss</td></tr>
+    
+    <tr>
+      <td class="name">TransactionCode</td><td class="type">String</td>
+      <td class="desc">کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود</td></tr>
+    
+    <tr>
+      <td class="name">DocumentNumber</td><td class="type">String</td>
+      <td class="desc">شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="get-api-issuedocument-transactionid-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 13 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+
+  
+  <h3 id="get-api-issuedocument-transactionid-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;RsCode&#34;: 1,
+  &#34;TransactionId&#34;: &#34;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&#34;,
+  &#34;Transactiondate&#34;: &#34;1400/11/11 - 06:11:16&#34;,
+  &#34;TransactionCode&#34;: &#34;1&#34;,
+  &#34;DocumentNumber&#34;: &#34;12081651201&#34;
+}</pre>
+  
+  <h3 id="get-api-issuedocument-transactionid-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;TransactionId&#34;,
+      &#34;ParamPath&#34;: &#34;TransactionId&#34;
+    }
+  ]
+}</pre>
+  
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1644,
+  &#34;Message&#34;: &#34;شناسه ی تراکنش صحیح نمی باشد&#34;,
+  &#34;IsSuccess&#34;: false
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="get-api-issuedocument-transactionid-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">GET#/API/IssueDocument/{transactionId}#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="get-api-issuedocument-transactionid-errors">جدول 14. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">1644</td><td>شناسه ی تراکنش صحیح نمی باشد</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="post-api-reverse">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>5. سرویس برگشت تراکنش</h1>
+  <p>سرویس برگشت تراکنش. از این سرویس جهت برگشت تراکنش‌های انتقال، واریز و برداشت و ... استفاده می‌گردد.</p>
+  <h3 id="post-api-reverse-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="post-api-reverse-tbl">جدول 15. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/Api/Reverse</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">POST</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="2">پارامترهای درخواست</td>
+      <td class="name">TransactionId *</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه یکتای تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">IsAsync</td>
+      <td class="type">Boolean</td>
+      <td class="desc">false: عملیات ریورس به صورت همزمان انجام شده و پاسخ عملیات در خروجی بازگردانی می‌شود. true: عملیات ریورس به صورت غیرهمزمان انجام خواهد شد و نتیجه سرویس به صورت موفق بازگردانده می‌شود.</td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای پاسخ</td>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد استاندارد طبق جدول پیوست</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - لیست خطاها - مطابق جدول شماره 16</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="post-api-reverse-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 16 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+  <h4>نکات:</h4>
+  <ul class="notes"><li>درصورت عدم ارسال IsAsync مقدار این پارامتر true در نظر گرفته می‌شود.</li><li>در صورتیکه فیلد IsAsync مقدار false دریافت کند، در همان زمان فراخوانی، تراکنش ریورس شده و نتیجه تلاش نمایش داده می‌شود.</li></ul>
+  
+
+  
+  <h3 id="post-api-reverse-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;RsCode&#34;: 1
+}</pre>
+  
+  <h3 id="post-api-reverse-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;TransactionId&#34;,
+      &#34;ParamPath&#34;: &#34;TransactionId&#34;
+    }
+  ]
+}</pre>
+  
+  <p>در صورت بروز سایر خطاها ساختار خروجی ناموفق به صورت زیر می‌باشد:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1418,
+  &#34;Message&#34;: &#34;شماره تراکنش نامعتبر است&#34;,
+  &#34;IsSuccess&#34;: false
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="post-api-reverse-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">POST#/Api/Reverse#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#{&quot;TransactionId&quot;: &quot;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&quot;,&quot;IsAsync&quot;: true}</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="post-api-reverse-errors">جدول 17. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">1038</td><td>اطلاعات ورودی اشتباه است</td><td></td></tr><tr><td style="text-align:center">1418</td><td>شماره تراکنش نامعتبر است</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="post-functional-documents">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>6. سرویس ثبت سند (نسخه Reactive)</h1>
+  <p>ایجاد سند (نسخه reactive)</p>
+  <h3 id="post-functional-documents-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="post-functional-documents-tbl">جدول 18. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/functional/documents</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">POST</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="36">پارامترهای درخواست</td>
+      <td class="name">TransactionId *</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">ShowDocumentNumber</td>
+      <td class="type">Boolean</td>
+      <td class="desc">نمایش شماره سند؛ مقدار پیش‌فرض false است. در صورت true بودن، فیلد DocumentNumber در خروجی نمایش داده می‌شود.</td></tr>
+    
+    <tr>
+      <td class="name">TransferBillNumber</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه واریز (رجوع شود به نکات)</td></tr>
+    
+    <tr>
+      <td class="name">DocumentTitle *</td>
+      <td class="type">String</td>
+      <td class="desc">عنوان سند</td></tr>
+    
+    <tr>
+      <td class="name">TerminalCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد ترمینال</td></tr>
+    
+    <tr>
+      <td class="name">TransactionChannel</td>
+      <td class="type">String</td>
+      <td class="desc">کانال تراکنش<table class="enum">
+  <tr><th>کد</th><th>مقدار</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">POS</td></tr><tr><td class="code">2</td><td class="ltr">ATM</td></tr><tr><td class="code">3</td><td class="ltr">BATCH</td></tr><tr><td class="code">4</td><td class="ltr">TELLER</td></tr><tr><td class="code">5</td><td class="ltr">INTERNET</td></tr><tr><td class="code">6</td><td class="ltr">TELEPHONE</td></tr><tr><td class="code">7</td><td class="ltr">MOBILE</td></tr><tr><td class="code">8</td><td class="ltr">PINPAD</td></tr><tr><td class="code">9</td><td class="ltr">KIOSK</td></tr><tr><td class="code">10</td><td class="ltr">CARDPRESENTKIOSK</td></tr>
+</table></td></tr>
+    
+    <tr>
+      <td class="name">FromCMS</td>
+      <td class="type">Boolean</td>
+      <td class="desc">آیا درخواست از CMS ارسال می‌شود؟</td></tr>
+    
+    <tr>
+      <td class="name">DocumentTemplateCode</td>
+      <td class="type">String</td>
+      <td class="desc"></td></tr>
+    
+    <tr>
+      <td class="name">DocumentExtraInfoIgnoreSayahBizCheck</td>
+      <td class="type">String</td>
+      <td class="desc">عدم کنترل اطلاعات سیاح</td></tr>
+    
+    <tr>
+      <td class="name">TransactionType</td>
+      <td class="type">String</td>
+      <td class="desc">نوع تراکنش پاد</td></tr>
+    
+    <tr>
+      <td class="name">BusinessCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد صنف</td></tr>
+    
+    <tr>
+      <td class="name">IsPod</td>
+      <td class="type">Boolean</td>
+      <td class="desc">حساب پادی هست یا خیر. این فیلد اختیاری است؛ چنانچه سپرده/شبای مبدا سنتی باشد مقدار false و چنانچه سپرده/شبای مبدا دیجیتال باشد مقدار true باید ارسال شود.</td></tr>
+    
+    <tr>
+      <td class="name">CauseTypeCode</td>
+      <td class="type">String</td>
+      <td class="desc">بابت (طبق جدول شماره 3)<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">POSA_TRANSACTION_CAUSE_TYPE</td><td>واریز حقوق</td></tr><tr><td class="code">2</td><td class="ltr">IOSP_TRANSACTION_CAUSE_TYPE</td><td>امور بیمه خدمات</td></tr><tr><td class="code">3</td><td class="ltr">HIPA_TRANSACTION_CAUSE_TYPE</td><td>امور درمانی</td></tr><tr><td class="code">4</td><td class="ltr">ISAP_TRANSACTION_CAUSE_TYPE</td><td>امور سرمایه گذاری و بورس</td></tr><tr><td class="code">5</td><td class="ltr">FXAP_TRANSACTION_CAUSE_TYPE</td><td>امور ارزی در چهارچوب ضوابط و مقررات</td></tr><tr><td class="code">6</td><td class="ltr">DRPA_TRANSACTION_CAUSE_TYPE</td><td>پرداخت قرض و تادیه دیون (قرض الحسنه، بدهی، ...)</td></tr><tr><td class="code">7</td><td class="ltr">RTAP_TRANSACTION_CAUSE_TYPE</td><td>امور بازنشستگی</td></tr><tr><td class="code">8</td><td class="ltr">MPTP_TRANSACTION_CAUSE_TYPE</td><td>معاملات اموال منقول</td></tr><tr><td class="code">9</td><td class="ltr">IMPT_TRANSACTION_CAUSE_TYPE</td><td>معاملات اموال غیرمنقول</td></tr><tr><td class="code">10</td><td class="ltr">LMAP_TRANSACTION_CAUSE_TYPE</td><td>مدیریت نقدینگی</td></tr><tr><td class="code">11</td><td class="ltr">CDAP_TRANSACTION_CAUSE_TYPE</td><td>عوارض گمرکی</td></tr><tr><td class="code">12</td><td class="ltr">TCAP_TRANSACTION_CAUSE_TYPE</td><td>تسویه مالیاتی</td></tr><tr><td class="code">13</td><td class="ltr">GEAC_TRANSACTION_CAUSE_TYPE</td><td>سایر خدمات دولتی</td></tr><tr><td class="code">14</td><td class="ltr">LRPA_TRANSACTION_CAUSE_TYPE</td><td>تسهیلات و تعهدات</td></tr><tr><td class="code">15</td><td class="ltr">CCPA_TRANSACTION_CAUSE_TYPE</td><td>تودیع وثیقه</td></tr><tr><td class="code">16</td><td class="ltr">GPAC_TRANSACTION_CAUSE_TYPE</td><td>هزینه عمومی و امور روزمره</td></tr><tr><td class="code">17</td><td class="ltr">CPAC_TRANSACTION_CAUSE_TYPE</td><td>کمک‌های خیریه</td></tr><tr><td class="code">18</td><td class="ltr">GPPC_TRANSACTION_CAUSE_TYPE</td><td>خرید کالا</td></tr><tr><td class="code">19</td><td class="ltr">SPAC_TRANSACTION_CAUSE_TYPE</td><td>خرید خدمات</td></tr><tr><td class="code">20</td><td class="ltr">GASP_TRANSACTION_CAUSE_TYPE</td><td>خرید کالا و خدمات</td></tr><tr><td class="code">21</td><td class="ltr">FRTX_TRANSACTION_CAUSE_TYPE</td><td>سایر امور</td></tr>
+</table></td></tr>
+    
+    <tr>
+      <td class="name">IssueType</td>
+      <td class="type">String</td>
+      <td class="desc">درگاه تراکنش. مقدار قابل قبول برای این فیلد: CashingCheque (وصول چک)</td></tr>
+    
+    <tr>
+      <td class="name">GuildCode</td>
+      <td class="type">String</td>
+      <td class="desc">کد صنفی کسب و کار</td></tr>
+    
+    <tr>
+      <td class="name">Wallet</td>
+      <td class="type">String</td>
+      <td class="desc">شناسه کیف پول</td></tr>
+    
+    <tr>
+      <td class="name">DocumentItem *</td>
+      <td class="type">List&lt;DocumentItem&gt;</td>
+      <td class="desc">بندهای سند<div class="muted" style="font-size:9pt">طبق جدول زیر</div></td></tr>
+    
+    
+    <tr class="sub"><th colspan="3" id="post-functional-documents-DocumentItem">DocumentItem – بند سند</th></tr>
+    <tr>
+  <td class="name">IsDebtor *</td>
+  <td class="type">Boolean</td>
+  <td class="desc">بستانکار: False / بدهکار: True</td>
+</tr><tr>
+  <td class="name">PersonnelCode</td>
+  <td class="type">String</td>
+  <td class="desc">کد کاربری که حساب مجازی صندوق او در ارز ریال مد نظر می‌باشد (در صورتی که DocumentItemType برابر VIRTUALBOX باشد اجباری است)</td>
+</tr><tr>
+  <td class="name">AccountNumber *</td>
+  <td class="type">String</td>
+  <td class="desc">شماره حساب / سپرده / سرفصل. در صورتی که DocumentItemType مخالف VIRTUALBOX و BOX باشد این فیلد اجباری است</td>
+</tr><tr>
+  <td class="name">DocumentItemType *</td>
+  <td class="type">String</td>
+  <td class="desc"><table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">BOX</td><td>صندوق</td></tr><tr><td class="code">2</td><td class="ltr">VIRTUALBOX</td><td>صندوق مجازی</td></tr><tr><td class="code">3</td><td class="ltr">TOPIC</td><td>سرفصل</td></tr><tr><td class="code">4</td><td class="ltr">ACCOUNT</td><td>حساب</td></tr><tr><td class="code">5</td><td class="ltr">DEPOSIT</td><td>سپرده</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">BranchCode</td>
+  <td class="type">String</td>
+  <td class="desc">در صورتی که DocumentItemType از نوع TOPIC یا VIRTUALBOX باشد، اجباری می‌باشد</td>
+</tr><tr>
+  <td class="name">Amount *</td>
+  <td class="type">Long</td>
+  <td class="desc">مبلغ. این فیلد مقدار اعشاری را نیز ساپورت می‌کند</td>
+</tr><tr>
+  <td class="name">WithdrawalTool</td>
+  <td class="type">String</td>
+  <td class="desc">ابزار برداشت<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">chequeTool</td><td>دسته چک</td></tr><tr><td class="code">2</td><td class="ltr">orderedPaymentTool</td><td>دستور پرداخت</td></tr><tr><td class="code">3</td><td class="ltr">cardTool</td><td>کارت</td></tr><tr><td class="code">4</td><td class="ltr">internalDocumentTool</td><td>سند داخلی</td></tr><tr><td class="code">5</td><td class="ltr">internetTool</td><td>اینترنتی</td></tr><tr><td class="code">6</td><td class="ltr">telephoneTool</td><td>تلفنی</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">Comment *</td>
+  <td class="type">String</td>
+  <td class="desc">شرح بند</td>
+</tr><tr>
+  <td class="name">SecondaryBillSerialNumber</td>
+  <td class="type">String</td>
+  <td class="desc">شناسه قبض ثانویه</td>
+</tr><tr>
+  <td class="name">ItemSOC</td>
+  <td class="type">String</td>
+  <td class="desc">نوع منشا وجه. این فیلد اختیاری شرطی است: در صورت ارسال مقدار برای IsoCode ارسال این فیلد حتما لازم است<table class="enum">
+  <tr><th>ردیف</th><th>مقدار</th><th>شرح</th></tr>
+  
+  <tr><td class="code">1</td><td class="ltr">UNKNOWN_RESOURCE</td><td>نامعلوم</td></tr><tr><td class="code">2</td><td class="ltr">PAPER_MONEY</td><td>اسکناس</td></tr><tr><td class="code">3</td><td class="ltr">INTERNAL_DRAFT</td><td>حواله داخلی</td></tr><tr><td class="code">4</td><td class="ltr">EXTERNAL_DRAFT</td><td>حواله خارجی</td></tr><tr><td class="code">5</td><td class="ltr">PURCHASE_FROM_FREE_MARKET</td><td>خرید از بازار فرعی</td></tr><tr><td class="code">6</td><td class="ltr">BANK_CURRENCY_RESOURCE</td><td>مبادلات موقت بانک</td></tr>
+</table></td>
+</tr><tr>
+  <td class="name">IsoCode</td>
+  <td class="type">String</td>
+  <td class="desc">ارز مورد نظر</td>
+</tr><tr>
+  <td class="name">BillNumber</td>
+  <td class="type">String</td>
+  <td class="desc">شناسه قبض سپرده؛ در صورتی که سپرده وارد شده قبضی باشد ارسال آن الزامی است</td>
+</tr><tr>
+  <td class="name">CustomerNumbers</td>
+  <td class="type">List&lt;String&gt;</td>
+  <td class="desc">لیست مشتریان سپرده (اختیاری - به بخش نکات شرایط برداشت مراجعه شود)</td>
+</tr><tr>
+  <td class="name">ItemUserMetaData</td>
+  <td class="type">List&lt;MetaData&gt;</td>
+  <td class="desc">داده‌های کاربر<div class="muted" style="font-size:9pt">طبق جدول MetaData</div></td>
+</tr><tr>
+  <td class="name">SystemMetaData</td>
+  <td class="type">List&lt;MetaData&gt;</td>
+  <td class="desc">داده‌های سیستم؛ مقادیر مجاز key مطابق با فایل اکسل دریافتی<div class="muted" style="font-size:9pt">طبق جدول MetaData</div></td>
+</tr>
+    
+    <tr class="sub"><th colspan="3" id="post-functional-documents-MetaData">MetaData – زوج کلید/مقدار داده‌های اکسترا اینفو</th></tr>
+    <tr>
+  <td class="name">Key</td>
+  <td class="type">String</td>
+  <td class="desc">فیلد</td>
+</tr><tr>
+  <td class="name">Value</td>
+  <td class="type">String</td>
+  <td class="desc">مقدار فیلد</td>
+</tr>
+    
+    
+    
+    
+    <tr><td class="group" rowspan="8">پارامترهای پاسخ</td>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد استاندارد طبق جدول پیوست</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - لیست خطاها - مطابق جدول شماره 19</td></tr>
+    
+    <tr>
+      <td class="name">TransactionId</td><td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">Transactiondate</td><td class="type">String</td>
+      <td class="desc">تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss</td></tr>
+    
+    <tr>
+      <td class="name">TransactionCode</td><td class="type">String</td>
+      <td class="desc">کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود</td></tr>
+    
+    <tr>
+      <td class="name">DocumentNumber</td><td class="type">String</td>
+      <td class="desc">شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="post-functional-documents-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 19 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+  <h4>نکات:</h4>
+  <ul class="notes"><li>مسیر با RouterFunction تعریف شده است</li></ul>
+  
+
+  
+  <h3 id="post-functional-documents-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;RsCode&#34;: 1,
+  &#34;TransactionId&#34;: &#34;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&#34;,
+  &#34;Transactiondate&#34;: &#34;1400/11/11 - 06:11:16&#34;,
+  &#34;TransactionCode&#34;: &#34;1&#34;,
+  &#34;DocumentNumber&#34;: &#34;12081651201&#34;
+}</pre>
+  
+  <h3 id="post-functional-documents-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;TransactionId&#34;,
+      &#34;ParamPath&#34;: &#34;TransactionId&#34;
+    }
+  ]
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="post-functional-documents-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">POST#/functional/documents#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#{&quot;TransactionId&quot;: &quot;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&quot;,&quot;ShowDocumentNumber&quot;: true,&quot;TransferBillNumber&quot;: &quot;12081651201&quot;,&quot;DocumentTitle&quot;: &quot;شرح نمونه&quot;,&quot;TerminalCode&quot;: &quot;1&quot;,&quot;TransactionChannel&quot;: &quot;POS&quot;,&quot;FromCMS&quot;: true,&quot;DocumentTemplateCode&quot;: &quot;1&quot;,&quot;DocumentExtraInfoIgnoreSayahBizCheck&quot;: &quot;string&quot;,&quot;TransactionType&quot;: &quot;string&quot;,&quot;BusinessCode&quot;: &quot;1&quot;,&quot;IsPod&quot;: true,&quot;CauseTypeCode&quot;: &quot;POSA_TRANSACTION_CAUSE_TYPE&quot;,&quot;IssueType&quot;: &quot;string&quot;,&quot;GuildCode&quot;: &quot;1&quot;,&quot;Wallet&quot;: &quot;string&quot;,&quot;DocumentItem&quot;: [{&quot;IsDebtor&quot;: true,&quot;PersonnelCode&quot;: &quot;1&quot;,&quot;AccountNumber&quot;: &quot;1.20.10504.1&quot;,&quot;DocumentItemType&quot;: &quot;BOX&quot;,&quot;BranchCode&quot;: &quot;1&quot;,&quot;Amount&quot;: 100000,&quot;WithdrawalTool&quot;: &quot;chequeTool&quot;,&quot;Comment&quot;: &quot;شرح نمونه&quot;,&quot;SecondaryBillSerialNumber&quot;: &quot;12081651201&quot;,&quot;ItemSOC&quot;: &quot;UNKNOWN_RESOURCE&quot;,&quot;IsoCode&quot;: &quot;1&quot;,&quot;BillNumber&quot;: &quot;12081651201&quot;,&quot;CustomerNumbers&quot;: [&quot;string&quot;],&quot;ItemUserMetaData&quot;: [{&quot;Key&quot;: &quot;key&quot;,&quot;Value&quot;: &quot;value&quot;}],&quot;SystemMetaData&quot;: [{&quot;Key&quot;: &quot;key&quot;,&quot;Value&quot;: &quot;value&quot;}]}]}</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="post-functional-documents-errors">جدول 20. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="get-functional-documents-id">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>7. سرویس دریافت سند با شناسه</h1>
+  <p>دریافت سند با شناسه</p>
+  <h3 id="get-functional-documents-id-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="get-functional-documents-id-tbl">جدول 21. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/functional/documents/{id}</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">GET</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="1">پارامترهای درخواست</td>
+      <td class="name">id *<div class="muted" style="font-size:8pt">Path</div></td>
+      <td class="type">String</td>
+      <td class="desc"></td></tr>
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="8">پارامترهای پاسخ</td>
+      <td class="name">IsSuccess</td><td class="type">Boolean</td>
+      <td class="desc">نتیجه موفق یا ناموفق</td></tr>
+    
+    <tr>
+      <td class="name">Message</td><td class="type">String</td>
+      <td class="desc">پیغام</td></tr>
+    
+    <tr>
+      <td class="name">RsCode</td><td class="type">Int</td>
+      <td class="desc">کد استاندارد طبق جدول پیوست</td></tr>
+    
+    <tr>
+      <td class="name">ErrorList</td><td class="type">List&lt;ErrorItem&gt;</td>
+      <td class="desc">خروجی ناموفق - لیست خطاها - مطابق جدول شماره 22</td></tr>
+    
+    <tr>
+      <td class="name">TransactionId</td><td class="type">String</td>
+      <td class="desc">شناسه یکتا تراکنش</td></tr>
+    
+    <tr>
+      <td class="name">Transactiondate</td><td class="type">String</td>
+      <td class="desc">تاریخ انجام تراکنش بصورت شمسی و با فرمت yyyy/mm/dd - hh:mm:ss</td></tr>
+    
+    <tr>
+      <td class="name">TransactionCode</td><td class="type">String</td>
+      <td class="desc">کد تراکنش. در صورتی که حساب مبدا دیجیتال باشد این فیلد null خواهد بود</td></tr>
+    
+    <tr>
+      <td class="name">DocumentNumber</td><td class="type">String</td>
+      <td class="desc">شماره سند - اگر فیلد ShowDocumentNumber برابر با false باشد این فیلد در خروجی نمایش داده نمی‌شود</td></tr>
+    
+    
+  </table>
+
+  
+  <table class="tbl" id="get-functional-documents-id-ErrorItem">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">ErrorItem – خروجی ناموفق - جدول شماره 22 (جزئیات خطا)</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    <tr>
+  <td class="name">Code</td>
+  <td class="type">Int</td>
+  <td class="desc">کد خطا</td>
+</tr><tr>
+  <td class="name">Desc</td>
+  <td class="type">String</td>
+  <td class="desc">پیغام خطا</td>
+</tr><tr>
+  <td class="name">ParamName</td>
+  <td class="type">String</td>
+  <td class="desc">نام پارامتر دارای خطا</td>
+</tr><tr>
+  <td class="name">ParamPath</td>
+  <td class="type">String</td>
+  <td class="desc">مسیر پارامتر دارای خطا</td>
+</tr>
+  </table>
+  
+
+  
+  <h4>نکات:</h4>
+  <ul class="notes"><li>مسیر با RouterFunction تعریف شده است</li></ul>
+  
+
+  
+  <h3 id="get-functional-documents-id-success">ساختار خروجی موفق:</h3>
+  <p>اگر سرویس با موفقیت اجرا شده و پاسخ صحیح بازگرداند خروجی به صورت زیر است:</p>
+  <pre class="json">{
+  &#34;IsSuccess&#34;: true,
+  &#34;Message&#34;: &#34;عملیات با موفقیت انجام شد&#34;,
+  &#34;RsCode&#34;: 1,
+  &#34;TransactionId&#34;: &#34;C5163-E322762b7c12c4f7a9b14bf5b15761f6e-20220131181208029-3391&#34;,
+  &#34;Transactiondate&#34;: &#34;1400/11/11 - 06:11:16&#34;,
+  &#34;TransactionCode&#34;: &#34;1&#34;,
+  &#34;DocumentNumber&#34;: &#34;12081651201&#34;
+}</pre>
+  
+  <h3 id="get-functional-documents-id-failure">ساختار خروجی ناموفق:</h3>
+  <p>در صورتی که در اعتبار سنجی پارامترهای ورودی، مقادیر ارسالی طبق توضیحات مندرج در جدول ورودی‌ها نباشد، ساختار پاسخ ناموفق سرویس به صورت زیر خواهد بود:</p>
+  <pre class="json">{
+  &#34;RsCode&#34;: 1038,
+  &#34;Message&#34;: &#34;اطلاعات ورودی اشتباه است&#34;,
+  &#34;IsSuccess&#34;: false,
+  &#34;ErrorList&#34;: [
+    {
+      &#34;Code&#34;: 2941,
+      &#34;Desc&#34;: &#34;مقداری برای پارامتر ورودی اجباری ارسال نشده است&#34;,
+      &#34;ParamName&#34;: &#34;TransactionId&#34;,
+      &#34;ParamPath&#34;: &#34;TransactionId&#34;
+    }
+  ]
+}</pre>
+  
+  
+  
+
+  
+  <h3 id="get-functional-documents-id-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">GET#/functional/documents/{id}#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="get-functional-documents-id-errors">جدول 23. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+<section class="page" id="get-legacy-status">
+  <div class="pagehead">
+  <div class="hl"><div><div class="doc-title">سرویس ثبت سند حسابداری</div><div class="cls">این سند ازجمله اسناد <b>عمومی</b> داتین است.</div></div></div>
+  <div class="ver">شماره مستند: ver1.17</div>
+</div>
+  <h1>8. سرویس استعلام وضعیت تراکنش (قدیمی)</h1>
+  <p>استعلام وضعیت تراکنش (سرولت قدیمی)</p>
+  <h3 id="get-legacy-status-params">پارامترهای ورودی و خروجی سرویس:</h3>
+  <div class="caption" id="get-legacy-status-tbl">جدول 24. ورودی و خروجی سرویس</div>
+  <table class="tbl">
+    <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
+    <tr><td class="group">آدرس</td><td colspan="3" class="addr">http://[IP]:[PORT]/legacy/status</td></tr>
+    <tr><td class="group">متد</td><td colspan="3" class="addr">GET</td></tr>
+    <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    
+    
+    <tr><td class="group" rowspan="4">پارامترهای هدر</td>
+      <td class="name">Content-Type *</td><td class="type">String</td><td class="desc">فرمت محتوی درخواست Application/json</td></tr>
+    
+    <tr>
+      <td class="name">ApiKey *</td><td class="type">String</td><td class="desc">کلید منحصر به فرد هر کلاینت در سامانه ESB</td></tr>
+    
+    <tr>
+      <td class="name">Signature *</td><td class="type">String</td><td class="desc">امضای دیجیتال سرویس گیرنده</td></tr>
+    
+    <tr>
+      <td class="name">Accept-Version</td><td class="type">String</td><td class="desc">Accept-Version - مقدار 7</td></tr>
+    
+    
+    
+    
+    
+    
+    <tr><td class="group" rowspan="1">پارامترهای درخواست</td>
+      <td class="name">transactionId<div class="muted" style="font-size:8pt">Query</div></td>
+      <td class="type">String</td>
+      <td class="desc"></td></tr>
+    
+    
+    
+    
+    <tr><td class="group">پارامترهای پاسخ</td><td colspan="3" class="muted">—</td></tr>
+    
+  </table>
+
+  
+
+  
+
+  
+
+  
+  <h3 id="get-legacy-status-steps">مراحل فراخوانی سرویس:</h3>
+  <p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
+<p class="ltr mono">httpMethod(Upper Case)#url(after Address Root)#ApiKey#body</p>
+<p>نمونه رشته بالا:</p>
+<p class="ltr mono wrap">GET#/legacy/status#a8b40f20-da83-45ee-bf46-c1e4a9c717bf#</p>
+<p>2- Sign کردن رشته بالا با Private Key به روش SHA1 و تبدیل خروجی نهایی به Base64 (توجه داشته باشید که عبارت بالا به صورت یک رشته کامل و بدون Space باید امضا گردد).</p>
+<p>3- اضافه کردن Apikey و رشته sign شده به Header درخواست با کلیدهای زیر: ApiKey و Signature</p>
+<p>4- اضافه کردن Body به بدنه درخواست (در صورتی که نوع متد Get باشد این مقدار خالی می‌باشد).</p>
+<p>5- ارسال درخواست به آدرس ذکر شده در بالای صفحه. توجه داشته باشید که ContentType درخواست باید application/json باشد.</p>
+
+  
+
+  
+  <div class="caption" id="get-legacy-status-errors">جدول 25. لیست خطاهای سرویس</div>
+  <table class="tbl">
+    <tr><th colspan="3">جدول برخی از کد خطاهای سرویس</th></tr>
+    <tr><th style="width:14%">کد خطا</th><th>عنوان خطا</th><th style="width:30%">توضیحات</th></tr>
+    <tr><td style="text-align:center">1</td><td>عملیات با موفقیت انجام شد</td><td></td></tr><tr><td style="text-align:center">804</td><td>مدت زمان پردازش پیام منقضی شده است</td><td></td></tr><tr><td style="text-align:center">805</td><td>خطا در فراخوانی سرویس</td><td></td></tr>
+  </table>
+  
+  
+  <div class="pagefoot"><span>این سند توسط شرکت داتین تدوین شده و کلیه حقوق مادی و معنوی آن متعلق به این شرکت است.</span></div>
+</section>
+
+
+
+</td></tr></tbody>
+</table>
+</body>
+</html>

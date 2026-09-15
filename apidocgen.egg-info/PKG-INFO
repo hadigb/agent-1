@@ -1,0 +1,339 @@
+Metadata-Version: 2.4
+Name: apidocgen
+Version: 0.1.0
+Summary: Scan Java code, keep a code graph and generate Persian (Datin-style) API service documents with a content-addressed LLM cache.
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: Jinja2>=3.0
+Requires-Dist: PyYAML>=6.0
+Provides-Extra: markdown
+Requires-Dist: Markdown>=3.4; extra == "markdown"
+Provides-Extra: tokens
+Requires-Dist: tiktoken>=0.5; extra == "tokens"
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+
+# apidocgen
+
+Scan a Java code base on disk (no git needed), keep a **persistent code graph**, and generate
+Persian **Datin-style service documents** (like `ESB.IssueDocument…pdf`) for every HTTP endpoint —
+while sending each piece of code to the LLM **at most once**.
+
+```
+   source folders ──► scanner ──► parser (pure Python) ──► code graph (SQLite)
+                                                              │
+                                    endpoint detectors ◄──────┤   Spring MVC/WebFlux, JAX-RS, Servlets,
+                                                              │   Micronaut, RouterFunction, custom rules,
+                          ┌────── deterministic doc model ◄───┘   manual list, LLM-assisted discovery
+                          │       (fields, types, required flags, enums, samples, error codes)
+                          │
+                          ├────── analysis units + content hashes ──► cache hit? ──► reuse
+                          │                                            miss?     ──► LLM (Persian descriptions)
+                          ▼
+                    HTML document (RTL, print-ready)  +  archive  +  web UI
+```
+
+* **Zero native dependencies** – only `Jinja2` and `PyYAML`. Works on macOS/Linux/Windows with Python 3.9+.
+* **Frameworks**: Spring (`@RestController`, `@RequestMapping`, `@GetMapping`…, `RouterFunction` routes, API interfaces),
+  JAX-RS (`@Path`, `@GET`…, Jersey/RESTEasy/Quarkus), Servlets (`@WebServlet`, `doGet/doPost`), Micronaut,
+  **config-driven custom rules** for in-house dispatchers, a **manual endpoints file**, and an optional
+  **LLM-assisted `discover`** step for code with no annotations at all.
+* **Token economy**: DTOs and endpoints are analysed as small *units* whose cache key is the SHA-256 of the code the
+  model would see. Unchanged code is never re-sent; a comment change re-sends one DTO; a new field re-sends that DTO and
+  only the endpoints that exchange it. Anthropic prompt caching is used for the static instructions.
+* **LLM providers**: Anthropic (default `claude-sonnet-5`), any OpenAI-compatible server (OpenAI, Azure, LM Studio,
+  vLLM…), Ollama, and a deterministic `mock` for tests / dry runs.
+* **Output**: one self-contained HTML per run (cover page, شناسنامه/تاییدیه/جدول تغییرات, فهرست مطالب, فهرست جداول, مقدمه,
+  per-service tables, نکات, ساختار خروجی موفق/ناموفق, مراحل فراخوانی, جدول کد خطاها, پیوست) that prints to A4 with a
+  repeating header/footer. Every render is archived.
+* **UI**: `apidocgen ui` – applications, endpoint tree, document archive, scan/analyze/render buttons, dark mode.
+
+---
+
+## 1. Install
+
+```bash
+cd apidocgen
+python3 -m pip install .            # or:  pip install -e .   (editable)
+apidocgen --version
+```
+
+No install at all is also fine: `pip install -r requirements.txt` and use `python3 -m apidocgen …` from this folder
+(add the folder to `PYTHONPATH` to run it from elsewhere).
+
+Optional extras: `pip install Markdown` (markdown intro/appendix files), `pip install tiktoken` (exact token estimates).
+
+## 2. Quick start
+
+```bash
+cd /path/to/my-java-service
+apidocgen init                       # writes a commented apidocgen.yaml
+# edit apidocgen.yaml: project.paths, llm.provider/model, doc.title/author/version ...
+export ANTHROPIC_API_KEY=sk-ant-...  # or OPENAI_API_KEY for provider: openai
+
+apidocgen scan                       # parse changed files, rebuild the code graph, detect endpoints
+apidocgen endpoints -v               # what was detected (paths, params, body/response types)
+apidocgen analyze --dry-run          # what would be sent to the LLM and the estimated token cost
+apidocgen analyze                    # send only the cache misses
+apidocgen render                     # write docs/api-document.html (+ .json) and archive it
+apidocgen status                     # graph / cache / token usage
+```
+
+`apidocgen run` does scan + analyze + render in one go (`--no-llm` renders from the cache and code comments only).
+Open the HTML in Chrome/Edge and **Print → Save as PDF** for the paginated A4 document.
+
+Try it on the bundled sample first:
+
+```bash
+cd examples/sample-esb
+apidocgen run --no-llm               # uses code comments + config overrides, no LLM
+apidocgen ui                         # http://127.0.0.1:8765
+```
+
+## 3. How the token saving works
+
+| Unit kind | Content hashed | Re-sent when |
+|-----------|----------------|--------------|
+| `type` (one DTO / enum) | class header, fields with annotations & comments, enum constants, inherited fields | that class (or a superclass) changes |
+| `endpoint` (one handler) | controller header, handler method (and its implementation when the mapping is on an interface), **skeletons** (names/types only) of the exchanged types, bodies of called project methods up to `analysis.call_depth`, referenced error-catalog constants | the handler, a called method within the depth, or the *structure* of an exchanged type changes |
+| `intro` (optional) | the list of services | endpoints are added/removed/retitled |
+
+* Cache key = SHA-256(prompt version, unit kind, normalised payload). It does **not** include file paths or symbol ids,
+  so moving/renaming files without changing content is free. Set `analysis.cache_key_includes_model: true` if you
+  want a model switch to re-analyse everything.
+* DTO units shared by many endpoints are described once; several small DTOs are batched in one call
+  (`analysis.type_batch_tokens`); a batch that produces invalid JSON is split in half and retried.
+* Budgets: `llm.max_calls_per_run`, `llm.max_input_tokens_per_run`. `analyze --dry-run` prints the plan first.
+* `apidocgen graph impact path/to/File.java` tells you which endpoints a file change would touch.
+* `render` never calls the LLM. If a unit changed and was not re-analysed yet, the previous analysis is used and the
+  endpoint is marked `stale` (`analysis.stale_fallback`).
+* `cache prune` removes analyses of code versions that no longer exist; `cache clear --unit <id>` forces one unit.
+
+## 4. Configuration (`apidocgen.yaml`)
+
+`apidocgen init` writes a fully commented template. Key sections:
+
+```yaml
+project:
+  paths: [./src/main/java, ../shared-dtos/src/main/java]   # folders or files, absolute or relative
+  include: ["**/*.java"]
+  exclude: ["**/test/**", "**/target/**"]
+  db: .apidocgen/graph.db            # graph + LLM cache + archive live next to it
+  endpoints_file: endpoints.yaml     # optional manual endpoints (see §6)
+
+detectors:
+  spring: true
+  jaxrs: true
+  servlet: true
+  micronaut: false
+  custom:                            # in-house frameworks (see §5)
+    - name: dispatcher
+      class: { annotation: ServiceHandler }
+      method: { name_regex: "^execute$" }
+      http_method: { class_annotation_arg: method, default: POST }
+      path: { class_annotation_arg: path }
+      request: { param_index: 0 }
+      response: { return_type: true }
+
+analysis:
+  call_depth: 1                      # how far to follow calls when slicing an endpoint
+  max_slice_tokens: 6000
+  type_batch_tokens: 9000
+  error_catalog_regex: "(?i).*(ErrorCode|ResultCode|RsCode).*"   # enums/classes holding code+message pairs
+  cache_key_includes_model: false
+  stale_fallback: true
+
+llm:
+  provider: anthropic                # anthropic | openai | ollama | mock
+  model: claude-sonnet-5
+  api_key_env: ANTHROPIC_API_KEY
+  base_url: null                     # openai-compatible: https://api.openai.com/v1, http://localhost:1234/v1 ...
+  temperature: 0.2                   # null for models that reject it
+  prompt_cache: true
+  max_calls_per_run: null
+  style_notes: ""                    # extra Persian terminology / style rules for the model
+
+doc:
+  title: "سرویس ثبت سند حسابداری"
+  system_name: "سامانه بانکداری باز"
+  organization: "داتین"
+  classification: "عمومی"
+  author: "نام تهیه‌کننده"
+  date: auto                         # Jalali date of the render, or "1403/10/22"
+  version: "1.17"
+  logo: ./logo.png                   # embedded into the HTML
+  font_google: Vazirmatn             # or font_file: ./Vazirmatn.ttf (embedded, offline)
+  base_url: "http://[IP]:[PORT]"
+  approvals: [...]                   # تاییدیه سند rows
+  changelog: [...]                   # جدول تغییرات rows; changelog_auto appends added/changed/removed services
+  common_headers: [...]              # ApiKey, Signature ... shown for every service
+  common_error_codes: [...]          # 804, 805 ... appended to every error table
+  intro_file: intro.md               # or intro_llm: true
+  call_steps_file: null              # custom "مراحل فراخوانی سرویس" template ({method} {path} {body})
+  include: []                        # endpoint id patterns, e.g. ["POST /API/*"]
+  output: docs/api-document.html
+
+overrides:                           # human corrections that survive every regeneration
+  "POST /API/IssueDocument":
+    title: "سرویس ثبت سند حسابداری"
+    description: "..."
+    notes: ["..."]                   # replaces LLM notes; extra_notes appends
+    fields: { TransactionId: "شناسه یکتا تراکنش" }
+    error_codes: [{ code: 1038, title: "اطلاعات ورودی اشتباه است" }]
+    samples: { success: "{...}", failures: ["{...}"] }
+    hide_fields: [InternalFlag]
+```
+
+Endpoint ids are `"<METHOD> <path>"` (see `apidocgen endpoints`).
+
+## 5. Custom (in-house) frameworks
+
+Anything that is *not* Spring/JAX-RS can be described with a rule instead of code:
+
+```yaml
+detectors:
+  custom:
+    - name: legacy
+      class:  { extends: BaseHandler, name_regex: ".*Handler$" }   # annotation / extends / implements / name_regex
+      method: { annotation: Handles }                              # annotation / name_regex / modifiers
+      http_method: { annotation_arg: method, default: POST }       # read from the method or class annotation
+      path: { annotation_arg: value, template: "/API/{class_name}", strip_suffix: Handler }
+      request: { param_index: 0 }          # or param_annotation: Body, or none: true
+      response: { base_type_arg: 1 }       # generic argument of BaseHandler<REQ, RES>, or return_type: true
+      headers: [{ name: ApiKey, required: true, description: "..." }]
+```
+
+## 6. Manual endpoints & LLM-assisted discovery
+
+For reflection/registry based routing the handler methods carry no markers. Either list them by hand:
+
+```yaml
+# endpoints.yaml
+endpoints:
+  - handler: com.bank.esb.legacy.ReverseHandler#execute   # class#method (parameter list optional)
+    method: POST
+    path: /Api/Reverse
+    body: com.bank.esb.dto.ReverseRequest                 # optional
+    response: com.bank.esb.dto.BaseResponse               # optional
+```
+
+or let the model propose them from **class skeletons only** (cheap, cached, written to that file for review):
+
+```bash
+apidocgen discover --class-regex ".*(Handler|Processor)$"
+# review endpoints.yaml, set project.endpoints_file: endpoints.yaml, then: apidocgen scan
+```
+
+## 7. What is extracted without any LLM
+
+* wire names (Jackson `@JsonProperty`, `@JsonNaming(UpperCamelCase/SnakeCase…)`, Gson `@SerializedName`),
+  ignored fields (`@JsonIgnore`, `transient`), inherited fields (base class first, like serialisers),
+  generic envelopes (`ApiResponse<T>` → `T` substituted), records, nested types, enums (constant + Persian title
+  from the constructor argument / comment)
+* required flags (`@NotNull/@NotBlank/@NotEmpty`, `@RequestParam(required)`, `@Schema(required…)`, primitives, path variables)
+* descriptions from Javadoc, `//` comments, `@Schema/@ApiModelProperty/@Parameter` annotations
+* error codes: constants of the error catalog (`ErrorCode.INVALID_INPUT` → `1038 – اطلاعات ورودی اشتباه است`) reached
+  through the call graph from the handler (`controller → service → validate()` …)
+* JSON samples (success / validation failure / business failure) from the response envelope
+* headers, query, path, form, cookie parameters; Spring `RouterFunction` routes; servlet `getParameter/getHeader`
+
+The LLM then adds: Persian service titles/descriptions, field descriptions and examples where the code has none,
+enum labels, notes (conditional fields, balance rules…), and a Persian title for each error code.
+
+### Business descriptions
+
+`scan` extracts the API structure. `render` uses code comments and cached analyses; neither command invokes an LLM.
+`mock` produces test placeholders, and `run --no-llm` skips analysis. To generate actual Persian business explanations,
+configure a real `llm.provider` and `llm.model` with the required credentials, then run `apidocgen analyze` followed by
+`apidocgen render` (or `apidocgen run`). In the UI use **Analyze**, with **dry-run** unchecked, then **Render**.
+
+Set `project.description` to describe the application domain and `llm.style_notes` for terminology. The analyzer explains
+service goals, preconditions and outcomes and all request/response fields, including nested fields, using the visible
+implementation and validation rules. `analysis.call_depth: 2` includes validation methods called by services; increase
+`analysis.max_slice_tokens` if necessary. Unsupported business rules must remain unspecified. Changing the application
+context invalidates cached analyses; if `analysis.stale_fallback` is enabled, old text can remain visible as stale until
+analysis finishes. Set it to `false` to show only current analyses. Explicit `overrides.fields` corrections still win.
+
+## 8. Web UI
+
+```bash
+apidocgen ui                                  # one application (the config in the current folder)
+apidocgen ui --workspace workspace.yaml       # several applications
+```
+
+```yaml
+# workspace.yaml
+applications:
+  - { name: ESB Core,     config: ../esb-core/apidocgen.yaml }
+  - { name: Card Service, config: ../card/apidocgen.yaml }
+```
+
+The UI (green `#2C673E` / orange `#E28B3C`, light theme with a dark-mode toggle) shows for each application the
+endpoint tree (by path), endpoint details (tables, error codes, samples, analysis status, link into the latest
+document), the archive of every generated document version (open/download/delete, what changed between versions),
+status (graph, cache hits, token usage) and lets you run *Scan / Analyze (optionally dry-run) / Render / Run all*
+with a live job log. It binds to `127.0.0.1` only.
+
+## 9. The code graph
+
+`.apidocgen/graph.db` (SQLite) holds files with content hashes, symbols (types, methods, fields, constants), edges
+(`extends`, `implements`, `field_type`, `param_type`, `returns`, `throws`, `calls` — including interface → implementation,
+`creates`, `uses_const`, `mentions`, `annotated_with`), detected endpoints, the analysis cache, LLM call log and
+document snapshots.
+
+```bash
+apidocgen graph stats
+apidocgen graph deps com.bank.esb.error.ErrorCode#INVALID_INPUT
+apidocgen graph impact src/main/java/com/bank/esb/dto/MetaData.java
+apidocgen graph export --format dot --out graph.dot      # or --format json
+```
+
+## 10. Notes & limitations
+
+* Java only (Lombok-generated accessors are fine because documentation is field based; Kotlin/Groovy are not parsed).
+* Values are read from source: an annotation argument referencing a constant from *another* file is kept as-is
+  (`BASE + "/x"` inside the same class is resolved).
+* `boolean isX` fields are documented by field name (`isX`); Jackson would expose `x` unless annotated — add
+  `@JsonProperty` or an `overrides.fields` entry if that matters.
+* Print layout is tuned for Chromium (Chrome/Edge). Google Fonts need internet when viewing; use `doc.font_file` to embed
+  a font for offline/print use.
+* The LLM never sees whole files: only the slices described in §3, truncated to the configured budgets.
+
+## 11. Tests
+
+```bash
+pip install pytest && pytest -q            # or, without pytest:  python tests/run_tests.py
+```
+
+## 12. Layout
+
+```
+apidocgen/
+  javaparse/    tokenizer + declaration-level Java parser (pure Python)
+  graph/        SQLite store, in-memory index, graph builder (type/call resolution)
+  detectors/    Spring / JAX-RS / Micronaut profiles, servlets, functional routes, custom rules, manual file
+  docmodel/     deterministic document model: fields, naming, samples, error catalog
+  analysis/     units + hashing, prompts, analyzer (cache, batching, budgets), discovery
+  llm/          Anthropic / OpenAI-compatible / Ollama / mock clients (stdlib HTTP)
+  render/       Jinja2 template → RTL HTML
+  ui/           local web UI (stdlib http.server + single-page app)
+  archive.py    document version archive
+  pipeline.py   scan / analyze / render orchestration
+  cli.py        command line
+examples/sample-esb   a small ESB-like project covering all detector styles
+```
+
+## Local OpenAI setup
+
+The default application is configured for `gpt-5.6-terra`. Run the following in your own Terminal:
+
+```bash
+cd /Users/manakhoshbatn/Downloads/apidocgen
+.venv/bin/python setup_openai.py
+```
+
+Paste the key at the hidden prompt. The helper stores it in `.apidocgen/openai-key` with owner-only permissions;
+this path is ignored by Git. The key is not printed and does not belong in chat, screenshots, or the main YAML file.
+An `OPENAI_API_KEY` environment variable takes precedence over this file. After saving the key, use Analyze then
+Render in the UI, or run `.venv/bin/python -m apidocgen run` to generate business descriptions.

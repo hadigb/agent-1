@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apidocgen"
+version = "0.1.0"
+description = "Scan Java code, keep a code graph and generate Persian (Datin-style) API service documents with a content-addressed LLM cache."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = ["Jinja2>=3.0", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+markdown = ["Markdown>=3.4"]
+tokens = ["tiktoken>=0.5"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+apidocgen = "apidocgen.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["apidocgen*"]
+
+[tool.setuptools.package-data]
+apidocgen = ["render/templates/*.j2", "ui/static/*"]

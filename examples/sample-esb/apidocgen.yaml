@@ -1,0 +1,79 @@
+project:
+  name: "سامانه بانکداری باز"
+  paths:
+    - ./src/main/java
+  db: .apidocgen/graph.db
+
+detectors:
+  spring: true
+  jaxrs: true
+  servlet: true
+  custom:
+    - name: dispatcher
+      class: { annotation: ServiceHandler }
+      method: { name_regex: "^execute$" }
+      http_method: { class_annotation_arg: method, default: POST }
+      path: { class_annotation_arg: path }
+      request: { param_index: 0 }
+      response: { return_type: true }
+
+llm:
+  provider: mock
+  model: mock-1
+
+doc:
+  title: "سرویس ثبت سند حسابداری"
+  author: "نسیم حمیدیان"
+  version: "1.17"
+  date: auto
+  output: docs/api-document.html
+  approvals:
+    - { role: "تدوین کننده", name: "نسیم حمیدیان", position: "کارشناس", date: "1403/10/22" }
+    - { role: "تأییدکننده", name: "آذین چراغی", position: "کارشناس ارشد", date: "1403/10/30" }
+    - { role: "تصویب‌کننده", name: "", position: "", date: "" }
+  changelog:
+    - { date: "1399/10/13", version: "1.1", editor: "اکرم احمدیان مهرگو", description: "اضافه شدن فیلد Personnelcode در ورودی" }
+    - { date: "1404/03/10", version: "1.17", editor: "آذین چراغی", description: "اضافه شده دو فیلد GuildCode و Wallet به ورودی سرویس ثبت سند حسابداری" }
+  show_call_steps: true
+  success_code: { code: 1, title: "عملیات با موفقیت انجام شد" }
+  validation_error:
+    code: 1038
+    title: "اطلاعات ورودی اشتباه است"
+    item_code: 2941
+    item_title: "مقداری برای پارامتر ورودی اجباری ارسال نشده است"
+  common_error_codes:
+    - { code: 804, title: "مدت زمان پردازش پیام منقضی شده است" }
+    - { code: 805, title: "خطا در فراخوانی سرویس" }
+
+# Manual corrections that survive regeneration (also what a reviewer would tweak after an LLM run).
+overrides:
+  "POST /API/IssueDocument":
+    title: "سرویس ثبت سند حسابداری"
+    description: "با استفاده از این سرویس انتقال وجه در چند بند انجام و سند حسابداری مربوطه ثبت می‌گردد. در این سرویس امکان درج تعداد بیش از یک بدهکار و بیش از یک بستانکار وجود دارد. این سرویس برای انتقال وجه به حساب‌های دیجیتال (سپرده/شبا) نیز قابل استفاده است."
+    extra_notes:
+      - "به منظور تراز بودن سند حسابداری باید جمع مقادیر مبلغ وارد شده در ورودی برای حساب‌های Debtor و Creditor با هم برابر باشد."
+      - "در صورتی‌که سپرده ارسال شده در ورودی از نوع قبضی باشد شماره قبض سپرده در فیلد BillNumber در ورودی ارسال می‌گردد."
+      - "چنانچه از حالت نقدی (DocumentItemType = BOX) در بخش بدهکار یا بستانکار استفاده شود نیازی به ارسال مقدار برای فیلد AccountNumber نمی‌باشد."
+    fields:
+      TransactionChannel: "کانال تراکنش"
+  "GET /API/IssueDocument/{transactionId}":
+    title: "سرویس استعلام سند حسابداری"
+    fields:
+      transactionId: "شناسه یکتا تراکنش ثبت شده"
+      showDocumentNumber: "نمایش شماره سند در خروجی"
+  "POST /Api/GetBillStructureForDeposite":
+    title: "سرویس نمایش نوع مشخصه عملیات مالی"
+  "POST /Api/GenerateBillSerialNumber":
+    title: "سرویس دریافت شماره سریال قبض سپرده"
+  "POST /Api/Reverse":
+    title: "سرویس برگشت تراکنش"
+    extra_notes:
+      - "درصورت عدم ارسال IsAsync مقدار این پارامتر true در نظر گرفته می‌شود."
+      - "در صورتیکه فیلد IsAsync مقدار false دریافت کند، در همان زمان فراخوانی، تراکنش ریورس شده و نتیجه تلاش نمایش داده می‌شود."
+  "POST /functional/documents":
+    title: "سرویس ثبت سند (نسخه Reactive)"
+  "GET /functional/documents/{id}":
+    title: "سرویس دریافت سند با شناسه"
+  "GET /legacy/status":
+    title: "سرویس استعلام وضعیت تراکنش (قدیمی)"
+    hide_fields: []
