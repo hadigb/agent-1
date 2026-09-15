@@ -1,29 +1,57 @@
 """Endpoint detector registry."""
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from ..graph.index import CodeIndex
 from .annotation_frameworks import PROFILES, AnnotationFrameworkDetector
 from .model import EndpointSpec, ParamSpec  # noqa: F401
 from .others import CustomRuleDetector, ManualEndpointsDetector, ServletDetector, SpringFunctionalDetector
 
+# One entry per switchable, config-driven detector: the config flag that turns
+# it on (with its default), and a factory that builds the detector instance(s)
+# for it. build_detectors() then just walks this table instead of repeating
+# an "if det_cfg.get(flag, default): dets.append(...)" per framework.
+_DetectorFactory = Callable[[Dict[str, Any], Any], List[Any]]
 
-def build_detectors(cfg: Dict[str, Any], manual_entries: List[Dict[str, Any]] | None = None) -> list:
+
+def _build_spring(det_cfg: Dict[str, Any], wrappers: Any) -> List[Any]:
+    unannotated_as_body = bool(det_cfg.get("spring_unannotated_object_as_body", False))
+    return [
+        AnnotationFrameworkDetector(PROFILES["spring"], wrappers, unannotated_object_as_body=unannotated_as_body),
+        SpringFunctionalDetector(),
+    ]
+
+
+def _build_jaxrs(_det_cfg: Dict[str, Any], wrappers: Any) -> List[Any]:
+    return [AnnotationFrameworkDetector(PROFILES["jaxrs"], wrappers)]
+
+
+def _build_micronaut(_det_cfg: Dict[str, Any], wrappers: Any) -> List[Any]:
+    return [AnnotationFrameworkDetector(PROFILES["micronaut"], wrappers)]
+
+
+def _build_servlet(_det_cfg: Dict[str, Any], _wrappers: Any) -> List[Any]:
+    return [ServletDetector()]
+
+
+_SWITCHABLE_DETECTORS: List[tuple[str, bool, _DetectorFactory]] = [
+    ("spring", True, _build_spring),
+    ("jaxrs", True, _build_jaxrs),
+    ("micronaut", False, _build_micronaut),
+    ("servlet", True, _build_servlet),
+]
+
+
+def build_detectors(cfg: Dict[str, Any], manual_entries: Optional[List[Dict[str, Any]]] = None) -> list:
     det_cfg = cfg.get("detectors", {}) or {}
     analysis_cfg = cfg.get("analysis", {}) or {}
     wrappers = analysis_cfg.get("response_wrappers")
+
     dets: list = []
-    if det_cfg.get("spring", True):
-        dets.append(AnnotationFrameworkDetector(PROFILES["spring"], wrappers,
-                                                unannotated_object_as_body=bool(det_cfg.get("spring_unannotated_object_as_body", False))))
-        dets.append(SpringFunctionalDetector())
-    if det_cfg.get("jaxrs", True):
-        dets.append(AnnotationFrameworkDetector(PROFILES["jaxrs"], wrappers))
-    if det_cfg.get("micronaut", False):
-        dets.append(AnnotationFrameworkDetector(PROFILES["micronaut"], wrappers))
-    if det_cfg.get("servlet", True):
-        dets.append(ServletDetector())
+    for flag, default_enabled, factory in _SWITCHABLE_DETECTORS:
+        if det_cfg.get(flag, default_enabled):
+            dets.extend(factory(det_cfg, wrappers))
     for rule in det_cfg.get("custom", []) or []:
         dets.append(CustomRuleDetector(rule))
     if manual_entries:

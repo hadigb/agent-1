@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from ..javaparse.model import Annotation, Javadoc, MethodDecl, Param, TypeDecl, TypeRef, find_annotation
 
@@ -17,6 +17,7 @@ REQUIRED_ANNOTATIONS = {"NotNull", "NotBlank", "NotEmpty", "NonNull", "Nonnull",
 VALIDATION_ANNOTATIONS = REQUIRED_ANNOTATIONS | {"Size", "Min", "Max", "Pattern", "Positive", "PositiveOrZero",
                                                  "Negative", "NegativeOrZero", "Email", "Digits", "Past", "Future",
                                                  "DecimalMin", "DecimalMax", "Length", "Range", "Valid"}
+PRIMITIVE_TYPE_NAMES = {"int", "long", "short", "byte", "boolean", "double", "float", "char"}
 
 DEFAULT_RESPONSE_WRAPPERS = [
     "ResponseEntity", "HttpEntity", "RequestEntity", "Mono", "CompletableFuture", "CompletionStage", "Future",
@@ -118,68 +119,122 @@ def unwrap_response(ref: Optional[TypeRef], wrappers: Sequence[str] = DEFAULT_RE
     return cur
 
 
+# ---------------------------------------------------------------------- #
+# annotation-driven field metadata
+#
+# Each piece of metadata (required?, description, wire name, ...) is read
+# from whichever annotation the field happens to carry. Rather than a long
+# if/elif chain keyed on the annotation's simple name, every recognised
+# annotation is registered once in a small table together with the function
+# that knows how to read *that* annotation. Looking a field up then becomes
+# "iterate the annotations, dispatch on name, stop at the first decisive
+# answer" - the same behaviour as the original chain, only declarative.
+# ---------------------------------------------------------------------- #
+RequiredReader = Callable[[Annotation], Optional[bool]]
+
+
+def _required_always_true(_a: Annotation) -> Optional[bool]:
+    return True
+
+
+def _required_always_false(_a: Annotation) -> Optional[bool]:
+    return False
+
+
+def _required_from_schema(a: Annotation) -> Optional[bool]:
+    if a.get("required") is True:
+        return True
+    mode = constant_name(a.get("requiredMode"))
+    if mode == "REQUIRED":
+        return True
+    if mode == "NOT_REQUIRED":
+        return False
+    return None
+
+
+def _required_from_flag(a: Annotation) -> Optional[bool]:
+    if a.get("required") is not None:
+        return bool(a.get("required"))
+    return None
+
+
+_REQUIRED_READERS: Dict[str, RequiredReader] = {
+    **{name: _required_always_true for name in REQUIRED_ANNOTATIONS},
+    "Schema": _required_from_schema,
+    "ApiModelProperty": _required_from_flag,
+    "JsonProperty": _required_from_flag,
+    "Parameter": _required_from_flag,
+    "ApiParam": _required_from_flag,
+    "Nullable": _required_always_false,
+}
+
+
 def required_from_annotations(annotations: List[Annotation], type_ref: Optional[TypeRef] = None) -> Optional[bool]:
     """True/False when an annotation states it explicitly, None when unknown."""
     for a in annotations:
-        n = a.simple_name
-        if n in REQUIRED_ANNOTATIONS:
-            return True
-        if n in ("Schema",):
-            r = a.get("required")
-            if r is True:
-                return True
-            mode = constant_name(a.get("requiredMode"))
-            if mode == "REQUIRED":
-                return True
-            if mode == "NOT_REQUIRED":
-                return False
-        if n in ("ApiModelProperty", "JsonProperty", "Parameter", "ApiParam") and a.get("required") is not None:
-            return bool(a.get("required"))
-        if n == "Nullable":
-            return False
+        reader = _REQUIRED_READERS.get(a.simple_name)
+        if reader is None:
+            continue
+        result = reader(a)
+        if result is not None:
+            return result
     if type_ref is not None:
         if type_ref.simple_name == "Optional":
             return False
-        if type_ref.name in ("int", "long", "short", "byte", "boolean", "double", "float", "char") and type_ref.dims == 0:
+        if type_ref.name in PRIMITIVE_TYPE_NAMES and type_ref.dims == 0:
             return True
     return None
 
 
+DescriptionReader = Callable[[Annotation], str]
+
+
+def _description_via(*keys: str) -> DescriptionReader:
+    def read(a: Annotation) -> str:
+        return a.get_str(*keys) or ""
+    return read
+
+
+_DESCRIPTION_READERS: Dict[str, DescriptionReader] = {
+    "Schema": _description_via("description"),
+    "Parameter": _description_via("description"),
+    "ApiModelProperty": _description_via("value", "notes"),
+    "ApiParam": _description_via("value", "notes"),
+    "JsonPropertyDescription": _description_via("value"),
+    "Comment": _description_via("value"),
+    "Description": _description_via("value"),
+}
+
+
 def description_from_annotations(annotations: List[Annotation]) -> str:
     for a in annotations:
-        n = a.simple_name
-        if n in ("Schema", "Parameter"):
-            d = a.get_str("description")
-            if d:
-                return d
-        if n in ("ApiModelProperty", "ApiParam"):
-            d = a.get_str("value", "notes")
-            if d:
-                return d
-        if n == "JsonPropertyDescription":
-            d = a.get_str("value")
-            if d:
-                return d
-        if n == "Comment" or n == "Description":
-            d = a.get_str("value")
-            if d:
-                return d
+        reader = _DESCRIPTION_READERS.get(a.simple_name)
+        if reader is None:
+            continue
+        text = reader(a)
+        if text:
+            return text
     return ""
+
+
+_WIRE_NAME_ANNOTATIONS = ("JsonProperty", "SerializedName", "JsonAlias", "XmlElement", "XmlAttribute", "JsonbProperty")
 
 
 def wire_name(annotations: List[Annotation], java_name: str) -> str:
     """Jackson / Gson / JAXB renames."""
     for a in annotations:
-        n = a.simple_name
-        if n in ("JsonProperty", "SerializedName", "JsonAlias", "XmlElement", "XmlAttribute", "JsonbProperty"):
+        if a.simple_name in _WIRE_NAME_ANNOTATIONS:
             v = a.get_str("value", "name")
             if v:
                 return v
     return java_name
 
 
+_IGNORED_FIELD_ANNOTATIONS = ("JsonIgnore", "Transient", "JsonBackReference", "XmlTransient")
+
+
 def is_ignored_field(annotations: List[Annotation]) -> bool:
-    return any(a.simple_name in ("JsonIgnore", "Transient", "JsonBackReference", "XmlTransient") for a in annotations)
+    return any(a.simple_name in _IGNORED_FIELD_ANNOTATIONS for a in annotations)
 
 
 def method_summary(m: MethodDecl) -> str:

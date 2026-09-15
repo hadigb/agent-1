@@ -54,8 +54,13 @@ apidocgen/render/templates/document.html.j2
 apidocgen/services/__init__.py
 apidocgen/services/scan_service.py
 apidocgen/ui/__init__.py
+apidocgen/ui/folder_picker.py
+apidocgen/ui/registry.py
 apidocgen/ui/server.py
 apidocgen/ui/static/index.html
+apidocgen/ui/static/jquery.min.js
+apidocgen/ui/static/select2.min.css
+apidocgen/ui/static/select2.min.js
 apidocgen/util/__init__.py
 apidocgen/util/jalali.py
 apidocgen/util/tokens.py

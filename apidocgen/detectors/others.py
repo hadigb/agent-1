@@ -22,44 +22,58 @@ SERVLET_METHODS = {"doGet": "GET", "doPost": "POST", "doPut": "PUT", "doDelete":
 class ServletDetector:
     name = "servlet"
 
+    @staticmethod
+    def _extends_http_servlet(t: TypeDecl, index: CodeIndex) -> bool:
+        """True if ``t`` extends HttpServlet/GenericServlet directly, or via a
+        project superclass further up the chain."""
+        if any(e.simple_name in ("HttpServlet", "GenericServlet") for e in t.extends):
+            return True
+        for anc in index.superclass_chain(t.qname)[1:]:
+            at = index.types.get(anc)
+            if at and any(e.simple_name == "HttpServlet" for e in at.extends):
+                return True
+        return False
+
+    @staticmethod
+    def _servlet_url_patterns(t: TypeDecl, ws, index: CodeIndex) -> List[str]:
+        paths = all_strs(ws.get("urlPatterns", "value")) if ws else []
+        expanded = [str(expand_constants(p, t, index)) for p in paths]
+        return expanded or ["/" + t.name]
+
+    @staticmethod
+    def _params_from_servlet_calls(m: MethodDecl) -> List[ParamSpec]:
+        """``getParameter("x")`` / ``getHeader("x")`` calls in the handler body
+        become query/header params, each reported once even if called twice."""
+        params: List[ParamSpec] = []
+        seen: set = set()
+        readers = {"getParameter": "query", "getHeader": "header"}
+        for call in m.body.calls:
+            location = readers.get(call.name)
+            if location is None or not call.string_args:
+                continue
+            n = call.string_args[0]
+            if (location, n) in seen:
+                continue
+            seen.add((location, n))
+            params.append(ParamSpec(name=n, location=location, java_name=n, type=TypeRef(name="String")))
+        return params
+
     def detect(self, t: TypeDecl, jf: JavaFile, index: CodeIndex) -> List[EndpointSpec]:
         if t.kind != "class":
             return []
         ws = find_annotation(t.annotations, "WebServlet")
-        extends_servlet = any(e.simple_name in ("HttpServlet", "GenericServlet") for e in t.extends)
-        if not ws and not extends_servlet:
-            # maybe extends a project class that extends HttpServlet
-            for anc in index.superclass_chain(t.qname)[1:]:
-                at = index.types.get(anc)
-                if at and any(e.simple_name == "HttpServlet" for e in at.extends):
-                    extends_servlet = True
-                    break
-        if not ws and not extends_servlet:
+        if not ws and not self._extends_http_servlet(t, index):
             return []
-        paths = all_strs(ws.get("urlPatterns", "value")) if ws else []
-        paths = [str(expand_constants(p, t, index)) for p in paths] or ["/" + t.name]
+        paths = self._servlet_url_patterns(t, ws, index)
+
         out: List[EndpointSpec] = []
         for m in t.methods:
             if m.name not in SERVLET_METHODS or m.body is None:
                 continue
-            http = SERVLET_METHODS[m.name]
-            params: List[ParamSpec] = []
-            seen: set = set()
-            for call in m.body.calls:
-                if call.name == "getParameter" and call.string_args:
-                    n = call.string_args[0]
-                    if ("query", n) not in seen:
-                        seen.add(("query", n))
-                        params.append(ParamSpec(name=n, location="query", java_name=n, type=TypeRef(name="String")))
-                elif call.name == "getHeader" and call.string_args:
-                    n = call.string_args[0]
-                    if ("header", n) not in seen:
-                        seen.add(("header", n))
-                        params.append(ParamSpec(name=n, location="header", java_name=n, type=TypeRef(name="String")))
             class_doc = t.javadoc.text if t.javadoc else t.comment
-            spec = EndpointSpec(http_method=http, path=normalize_path(paths[0]), framework="servlet",
+            spec = EndpointSpec(http_method=SERVLET_METHODS[m.name], path=normalize_path(paths[0]), framework="servlet",
                                 handler_qname=CodeIndex.method_qname(t.qname, m), type_qname=t.qname, file_path=jf.path,
-                                params=params, body_type=None, response_type=None,
+                                params=self._params_from_servlet_calls(m), body_type=None, response_type=None,
                                 summary=method_summary(m) or class_doc,
                                 description=method_description(m) or class_doc,
                                 deprecated=is_deprecated(m.annotations, m.javadoc), path_aliases=paths[1:],
@@ -243,77 +257,100 @@ class CustomRuleDetector:
             return m.is_public and not m.is_static
         return True
 
+    # -- per-endpoint resolution steps -------------------------------------
+    # Each piece of an endpoint (http method / path / request body / response
+    # / headers) is resolved from the rule's config in its own priority
+    # order. Splitting these out of one long method keeps every resolution
+    # rule readable on its own, instead of one function mixing five concerns.
+
+    def _resolve_http_method(self, manno, class_anno) -> str:
+        hm_cfg = self.rule.get("http_method") or {}
+        http = None
+        if hm_cfg.get("annotation_arg") and manno:
+            http = first_str(manno.get(hm_cfg["annotation_arg"]))
+        if not http and hm_cfg.get("class_annotation_arg") and class_anno:
+            http = first_str(class_anno.get(hm_cfg["class_annotation_arg"]))
+        return (http or hm_cfg.get("default") or "POST").rsplit(".", 1)[-1].upper()
+
+    def _resolve_path(self, t: TypeDecl, m: MethodDecl, jf: JavaFile, index: CodeIndex, manno, class_anno) -> str:
+        path_cfg = self.rule.get("path") or {}
+        cls_name = t.name
+        if path_cfg.get("strip_suffix") and cls_name.endswith(path_cfg["strip_suffix"]):
+            cls_name = cls_name[: -len(path_cfg["strip_suffix"])]
+        prefix = ""
+        if path_cfg.get("class_annotation_arg") and class_anno:
+            prefix = str(expand_constants(first_str(class_anno.get(path_cfg["class_annotation_arg"])) or "", t, index))
+        sub = None
+        if path_cfg.get("annotation_arg") and manno:
+            sub = first_str(manno.get(path_cfg["annotation_arg"]))
+            if sub is not None:
+                sub = str(expand_constants(sub, t, index))
+        if sub is None and path_cfg.get("template"):
+            sub = path_cfg["template"].format(class_name=cls_name, method_name=m.name, package=jf.package)
+        if sub is None:
+            sub = "" if prefix else "/" + cls_name
+        return normalize_path(prefix, sub)
+
+    def _resolve_request(self, m: MethodDecl) -> Tuple[List[ParamSpec], Optional[TypeRef]]:
+        req_cfg = self.rule.get("request") or {}
+        ignored = set(self.rule.get("ignored_param_types", []) or [])
+        candidates = [p for p in m.params if p.type.simple_name not in ignored]
+        params: List[ParamSpec] = []
+        body_type: Optional[TypeRef] = None
+        if req_cfg.get("none"):
+            return params, body_type
+        chosen = None
+        if req_cfg.get("param_annotation"):
+            chosen = next((p for p in candidates if any(a.simple_name == req_cfg["param_annotation"] for a in p.annotations)), None)
+        elif "param_index" in req_cfg:
+            idx = int(req_cfg["param_index"])
+            chosen = candidates[idx] if 0 <= idx < len(candidates) else None
+        elif candidates:
+            chosen = candidates[0]
+        if chosen is not None:
+            body_type = chosen.type
+            params.append(ParamSpec(name=chosen.name, location="body", java_name=chosen.name, type=chosen.type,
+                                    required=True, description=param_description(chosen, m.javadoc)))
+        return params, body_type
+
+    def _resolve_response(self, t: TypeDecl, m: MethodDecl) -> Optional[TypeRef]:
+        resp_cfg = self.rule.get("response") or {}
+        if "base_type_arg" in resp_cfg:
+            idx = int(resp_cfg["base_type_arg"])
+            for ref in t.extends + t.implements:
+                if ref.args and idx < len(ref.args):
+                    return ref.args[idx]
+        if resp_cfg.get("return_type", True):
+            return unwrap_response(m.return_type)
+        return None
+
+    def _rule_header_params(self) -> List[ParamSpec]:
+        return [
+            ParamSpec(name=h["name"], location="header", java_name=h["name"],
+                      type=TypeRef(name=h.get("type", "String")), required=bool(h.get("required", False)),
+                      description=h.get("description", ""))
+            for h in self.rule.get("headers", []) or []
+        ]
+
     def detect(self, t: TypeDecl, jf: JavaFile, index: CodeIndex) -> List[EndpointSpec]:
         if t.kind not in ("class", "interface") or not self._class_matches(t, index):
             return []
-        out: List[EndpointSpec] = []
         c = self.rule.get("class") or {}
         class_anno = find_annotation(t.annotations, c["annotation"]) if c.get("annotation") else None
-        hm_cfg = self.rule.get("http_method") or {}
-        path_cfg = self.rule.get("path") or {}
-        req_cfg = self.rule.get("request") or {}
-        resp_cfg = self.rule.get("response") or {}
-        ignored = set(self.rule.get("ignored_param_types", []) or [])
+        mcfg = self.rule.get("method") or {}
+
+        out: List[EndpointSpec] = []
         for m in t.methods:
             if not self._method_matches(m):
                 continue
-            mcfg = self.rule.get("method") or {}
             manno = find_annotation(m.annotations, mcfg["annotation"]) if mcfg.get("annotation") else None
-            # http method
-            http = None
-            if hm_cfg.get("annotation_arg") and manno:
-                http = first_str(manno.get(hm_cfg["annotation_arg"]))
-            if not http and hm_cfg.get("class_annotation_arg") and class_anno:
-                http = first_str(class_anno.get(hm_cfg["class_annotation_arg"]))
-            http = (http or hm_cfg.get("default") or "POST").rsplit(".", 1)[-1].upper()
-            # path
-            cls_name = t.name
-            if path_cfg.get("strip_suffix") and cls_name.endswith(path_cfg["strip_suffix"]):
-                cls_name = cls_name[: -len(path_cfg["strip_suffix"])]
-            prefix = ""
-            if path_cfg.get("class_annotation_arg") and class_anno:
-                prefix = str(expand_constants(first_str(class_anno.get(path_cfg["class_annotation_arg"])) or "", t, index))
-            sub = None
-            if path_cfg.get("annotation_arg") and manno:
-                sub = first_str(manno.get(path_cfg["annotation_arg"]))
-                if sub is not None:
-                    sub = str(expand_constants(sub, t, index))
-            if sub is None and path_cfg.get("template"):
-                sub = path_cfg["template"].format(class_name=cls_name, method_name=m.name, package=jf.package)
-            if sub is None:
-                sub = "" if prefix else "/" + cls_name
-            path = normalize_path(prefix, sub)
-            # request
-            params: List[ParamSpec] = []
-            body_type: Optional[TypeRef] = None
-            candidates = [p for p in m.params if p.type.simple_name not in ignored]
-            if not req_cfg.get("none"):
-                chosen = None
-                if req_cfg.get("param_annotation"):
-                    chosen = next((p for p in candidates if any(a.simple_name == req_cfg["param_annotation"] for a in p.annotations)), None)
-                elif "param_index" in req_cfg:
-                    idx = int(req_cfg["param_index"])
-                    chosen = candidates[idx] if 0 <= idx < len(candidates) else None
-                elif candidates:
-                    chosen = candidates[0]
-                if chosen is not None:
-                    body_type = chosen.type
-                    params.append(ParamSpec(name=chosen.name, location="body", java_name=chosen.name, type=chosen.type,
-                                            required=True, description=param_description(chosen, m.javadoc)))
-            # response
-            response: Optional[TypeRef] = None
-            if "base_type_arg" in resp_cfg:
-                idx = int(resp_cfg["base_type_arg"])
-                for ref in t.extends + t.implements:
-                    if ref.args and idx < len(ref.args):
-                        response = ref.args[idx]
-                        break
-            if response is None and resp_cfg.get("return_type", True):
-                response = unwrap_response(m.return_type)
-            for h in self.rule.get("headers", []) or []:
-                params.append(ParamSpec(name=h["name"], location="header", java_name=h["name"],
-                                        type=TypeRef(name=h.get("type", "String")), required=bool(h.get("required", False)),
-                                        description=h.get("description", "")))
+
+            http = self._resolve_http_method(manno, class_anno)
+            path = self._resolve_path(t, m, jf, index, manno, class_anno)
+            params, body_type = self._resolve_request(m)
+            response = self._resolve_response(t, m)
+            params.extend(self._rule_header_params())
+
             class_doc = t.javadoc.text if t.javadoc else t.comment
             spec = EndpointSpec(http_method=http, path=path, framework=f"custom:{self.rule_name}",
                                 handler_qname=CodeIndex.method_qname(t.qname, m), type_qname=t.qname, file_path=jf.path,
