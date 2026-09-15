@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from ..graph.index import CodeIndex
 from ..javaparse.model import Annotation, JavaFile, MethodDecl, Param, TypeDecl, TypeRef, find_annotation
@@ -30,6 +30,12 @@ IGNORED_PARAM_TYPES = {
 }
 IGNORED_PARAM_ANNOTATIONS = {"AuthenticationPrincipal", "Context", "Suspended", "CurrentUser", "SessionAttribute",
                              "RequestAttribute", "Nullable"}
+
+# A parameter carrying one of these Map-like types, bound to a whole
+# request-part (all headers / all path variables / ...), isn't a single
+# documented field - see _bound_param().
+_MAP_LIKE_PARAM_TYPES = ("Map", "MultiValueMap", "HttpHeaders", "Properties")
+_ALL_PARAMS_DESCRIPTION = "همه پارامترهای درخواست"
 
 
 @dataclass
@@ -123,26 +129,38 @@ class AnnotationFrameworkDetector:
         mapped = self._mapped_methods(t, index, has_marker)
         if not mapped:
             return []
-        if p.name == "spring" and not has_marker and t.kind != "interface" and "abstract" in t.modifiers:
-            # Spring registers the concrete subclass, not the abstract base.
-            if self._has_annotated_subtype(t, index):
-                return []
+        if self._is_shadowed_abstract_base(t, index, has_marker):
+            return []
         base_paths = self._class_paths(t, index)
-        class_consumes: List[str] = []
-        class_produces: List[str] = []
-        for a in t.annotations:
-            if a.simple_name in p.class_path_annotations:
-                class_consumes += media_types(a.get(*p.consumes_args))
-                class_produces += media_types(a.get(*p.produces_args))
-            kind = p.class_consumes_annotations.get(a.simple_name)
-            if kind == "consumes":
-                class_consumes += media_types(a.get("value"))
-            elif kind == "produces":
-                class_produces += media_types(a.get("value"))
+        class_consumes, class_produces = self._class_media_types(t)
         out: List[EndpointSpec] = []
         for owner, m in mapped:
             out.extend(self._detect_method(t, m, jf, index, base_paths, class_consumes, class_produces, owner=owner))
         return out
+
+    def _is_shadowed_abstract_base(self, t: TypeDecl, index: CodeIndex, has_marker: bool) -> bool:
+        """Spring registers the concrete subclass of an abstract controller
+        base, not the base class itself - so the base is skipped when a
+        marker-annotated subtype exists."""
+        p = self.profile
+        if p.name != "spring" or has_marker or t.kind == "interface" or "abstract" not in t.modifiers:
+            return False
+        return self._has_annotated_subtype(t, index)
+
+    def _class_media_types(self, t: TypeDecl) -> Tuple[List[str], List[str]]:
+        p = self.profile
+        consumes: List[str] = []
+        produces: List[str] = []
+        for a in t.annotations:
+            if a.simple_name in p.class_path_annotations:
+                consumes += media_types(a.get(*p.consumes_args))
+                produces += media_types(a.get(*p.produces_args))
+            kind = p.class_consumes_annotations.get(a.simple_name)
+            if kind == "consumes":
+                consumes += media_types(a.get("value"))
+            elif kind == "produces":
+                produces += media_types(a.get("value"))
+        return consumes, produces
 
     def _has_annotated_subtype(self, t: TypeDecl, index: CodeIndex) -> bool:
         markers = self.profile.class_markers
@@ -208,31 +226,29 @@ class AnnotationFrameworkDetector:
         return {}
 
     # ------------------------------------------------------------------ method level
-    def _detect_method(self, t: TypeDecl, m: MethodDecl, jf: JavaFile, index: CodeIndex, base_paths: List[str],
-                       class_consumes: List[str], class_produces: List[str],
-                       owner: Optional[TypeDecl] = None) -> List[EndpointSpec]:
+    def _resolve_http_methods(self, mapping: Annotation) -> List[str]:
         p = self.profile
-        owner = owner or t
-        mapping = next(a for a in m.annotations if a.simple_name in p.method_mappings)
         http = p.method_mappings[mapping.simple_name]
-        notes: List[str] = []
-        if http is None:
-            methods = [constant_name(x) for x in all_strs(mapping.get(*p.method_arg_names))]
-            methods = [x.upper() for x in methods if x]
-            if p.name == "jaxrs" and mapping.simple_name == "HttpMethod":
-                http_methods = [methods[0] if methods else "ANY"]
-            else:
-                http_methods = methods or ["ANY"]
-        else:
-            http_methods = [http]
+        if http is not None:
+            return [http]
+        methods = [constant_name(x) for x in all_strs(mapping.get(*p.method_arg_names))]
+        methods = [x.upper() for x in methods if x]
+        if p.name == "jaxrs" and mapping.simple_name == "HttpMethod":
+            return [methods[0] if methods else "ANY"]
+        return methods or ["ANY"]
+
+    def _resolve_method_paths(self, m: MethodDecl, mapping: Annotation, owner: TypeDecl, index: CodeIndex) -> List[str]:
+        p = self.profile
         paths = all_strs(mapping.get(*p.mapping_path_args))
         paths = [str(expand_constants(v, owner, index)) for v in paths] or [""]
         if p.name == "jaxrs":
             pa = find_annotation(m.annotations, "Path")
             paths = [str(expand_constants(pa.get_str("value"), owner, index))] if pa and pa.get_str("value") else [""]
-        full_paths = [normalize_path(b, s) for b in base_paths for s in paths]
-        if len(full_paths) > 1:
-            notes.append("مسیرهای جایگزین: " + ", ".join(full_paths[1:]))
+        return paths
+
+    def _resolve_method_media_types(self, mapping: Annotation, m: MethodDecl, class_consumes: List[str],
+                                    class_produces: List[str]) -> Tuple[List[str], List[str]]:
+        p = self.profile
         consumes = media_types(mapping.get(*p.consumes_args)) or class_consumes
         produces = media_types(mapping.get(*p.produces_args)) or class_produces
         for a in m.annotations:
@@ -241,24 +257,49 @@ class AnnotationFrameworkDetector:
                 consumes = media_types(a.get("value"))
             elif kind == "produces":
                 produces = media_types(a.get("value"))
-        bindings = self._inherit_bindings(t, owner, index) if owner.qname != t.qname else {}
-        work_method = self._substitute_method(m, bindings) if bindings else m
-        params, body_type = self._params(t, work_method, full_paths[0], index)
-        response = unwrap_response(work_method.return_type, self.wrappers or None) if self.wrappers else unwrap_response(work_method.return_type)
-        handler_q = CodeIndex.method_qname(owner.qname, m)
-        impl_q: Optional[str] = None
+        return consumes, produces
+
+    def _resolve_impl_and_handler(self, t: TypeDecl, m: MethodDecl, owner: TypeDecl, index: CodeIndex,
+                                  handler_q: str) -> Tuple[Optional[str], str]:
+        """Which concrete method actually implements this mapping (impl_qname),
+        and the qname the mapping should be attributed to (handler_qname)."""
         if m.body is None and owner.kind == "interface":
             for impl in index.implementations(owner.qname):
                 found = index.find_method(impl, m.name, len(m.params), include_impls=False)
                 for im, impl_owner in found:
                     if impl_owner == impl and im.body is not None:
-                        impl_q = CodeIndex.method_qname(impl_owner, im)
-                        break
-                if impl_q:
-                    break
-        elif owner.qname != t.qname:
+                        return CodeIndex.method_qname(impl_owner, im), handler_q
+            return None, handler_q
+        if owner.qname != t.qname:
             impl_q = CodeIndex.method_qname(owner.qname, m)
-            handler_q = CodeIndex.method_qname(t.qname, m) if any(x.name == m.name for x in t.methods) else handler_q
+            new_handler_q = CodeIndex.method_qname(t.qname, m) if any(x.name == m.name for x in t.methods) else handler_q
+            return impl_q, new_handler_q
+        return None, handler_q
+
+    def _detect_method(self, t: TypeDecl, m: MethodDecl, jf: JavaFile, index: CodeIndex, base_paths: List[str],
+                       class_consumes: List[str], class_produces: List[str],
+                       owner: Optional[TypeDecl] = None) -> List[EndpointSpec]:
+        p = self.profile
+        owner = owner or t
+        mapping = next(a for a in m.annotations if a.simple_name in p.method_mappings)
+
+        http_methods = self._resolve_http_methods(mapping)
+        paths = self._resolve_method_paths(m, mapping, owner, index)
+        full_paths = [normalize_path(b, s) for b in base_paths for s in paths]
+        notes: List[str] = []
+        if len(full_paths) > 1:
+            notes.append("مسیرهای جایگزین: " + ", ".join(full_paths[1:]))
+        consumes, produces = self._resolve_method_media_types(mapping, m, class_consumes, class_produces)
+
+        bindings = self._inherit_bindings(t, owner, index) if owner.qname != t.qname else {}
+        work_method = self._substitute_method(m, bindings) if bindings else m
+        params, body_type = self._params(t, work_method, full_paths[0], index)
+        response = unwrap_response(work_method.return_type, self.wrappers or None) if self.wrappers \
+            else unwrap_response(work_method.return_type)
+
+        handler_q = CodeIndex.method_qname(owner.qname, m)
+        impl_q, handler_q = self._resolve_impl_and_handler(t, m, owner, index, handler_q)
+
         specs: List[EndpointSpec] = []
         for http_m in http_methods:
             spec = EndpointSpec(http_method=http_m, path=full_paths[0], framework=p.name, handler_qname=handler_q,
@@ -287,8 +328,14 @@ class AnnotationFrameworkDetector:
                           is_constructor=m.is_constructor, start_line=m.start_line, end_line=m.end_line,
                           source=m.source, signature_source=m.signature_source)
 
-    def _params(self, t: TypeDecl, m: MethodDecl, path: str, index: CodeIndex):
-        p = self.profile
+    # ------------------------------------------------------------------ parameter binding
+    #
+    # Every method parameter falls into exactly one of two cases: it carries
+    # one of the profile's binding annotations (@RequestParam, @PathVariable,
+    # @QueryValue, ...) or it doesn't. _bound_param() and _unannotated_param()
+    # each own one case end to end, instead of one function interleaving both.
+
+    def _params(self, t: TypeDecl, m: MethodDecl, path: str, index: CodeIndex) -> Tuple[List[ParamSpec], Optional[TypeRef]]:
         params: List[ParamSpec] = []
         body_type: Optional[TypeRef] = None
         path_vars = set(re.findall(r"\{([^}]+)\}", path))
@@ -299,79 +346,103 @@ class AnnotationFrameworkDetector:
             if prm.type.simple_name in IGNORED_PARAM_TYPES:
                 continue
             desc = param_description(prm, m.javadoc)
-            binding: Optional[Annotation] = next((a for a in prm.annotations if a.simple_name in p.param_annotations), None)
+            binding = next((a for a in prm.annotations if a.simple_name in self.profile.param_annotations), None)
+
             if binding is not None:
-                loc = p.param_annotations[binding.simple_name]
-                name = binding.get_str(*p.name_args) or prm.name
-                if prm.type.simple_name in ("Map", "MultiValueMap", "HttpHeaders", "Properties") and loc in ("query", "header", "path", "form", "cookie"):
-                    if loc == "query":
-                        params.append(ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
-                                                required=False, description=desc or "همه پارامترهای درخواست", annotations=ann_names))
-                    continue  # a Map of all headers / path variables is not a documented parameter
-                if binding.simple_name == "Body" and binding.get_str("value"):
-                    # Micronaut @Body("part") binds a body property
-                    loc = "body-field"
-                default = binding.get_str("defaultValue")
-                dv = find_annotation(prm.annotations, "DefaultValue")
-                if dv:
-                    default = dv.get_str("value")
-                req_explicit = binding.get("required")
-                req = required_from_annotations(prm.annotations, prm.type)
-                if isinstance(req_explicit, bool):
-                    required = req_explicit
-                elif default is not None:
-                    required = False          # a default value makes the parameter optional even for primitives
-                elif req is not None:
-                    required = req
-                elif loc == "path":
-                    required = True
-                elif p.name == "spring" and loc in ("query", "header", "body", "cookie", "form"):
-                    required = default is None   # Spring defaults required=true unless a default value exists
-                else:
-                    required = False
-                if loc == "body":
-                    body_type = prm.type
-                    params.append(ParamSpec(name=name, location="body", java_name=prm.name, type=prm.type,
-                                            required=required, description=desc, annotations=ann_names))
-                    continue
-                params.append(ParamSpec(name=name, location=loc, java_name=prm.name, type=prm.type, required=required,
-                                        default=default, description=desc, annotations=ann_names))
-                continue
-            # unannotated parameter
-            if prm.type.simple_name in ("HttpEntity", "RequestEntity") and prm.type.args:
-                body_type = prm.type.args[0]
-                params.append(ParamSpec(name=prm.name, location="body", java_name=prm.name, type=body_type, required=True,
-                                        description=desc, annotations=ann_names))
-                continue
-            req = required_from_annotations(prm.annotations, prm.type)
-            if prm.name in path_vars:
-                params.append(ParamSpec(name=prm.name, location="path", java_name=prm.name, type=prm.type, required=True,
-                                        description=desc, annotations=ann_names))
-                continue
-            if p.default_unannotated == "body":
-                body_type = prm.type
-                params.append(ParamSpec(name=prm.name, location="body", java_name=prm.name, type=prm.type,
-                                        required=True if req is None else req, description=desc, annotations=ann_names))
-                continue
-            # auto (Spring / Micronaut): simple types are query params, objects are bound from the query string
-            # (Spring @ModelAttribute) or the body, depending on configuration.
-            if is_simple_type(prm.type) or prm.type.simple_name in ("List", "Set") and prm.type.args and is_simple_type(prm.type.args[0]):
-                params.append(ParamSpec(name=prm.name, location="query", java_name=prm.name, type=prm.type,
-                                        required=bool(req), description=desc, annotations=ann_names))
-                continue
-            if prm.type.simple_name in ("Map", "MultiValueMap"):
-                params.append(ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
-                                        required=False, description=desc or "همه پارامترهای درخواست", annotations=ann_names))
-                continue
-            if prm.type.simple_name == "MultipartFile":
-                params.append(ParamSpec(name=prm.name, location="form", java_name=prm.name, type=prm.type,
-                                        required=bool(req), description=desc, annotations=ann_names))
-                continue
-            if self.unannotated_object_as_body or p.name == "micronaut":
-                body_type = prm.type
-                params.append(ParamSpec(name=prm.name, location="body", java_name=prm.name, type=prm.type,
-                                        required=True if req is None else req, description=desc, annotations=ann_names))
+                spec, new_body_type = self._bound_param(prm, binding, desc, ann_names)
             else:
-                params.append(ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
-                                        required=bool(req), description=desc, annotations=ann_names))
+                spec, new_body_type = self._unannotated_param(prm, path_vars, desc, ann_names)
+            if new_body_type is not None:
+                body_type = new_body_type
+            if spec is not None:
+                params.append(spec)
         return params, body_type
+
+    def _bound_param(self, prm: Param, binding: Annotation, desc: str,
+                     ann_names: List[str]) -> Tuple[Optional[ParamSpec], Optional[TypeRef]]:
+        """Parameter annotated with a binding annotation such as @RequestParam
+        or @PathVariable. Returns (spec, body_type); spec is None for a
+        Map-of-everything parameter that has nothing to document."""
+        p = self.profile
+        loc = p.param_annotations[binding.simple_name]
+        name = binding.get_str(*p.name_args) or prm.name
+
+        if prm.type.simple_name in _MAP_LIKE_PARAM_TYPES and loc in ("query", "header", "path", "form", "cookie"):
+            if loc == "query":
+                return ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
+                                 required=False, description=desc or _ALL_PARAMS_DESCRIPTION,
+                                 annotations=ann_names), None
+            return None, None  # a Map of all headers / path variables is not a documented parameter
+
+        if binding.simple_name == "Body" and binding.get_str("value"):
+            loc = "body-field"  # Micronaut @Body("part") binds a body property
+
+        default = binding.get_str("defaultValue")
+        dv = find_annotation(prm.annotations, "DefaultValue")
+        if dv:
+            default = dv.get_str("value")
+        required = self._required_for_binding(prm, binding, loc, default)
+
+        if loc == "body":
+            return ParamSpec(name=name, location="body", java_name=prm.name, type=prm.type,
+                             required=required, description=desc, annotations=ann_names), prm.type
+        return ParamSpec(name=name, location=loc, java_name=prm.name, type=prm.type, required=required,
+                         default=default, description=desc, annotations=ann_names), None
+
+    def _required_for_binding(self, prm: Param, binding: Annotation, loc: str, default: Optional[str]) -> bool:
+        p = self.profile
+        req_explicit = binding.get("required")
+        req = required_from_annotations(prm.annotations, prm.type)
+        if isinstance(req_explicit, bool):
+            return req_explicit
+        if default is not None:
+            return False  # a default value makes the parameter optional even for primitives
+        if req is not None:
+            return req
+        if loc == "path":
+            return True
+        if p.name == "spring" and loc in ("query", "header", "body", "cookie", "form"):
+            return default is None  # Spring defaults required=true unless a default value exists
+        return False
+
+    def _unannotated_param(self, prm: Param, path_vars: Set[str], desc: str,
+                           ann_names: List[str]) -> Tuple[ParamSpec, Optional[TypeRef]]:
+        p = self.profile
+
+        if prm.type.simple_name in ("HttpEntity", "RequestEntity") and prm.type.args:
+            body_type = prm.type.args[0]
+            return ParamSpec(name=prm.name, location="body", java_name=prm.name, type=body_type, required=True,
+                             description=desc, annotations=ann_names), body_type
+
+        req = required_from_annotations(prm.annotations, prm.type)
+
+        if prm.name in path_vars:
+            return ParamSpec(name=prm.name, location="path", java_name=prm.name, type=prm.type, required=True,
+                             description=desc, annotations=ann_names), None
+
+        if p.default_unannotated == "body":
+            return ParamSpec(name=prm.name, location="body", java_name=prm.name, type=prm.type,
+                             required=True if req is None else req, description=desc,
+                             annotations=ann_names), prm.type
+
+        # auto (Spring / Micronaut): simple types are query params, objects are bound from the query string
+        # (Spring @ModelAttribute) or the body, depending on configuration.
+        is_simple_collection = prm.type.simple_name in ("List", "Set") and prm.type.args and is_simple_type(prm.type.args[0])
+        if is_simple_type(prm.type) or is_simple_collection:
+            return ParamSpec(name=prm.name, location="query", java_name=prm.name, type=prm.type,
+                             required=bool(req), description=desc, annotations=ann_names), None
+
+        if prm.type.simple_name in ("Map", "MultiValueMap"):
+            return ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
+                             required=False, description=desc or _ALL_PARAMS_DESCRIPTION, annotations=ann_names), None
+
+        if prm.type.simple_name == "MultipartFile":
+            return ParamSpec(name=prm.name, location="form", java_name=prm.name, type=prm.type,
+                             required=bool(req), description=desc, annotations=ann_names), None
+
+        if self.unannotated_object_as_body or p.name == "micronaut":
+            return ParamSpec(name=prm.name, location="body", java_name=prm.name, type=prm.type,
+                             required=True if req is None else req, description=desc,
+                             annotations=ann_names), prm.type
+        return ParamSpec(name=prm.name, location="query-object", java_name=prm.name, type=prm.type,
+                         required=bool(req), description=desc, annotations=ann_names), None
