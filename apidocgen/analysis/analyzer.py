@@ -189,17 +189,7 @@ class Analyzer:
 
         # ---- type units in batches
         misses = [u for u in plan.type_units if not u.cached]
-        batches: List[List[UnitStatus]] = []
-        cur: List[UnitStatus] = []
-        cur_tokens = 0
-        for u in misses:
-            if cur and cur_tokens + u.unit.tokens > batch_tokens:
-                batches.append(cur)
-                cur, cur_tokens = [], 0
-            cur.append(u)
-            cur_tokens += u.unit.tokens
-        if cur:
-            batches.append(cur)
+        batches = self._batch_by_tokens(misses, batch_tokens)
         for bi, batch in enumerate(batches, 1):
             if not budget_ok():
                 break
@@ -217,6 +207,22 @@ class Analyzer:
             self._call_batch([plan.intro_unit], style, report, log, budget_ok)
         report.duration_s = time.time() - t0
         return report
+
+    @staticmethod
+    def _batch_by_tokens(units: List[UnitStatus], batch_tokens: int) -> List[List[UnitStatus]]:
+        """Greedily group units into batches that stay under ``batch_tokens`` each."""
+        batches: List[List[UnitStatus]] = []
+        cur: List[UnitStatus] = []
+        cur_tokens = 0
+        for u in units:
+            if cur and cur_tokens + u.unit.tokens > batch_tokens:
+                batches.append(cur)
+                cur, cur_tokens = [], 0
+            cur.append(u)
+            cur_tokens += u.unit.tokens
+        if cur:
+            batches.append(cur)
+        return batches
 
     def _unit_spec(self, u: Any) -> Dict[str, Any]:
         if isinstance(u, TypeUnit):
@@ -328,26 +334,34 @@ class Analyzer:
         if isinstance(unit, IntroUnit):
             return {"intro_html": str(r.get("intro_html", "") or "")}
         if isinstance(unit, TypeUnit):
-            fields = r.get("fields") or {}
-            if not isinstance(fields, dict):
-                raise ValueError("'fields' must be an object")
-            clean: Dict[str, Any] = {}
-            for k, v in fields.items():
-                if isinstance(v, str):
-                    v = {"description": v}
-                if isinstance(v, dict):
-                    clean[k] = {"description": str(v.get("description", "") or ""), "example": v.get("example")}
-            enum_values = r.get("enum_values") or {}
-            if not isinstance(enum_values, dict):
-                enum_values = {}
-            return {"description": str(r.get("description", "") or ""), "fields": clean,
-                    "enum_values": {str(k): str(v) for k, v in enum_values.items()}}
+            return Analyzer._sanitize_type(r)
+        return Analyzer._sanitize_endpoint(unit, r)
+
+    @staticmethod
+    def _sanitize_type(r: Dict[str, Any]) -> Dict[str, Any]:
+        fields = r.get("fields") or {}
+        if not isinstance(fields, dict):
+            raise ValueError("'fields' must be an object")
+        clean: Dict[str, Any] = {}
+        for k, v in fields.items():
+            if isinstance(v, str):
+                v = {"description": v}
+            if isinstance(v, dict):
+                clean[k] = {"description": str(v.get("description", "") or ""), "example": v.get("example")}
+        enum_values = r.get("enum_values") or {}
+        if not isinstance(enum_values, dict):
+            enum_values = {}
+        return {"description": str(r.get("description", "") or ""), "fields": clean,
+                "enum_values": {str(k): str(v) for k, v in enum_values.items()}}
+
+    @staticmethod
+    def _sanitize_endpoint(unit: Any, r: Dict[str, Any]) -> Dict[str, Any]:
         params = r.get("params") if isinstance(r.get("params"), dict) else {}
         resp_params = r.get("response_params") if isinstance(r.get("response_params"), dict) else {}
         notes = r.get("notes") if isinstance(r.get("notes"), list) else ([r["notes"]] if isinstance(r.get("notes"), str) else [])
         error_codes = r.get("error_codes") if isinstance(r.get("error_codes"), list) else []
         extra = r.get("response_fields_extra") if isinstance(r.get("response_fields_extra"), list) else []
-        out = {
+        return {
             "title": str(r.get("title", "") or ""),
             "summary": str(r.get("summary", "") or ""),
             "description": str(r.get("description", "") or ""),
@@ -358,7 +372,6 @@ class Analyzer:
             "response_params": {str(k): (str(v.get("description", "") or "") if isinstance(v, dict) else str(v)) for k, v in resp_params.items() if k in unit.response_names},
             "response_fields_extra": [e for e in extra if isinstance(e, dict) and e.get("name")],
         }
-        return out
 
     # ------------------------------------------------------------------ results for rendering
     def results_for(self, spec: EndpointSpec, doc: EndpointDoc) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Any], str]:
