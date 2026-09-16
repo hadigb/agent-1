@@ -3,7 +3,7 @@ types, required flags, nested/enum links) and collects the type closure."""
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from ..detectors.common import (
     description_from_annotations, is_ignored_field, required_from_annotations, wire_name,
@@ -49,23 +49,24 @@ def naming_strategy(t: TypeDecl, index: CodeIndex) -> Optional[str]:
     return None
 
 
+_NAMING_TRANSFORMS: Dict[str, Callable[[str, str], str]] = {
+    "UpperCamelCase": lambda name, words: name[:1].upper() + name[1:],
+    "SnakeCase": lambda name, words: words,
+    "UpperSnakeCase": lambda name, words: words.upper(),
+    "KebabCase": lambda name, words: words.replace("_", "-"),
+    "LowerDotCase": lambda name, words: words.replace("_", "."),
+    "LowerCase": lambda name, words: name.lower(),
+}
+
+
 def apply_naming(name: str, strategy: Optional[str]) -> str:
     if not strategy or strategy == "LowerCamelCase":
         return name
-    if strategy == "UpperCamelCase":
-        return name[:1].upper() + name[1:]
+    transform = _NAMING_TRANSFORMS.get(strategy)
+    if transform is None:
+        return name
     words = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
-    if strategy == "SnakeCase":
-        return words
-    if strategy == "UpperSnakeCase":
-        return words.upper()
-    if strategy == "KebabCase":
-        return words.replace("_", "-")
-    if strategy == "LowerDotCase":
-        return words.replace("_", ".")
-    if strategy == "LowerCase":
-        return name.lower()
-    return name
+    return transform(name, words)
 
 
 def substitute(ref: TypeRef, bindings: Dict[str, TypeRef], _depth: int = 0) -> TypeRef:
@@ -156,14 +157,26 @@ class FieldExpander:
             type_str, nested, enum, is_list = self.classify(ftype, owner_ctx)
             req = required_from_annotations(f.annotations, ftype)
             desc = self.field_description(f) or record_doc.get(f.name, "")
-            if ftype.simple_name in _DATE_TYPES and "yyyy" not in desc and "فرمت" not in desc:
-                desc = (desc + " (تاریخ)").strip()
-            name = apply_naming(wire_name(f.annotations, f.name), strategy) if not any(
-                a.simple_name in ("JsonProperty", "SerializedName") for a in f.annotations) else wire_name(f.annotations, f.name)
+            desc = self._with_date_hint(desc, ftype)
+            name = self._document_field_name(f.annotations, f.name, strategy)
             rows.append(FieldRow(name=name, java_name=f.name, type_str=type_str, required=bool(req),
                                  code_description=desc, description=desc, location=location, enum_qname=enum,
                                  nested_qname=nested, is_list=is_list, owner_qname=owner, java_type=ftype.canonical()))
         return rows
+
+    @staticmethod
+    def _with_date_hint(desc: str, ftype: TypeRef) -> str:
+        if ftype.simple_name in _DATE_TYPES and "yyyy" not in desc and "فرمت" not in desc:
+            return (desc + " (تاریخ)").strip()
+        return desc
+
+    @staticmethod
+    def _document_field_name(annotations: List[Annotation], java_name: str, strategy: Optional[str]) -> str:
+        """The wire name for the field: an explicit @JsonProperty/@SerializedName wins outright,
+        otherwise the class's naming strategy (if any) is applied to the Java field name."""
+        if any(a.simple_name in ("JsonProperty", "SerializedName") for a in annotations):
+            return wire_name(annotations, java_name)
+        return apply_naming(wire_name(annotations, java_name), strategy)
 
     def enum_table(self, qname: str) -> EnumTable:
         t = self.index.types[qname]
