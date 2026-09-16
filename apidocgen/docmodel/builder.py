@@ -81,10 +81,50 @@ class DocBuilder:
                            or endpoint_analysis.get("summary") or spec.description or spec.summary or "")
         # ---- headers
         doc.header_rows = self._header_rows(spec, endpoint_analysis)
-        # ---- request
+        # ---- request / response
         tables: List[TypeTable] = []
         enums: Dict[str, EnumTable] = {}
         visited: Set[str] = set()
+        body_root = self._build_request(doc, spec, ctx, visited, tables, enums)
+        resp_root = self._build_response(doc, spec, ctx, tables, enums, visited)
+        doc.nested_tables = tables
+        doc.enum_tables = enums
+        doc.type_closure = [q for q in [body_root, resp_root] if q] + [t.qname for t in tables] + list(enums.keys())
+        # ---- apply LLM analyses to rows
+        self._apply_type_analyses(doc, body_root, resp_root, type_analyses)
+        self._apply_param_analysis(doc, endpoint_analysis)
+        # ---- notes
+        notes: List[str] = list(spec.notes)
+        notes.extend(endpoint_analysis.get("notes", []) or [])
+        if overrides.get("notes") is not None:
+            notes = list(overrides["notes"])
+        notes.extend(overrides.get("extra_notes", []) or [])
+        doc.notes = [n for n in notes if n]
+        # ---- error codes
+        doc.error_rows = self._build_error_rows(spec, endpoint_analysis, overrides)
+        # ---- field overrides
+        for name, desc in (overrides.get("fields", {}) or {}).items():
+            for r in self._all_rows(doc):
+                if r.name == name or r.java_name == name:
+                    r.description = desc
+        hide = set(overrides.get("hide_fields", []) or [])
+        if hide:
+            doc.request_rows = [r for r in doc.request_rows if r.name not in hide]
+            doc.response_rows = [r for r in doc.response_rows if r.name not in hide]
+        # ---- samples
+        self._build_samples(doc, overrides)
+        # ---- call steps
+        body_sample = request_sample(doc.request_rows, doc.nested_tables, doc.enum_tables)
+        steps = self.call_steps_template
+        for key, val in (("{method}", html.escape(spec.http_method.split("/")[0])), ("{path}", html.escape(spec.path)),
+                         ("{body}", html.escape(body_sample)), ("{api_key}", "a8b40f20-da83-45ee-bf46-c1e4a9c717bf")):
+            steps = steps.replace(key, val)
+        doc.call_steps_html = steps
+        return doc
+
+    # ------------------------------------------------------------------ build() phases
+    def _build_request(self, doc: EndpointDoc, spec: EndpointSpec, ctx, visited: Set[str],
+                       tables: List[TypeTable], enums: Dict[str, EnumTable]) -> Optional[str]:
         req_rows: List[FieldRow] = []
         for p in spec.params:
             if p.location in ("header", "body"):
@@ -112,7 +152,10 @@ class DocBuilder:
             req_rows.extend(rows)
         doc.request_rows = req_rows
         doc.request_type_name = self.index.types[body_root].name if body_root else (spec.body_type.canonical() if spec.body_type else "")
-        # ---- response
+        return body_root
+
+    def _build_response(self, doc: EndpointDoc, spec: EndpointSpec, ctx, tables: List[TypeTable],
+                        enums: Dict[str, EnumTable], visited: Set[str]) -> Optional[str]:
         resp_root: Optional[str] = None
         if spec.response_type is not None and ctx is not None:
             resp_visited: Set[str] = set()
@@ -122,22 +165,12 @@ class DocBuilder:
             for t in resp_tables:
                 if t.qname not in {x.qname for x in tables}:
                     tables.append(t)
-            visited |= resp_visited
+            visited |= resp_visited  # mutates the set shared with the request phase, in place
         doc.response_type_name = self.index.types[resp_root].name if resp_root else (spec.response_type.canonical() if spec.response_type else "")
-        doc.nested_tables = tables
-        doc.enum_tables = enums
-        doc.type_closure = [q for q in [body_root, resp_root] if q] + [t.qname for t in tables] + list(enums.keys())
-        # ---- apply LLM analyses to rows
-        self._apply_type_analyses(doc, body_root, resp_root, type_analyses)
-        self._apply_param_analysis(doc, endpoint_analysis)
-        # ---- notes
-        notes: List[str] = list(spec.notes)
-        notes.extend(endpoint_analysis.get("notes", []) or [])
-        if overrides.get("notes") is not None:
-            notes = list(overrides["notes"])
-        notes.extend(overrides.get("extra_notes", []) or [])
-        doc.notes = [n for n in notes if n]
-        # ---- error codes
+        return resp_root
+
+    def _build_error_rows(self, spec: EndpointSpec, endpoint_analysis: Dict[str, Any],
+                          overrides: Dict[str, Any]) -> List[ErrorRow]:
         handlers = [spec.handler_qname] + ([spec.impl_qname] if spec.impl_qname else [])
         code_rows = collect_endpoint_errors(self.store, self.catalog, handlers,
                                             depth=int(self.cfg.get("analysis", "call_depth", default=1)) + 2)
@@ -145,28 +178,9 @@ class DocBuilder:
                     for e in (endpoint_analysis.get("error_codes", []) or []) if e.get("code")]
         ov_rows = [ErrorRow(code=str(e.get("code", "")), title=e.get("title", ""), note=e.get("note", ""), source="override")
                    for e in (overrides.get("error_codes", []) or []) if e.get("code")]
-        doc.error_rows = merge_error_rows(ov_rows, code_rows, llm_rows,
-                                         success_first=self.cfg.get("doc", "success_code"),
-                                         always_last=self.cfg.get("doc", "common_error_codes", default=[]) or [])
-        # ---- field overrides
-        for name, desc in (overrides.get("fields", {}) or {}).items():
-            for r in self._all_rows(doc):
-                if r.name == name or r.java_name == name:
-                    r.description = desc
-        hide = set(overrides.get("hide_fields", []) or [])
-        if hide:
-            doc.request_rows = [r for r in doc.request_rows if r.name not in hide]
-            doc.response_rows = [r for r in doc.response_rows if r.name not in hide]
-        # ---- samples
-        self._build_samples(doc, overrides)
-        # ---- call steps
-        body_sample = request_sample(doc.request_rows, doc.nested_tables, doc.enum_tables)
-        steps = self.call_steps_template
-        for key, val in (("{method}", html.escape(spec.http_method.split("/")[0])), ("{path}", html.escape(spec.path)),
-                         ("{body}", html.escape(body_sample)), ("{api_key}", "a8b40f20-da83-45ee-bf46-c1e4a9c717bf")):
-            steps = steps.replace(key, val)
-        doc.call_steps_html = steps
-        return doc
+        return merge_error_rows(ov_rows, code_rows, llm_rows,
+                                success_first=self.cfg.get("doc", "success_code"),
+                                always_last=self.cfg.get("doc", "common_error_codes", default=[]) or [])
 
     # ------------------------------------------------------------------ helpers
     @staticmethod
