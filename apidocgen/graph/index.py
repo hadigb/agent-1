@@ -113,10 +113,27 @@ class CodeIndex:
             return Resolution("external")
         return self._resolve_simple(name, ctx, tps)
 
+    # _resolve_simple mirrors Java's own name-lookup order: nested types of
+    # enclosing types, then explicit imports, then same package, then
+    # wildcard imports, then (as a last-resort heuristic) a unique simple-name
+    # match anywhere in the project. Each stage is its own method so the
+    # overall order reads as a short list of stage calls instead of one long
+    # function; every stage returns None to mean "not found here, try the
+    # next stage" - same short-circuiting the original if-chain did.
     def _resolve_simple(self, name: str, ctx: ResolveContext, tps: Set[str]) -> Resolution:
         if name in tps:
             return Resolution("typevar")
-        # nested types of enclosing types (innermost first) and of their supertypes
+        for stage in (self._resolve_in_enclosing, self._resolve_via_import, self._resolve_same_package,
+                     self._resolve_via_wildcard_import):
+            res = stage(name, ctx)
+            if res is not None:
+                return res
+        if name in BUILTIN_TYPES:
+            return Resolution("builtin")
+        return self._resolve_unique_guess(name, ctx)
+
+    def _resolve_in_enclosing(self, name: str, ctx: ResolveContext) -> Optional[Resolution]:
+        """Nested types of enclosing types (innermost first) and of their supertypes."""
         for enc in reversed(ctx.enclosing):
             cand = f"{enc.qname}.{name}"
             if cand in self.types:
@@ -127,7 +144,9 @@ class CodeIndex:
                     return Resolution("project", cand)
             if enc.name == name:
                 return Resolution("project", enc.qname)
-        # explicit imports
+        return None
+
+    def _resolve_via_import(self, name: str, ctx: ResolveContext) -> Optional[Resolution]:
         for imp in ctx.file.imports:
             if imp.static or imp.wildcard:
                 continue
@@ -136,33 +155,38 @@ class CodeIndex:
                     return Resolution("project", imp.name)
                 # imported nested type written as a.b.Outer.Inner
                 return Resolution("external") if name not in BUILTIN_TYPES else Resolution("builtin")
-        # same package
+        return None
+
+    def _resolve_same_package(self, name: str, ctx: ResolveContext) -> Optional[Resolution]:
         cand = f"{ctx.file.package}.{name}" if ctx.file.package else name
         if cand in self.types:
             return Resolution("project", cand)
-        # wildcard imports
+        return None
+
+    def _resolve_via_wildcard_import(self, name: str, ctx: ResolveContext) -> Optional[Resolution]:
         for imp in ctx.file.imports:
             if imp.wildcard and not imp.static:
                 cand = f"{imp.name}.{name}"
                 if cand in self.types:
                     return Resolution("project", cand)
                 # wildcard import of a class's nested types: import a.b.Outer.*;
-        if name in BUILTIN_TYPES:
-            return Resolution("builtin")
-        # unique simple-name match anywhere in the project (heuristic)
+        return None
+
+    def _resolve_unique_guess(self, name: str, ctx: ResolveContext) -> Resolution:
+        """Last resort: a unique simple-name match anywhere in the project."""
         cands = self.simple.get(name, [])
+        if not cands:
+            return Resolution("external")
         if len(cands) == 1:
             return Resolution("guessed", cands[0])
-        if len(cands) > 1:
-            pkg = ctx.file.package
-            same_pkg = [c for c in cands if c.rsplit(".", 1)[0] == pkg]
-            if len(same_pkg) == 1:
-                return Resolution("guessed", same_pkg[0])
-            root = pkg.split(".")[0] if pkg else ""
-            same_root = [c for c in cands if c.startswith(root + ".")]
-            if len(same_root) == 1:
-                return Resolution("guessed", same_root[0])
-            return Resolution("external")
+        pkg = ctx.file.package
+        same_pkg = [c for c in cands if c.rsplit(".", 1)[0] == pkg]
+        if len(same_pkg) == 1:
+            return Resolution("guessed", same_pkg[0])
+        root = pkg.split(".")[0] if pkg else ""
+        same_root = [c for c in cands if c.startswith(root + ".")]
+        if len(same_root) == 1:
+            return Resolution("guessed", same_root[0])
         return Resolution("external")
 
     def resolve_typeref(self, ref: TypeRef, ctx: ResolveContext, extra_type_params: Optional[Set[str]] = None) -> Resolution:
