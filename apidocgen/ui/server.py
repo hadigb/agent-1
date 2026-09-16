@@ -16,7 +16,7 @@ import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -247,6 +247,46 @@ class Workspace:
             return ok
 
 
+# --------------------------------------------------------------------- #
+# routing
+#
+# Every "/api/apps/<key>/..." endpoint used to be one long chain of
+# ``if rest == [...] and method == "...":`` checks. Each route is really
+# just (HTTP method, path shape) -> handler, so that's now a small table:
+# _match_route() compares the request's path segments against a pattern
+# ("*" captures one segment), and _app_route() walks the table looking for
+# the first match - same "first match wins" behaviour as the if-chain, just
+# declared as data instead of repeated control flow.
+# --------------------------------------------------------------------- #
+def _match_route(rest: List[str], pattern: Tuple[str, ...]) -> Optional[List[str]]:
+    if len(rest) != len(pattern):
+        return None
+    captured: List[str] = []
+    for segment, expected in zip(rest, pattern):
+        if expected == "*":
+            captured.append(segment)
+        elif segment != expected:
+            return None
+    return captured
+
+
+# (HTTP method, path pattern under /api/apps/<key>/, handler method name)
+_APP_ROUTES: List[Tuple[str, Tuple[str, ...], str]] = [
+    ("GET", (), "_r_summary"),
+    ("GET", ("status",), "_r_status"),
+    ("GET", ("endpoints",), "_r_endpoints"),
+    ("GET", ("endpoint", "*"), "_r_endpoint_detail"),
+    ("GET", ("graph",), "_r_graph"),
+    ("GET", ("ucs",), "_r_ucs_list"),
+    ("GET", ("ucs", "*"), "_r_ucs_detail"),
+    ("GET", ("archive",), "_r_archive_list"),
+    ("DELETE", ("archive", "*"), "_r_archive_delete"),
+    ("GET", ("jobs",), "_r_jobs_list"),
+    ("POST", ("jobs",), "_r_jobs_create"),
+    ("GET", ("jobs", "*"), "_r_job_detail"),
+]
+
+
 def make_handler(ws: Workspace):
     class Handler(BaseHTTPRequestHandler):
         server_version = "apidocgen-ui/0.1"
@@ -311,132 +351,166 @@ def make_handler(ws: Workspace):
             parsed = urllib.parse.urlparse(self.path)
             parts = [urllib.parse.unquote(x) for x in parsed.path.split("/") if x]
             qs = urllib.parse.parse_qs(parsed.query)
+
             if method == "GET" and not parts:
                 return self._file(STATIC / "index.html", "text/html; charset=utf-8")
             if method == "GET" and parts[0] == "static" and len(parts) == 2:
-                name = parts[1]
-                target = (STATIC / name).resolve()
-                if any(x in name for x in ("/", "\\", "..")) or target.parent != STATIC.resolve():
-                    return self._json({"error": "not found"}, 404)
-                return self._file(target)
+                return self._serve_static(parts[1])
             if parts[0] == "archive" and len(parts) == 3 and method == "GET":
-                app = ws.app(parts[1])
-                if not app:
-                    return self._json({"error": "no such app"}, 404)
-                with app.session() as p:
-                    f = Archive(p.cfg).path_for(parts[2])
-                if not f:
-                    return self._json({"error": "not found"}, 404)
-                return self._file(f, "text/html; charset=utf-8")
+                return self._serve_archive_file(parts[1], parts[2])
             if parts[0] != "api":
                 return self._json({"error": "not found"}, 404)
             if len(parts) == 2 and parts[1] == "workspace":
                 return self._json({"apps": [a.summary() for a in ws.apps]})
             if method == "POST" and parts == ["api", "pick-folder"]:
-                if not ws._pick_lock.acquire(blocking=False):
-                    return self._json({"error": "folder picker already open"}, 409)
-                try:
-                    path = pick_folder()
-                finally:
-                    ws._pick_lock.release()
-                if not path:
-                    return self._json({"cancelled": True, "path": None})
-                return self._json({"cancelled": False, "path": path})
+                return self._pick_folder()
             if method == "POST" and parts == ["api", "apps"]:
-                body = self._body()
-                folder = (body.get("path") or body.get("root") or "").strip()
-                if not folder:
-                    return self._json({"error": "path is required"}, 400)
-                try:
-                    app = ws.add_root(folder)
-                except FileNotFoundError as e:
-                    return self._json({"error": str(e)}, 404)
-                except Exception as e:
-                    return self._json({"error": str(e)}, 400)
-                return self._json(app.summary())
+                return self._create_app()
             if len(parts) >= 3 and parts[1] == "apps":
-                key = parts[2]
-                if method == "DELETE" and len(parts) == 3:
-                    if not ws.remove_key(key):
-                        return self._json({"error": "no such app"}, 404)
-                    return self._json({"ok": True, "apps": [a.summary() for a in ws.apps]})
-                app = ws.app(key)
-                if not app:
+                return self._apps_route(method, parts[2], parts[3:], qs)
+            self._json({"error": "not found"}, 404)
+
+        # ---- top-level (non "/api/apps/<key>/…") handlers --------------
+        def _serve_static(self, name: str) -> None:
+            target = (STATIC / name).resolve()
+            if any(x in name for x in ("/", "\\", "..")) or target.parent != STATIC.resolve():
+                return self._json({"error": "not found"}, 404)
+            return self._file(target)
+
+        def _serve_archive_file(self, app_key: str, filename: str) -> None:
+            app = ws.app(app_key)
+            if not app:
+                return self._json({"error": "no such app"}, 404)
+            with app.session() as p:
+                f = Archive(p.cfg).path_for(filename)
+            if not f:
+                return self._json({"error": "not found"}, 404)
+            return self._file(f, "text/html; charset=utf-8")
+
+        def _pick_folder(self) -> None:
+            if not ws._pick_lock.acquire(blocking=False):
+                return self._json({"error": "folder picker already open"}, 409)
+            try:
+                path = pick_folder()
+            finally:
+                ws._pick_lock.release()
+            if not path:
+                return self._json({"cancelled": True, "path": None})
+            return self._json({"cancelled": False, "path": path})
+
+        def _create_app(self) -> None:
+            body = self._body()
+            folder = (body.get("path") or body.get("root") or "").strip()
+            if not folder:
+                return self._json({"error": "path is required"}, 400)
+            try:
+                app = ws.add_root(folder)
+            except FileNotFoundError as e:
+                return self._json({"error": str(e)}, 404)
+            except Exception as e:
+                return self._json({"error": str(e)}, 400)
+            return self._json(app.summary())
+
+        def _apps_route(self, method: str, key: str, rest: List[str], qs: Dict[str, List[str]]) -> None:
+            if method == "DELETE" and not rest:
+                if not ws.remove_key(key):
                     return self._json({"error": "no such app"}, 404)
-                rest = parts[3:]
-                return self._app_route(method, app, rest, qs)
-            self._json({"error": "not found"}, 404)
+                return self._json({"ok": True, "apps": [a.summary() for a in ws.apps]})
+            app = ws.app(key)
+            if not app:
+                return self._json({"error": "no such app"}, 404)
+            return self._app_route(method, app, rest, qs)
 
+        # ---- "/api/apps/<key>/…" sub-router -----------------------------
         def _app_route(self, method: str, app: App, rest: List[str], qs: Dict[str, List[str]]) -> None:
-            if not rest and method == "GET":
-                return self._json(app.summary())
-            if rest == ["status"] and method == "GET":
-                with app.session() as p:
-                    return self._json(status_info(p))
-            if rest == ["endpoints"] and method == "GET":
-                with app.session() as p:
-                    specs = p.endpoints()
-                    latest = Archive(p.cfg).entries()
-                    anchors = {e["id"]: e["anchor"] for e in (latest[0]["endpoints"] if latest else [])}
-                    return self._json({"tree": endpoint_tree(specs), "latest_document": latest[0]["file"] if latest else None,
-                                       "anchors": anchors,
-                                       "list": [{"id": s.id, "method": s.http_method, "path": s.path, "framework": s.framework,
-                                                 "handler": s.handler_qname, "file": s.file_path, "summary": s.summary}
-                                                for s in specs]})
-            if len(rest) == 2 and rest[0] == "endpoint" and method == "GET":
-                with app.session() as p:
-                    spec = p.endpoint(rest[1])
-                    if spec is None:
-                        return self._json({"error": "no such endpoint"}, 404)
-                    from ..analysis.analyzer import Analyzer
-
-                    an = Analyzer(p, None)
-                    doc = an.build_doc(spec, 0)
-                    data = endpoint_doc_summary(doc)
-                    data["spec"] = spec.to_dict()
-                    # cache status of the units
-                    base = an.doc_builder.build(spec, 0)
-                    _t, _e, status = an.results_for(spec, base)
-                    data["analysis_status"] = status
-                    return self._json(data)
-            if rest == ["graph"] and method == "GET":
-                with app.session() as p:
-                    raw = p.store.get_meta("controller_graph") or "[]"
-                    return self._json({"controllers": json.loads(raw), "endpoints": [
-                        {"id": s.id, "method": s.http_method, "path": s.path, "handler": s.handler_qname}
-                        for s in p.endpoints()]})
-            if rest == ["ucs"] and method == "GET":
-                with app.session() as p:
-                    return self._json({"entries": p.store.list_ucs()})
-            if len(rest) == 2 and rest[0] == "ucs" and method == "GET":
-                with app.session() as p:
-                    doc = p.store.get_ucs(int(rest[1]))
-                    if not doc:
-                        return self._json({"error": "no such document"}, 404)
-                    return self._json(doc)
-            if rest == ["archive"] and method == "GET":
-                with app.session() as p:
-                    return self._json({"entries": Archive(p.cfg).entries()})
-            if len(rest) == 2 and rest[0] == "archive" and method == "DELETE":
-                with app.session() as p:
-                    ok = Archive(p.cfg).delete(rest[1])
-                    return self._json({"ok": ok})
-            if rest == ["jobs"] and method == "GET":
-                return self._json({"jobs": [self._job_view(j, full=False) for j in app.jobs[-20:]]})
-            if rest == ["jobs"] and method == "POST":
-                body = self._body()
-                action = body.get("action")
-                if action not in ("scan", "analyze", "render", "run", "ucs"):
-                    return self._json({"error": "unknown action"}, 400)
-                job = app.start_job(action, body.get("options") or {})
-                return self._json(self._job_view(job, full=True))
-            if len(rest) == 2 and rest[0] == "jobs" and method == "GET":
-                jid = int(rest[1])
-                for j in app.jobs:
-                    if j["id"] == jid:
-                        return self._json(self._job_view(j, full=True))
-                return self._json({"error": "no such job"}, 404)
+            for route_method, pattern, handler_name in _APP_ROUTES:
+                if route_method != method:
+                    continue
+                captured = _match_route(rest, pattern)
+                if captured is None:
+                    continue
+                return getattr(self, handler_name)(app, qs, captured)
             self._json({"error": "not found"}, 404)
+
+        def _r_summary(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            return self._json(app.summary())
+
+        def _r_status(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                return self._json(status_info(p))
+
+        def _r_endpoints(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                specs = p.endpoints()
+                latest = Archive(p.cfg).entries()
+                anchors = {e["id"]: e["anchor"] for e in (latest[0]["endpoints"] if latest else [])}
+                return self._json({"tree": endpoint_tree(specs), "latest_document": latest[0]["file"] if latest else None,
+                                   "anchors": anchors,
+                                   "list": [{"id": s.id, "method": s.http_method, "path": s.path, "framework": s.framework,
+                                             "handler": s.handler_qname, "file": s.file_path, "summary": s.summary}
+                                            for s in specs]})
+
+        def _r_endpoint_detail(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                spec = p.endpoint(params[0])
+                if spec is None:
+                    return self._json({"error": "no such endpoint"}, 404)
+                from ..analysis.analyzer import Analyzer
+
+                an = Analyzer(p, None)
+                doc = an.build_doc(spec, 0)
+                data = endpoint_doc_summary(doc)
+                data["spec"] = spec.to_dict()
+                # cache status of the units
+                base = an.doc_builder.build(spec, 0)
+                _t, _e, status = an.results_for(spec, base)
+                data["analysis_status"] = status
+                return self._json(data)
+
+        def _r_graph(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                raw = p.store.get_meta("controller_graph") or "[]"
+                return self._json({"controllers": json.loads(raw), "endpoints": [
+                    {"id": s.id, "method": s.http_method, "path": s.path, "handler": s.handler_qname}
+                    for s in p.endpoints()]})
+
+        def _r_ucs_list(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                return self._json({"entries": p.store.list_ucs()})
+
+        def _r_ucs_detail(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                doc = p.store.get_ucs(int(params[0]))
+                if not doc:
+                    return self._json({"error": "no such document"}, 404)
+                return self._json(doc)
+
+        def _r_archive_list(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                return self._json({"entries": Archive(p.cfg).entries()})
+
+        def _r_archive_delete(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            with app.session() as p:
+                ok = Archive(p.cfg).delete(params[0])
+                return self._json({"ok": ok})
+
+        def _r_jobs_list(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            return self._json({"jobs": [self._job_view(j, full=False) for j in app.jobs[-20:]]})
+
+        def _r_jobs_create(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            body = self._body()
+            action = body.get("action")
+            if action not in ("scan", "analyze", "render", "run", "ucs"):
+                return self._json({"error": "unknown action"}, 400)
+            job = app.start_job(action, body.get("options") or {})
+            return self._json(self._job_view(job, full=True))
+
+        def _r_job_detail(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            jid = int(params[0])
+            for j in app.jobs:
+                if j["id"] == jid:
+                    return self._json(self._job_view(j, full=True))
+            return self._json({"error": "no such job"}, 404)
 
         @staticmethod
         def _job_view(j: Dict[str, Any], full: bool) -> Dict[str, Any]:
