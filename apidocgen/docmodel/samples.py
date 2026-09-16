@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 import json
-import re
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .model import EnumTable, FieldRow, TypeTable
 
@@ -14,37 +13,117 @@ def _lower(s: str) -> str:
     return s.lower()
 
 
+# ---------------------------------------------------------------------- #
+# coerce_example: validate/convert an LLM-supplied example against the
+# field's type. One small converter per type family, tried in order - the
+# first whose type predicate matches wins (mirrors the original if/elif
+# chain, just with each branch given a name).
+# ---------------------------------------------------------------------- #
+def _coerce_bool(value: Any) -> Any:
+    if isinstance(value, bool):
+        return value
+    return {"true": True, "false": False}.get(str(value).lower())
+
+
+def _coerce_int(value: Any) -> Any:
+    if isinstance(value, bool):
+        return None
+    return int(str(value).replace(",", ""))
+
+
+def _coerce_float(value: Any) -> Any:
+    if isinstance(value, bool):
+        return None
+    f = float(str(value).replace(",", ""))
+    return int(f) if f.is_integer() else f
+
+
+def _coerce_string(value: Any) -> Any:
+    return str(value) if not isinstance(value, (dict, list)) else None
+
+
+def _coerce_map(value: Any) -> Any:
+    return value if isinstance(value, dict) else None
+
+
+def _coerce_list(value: Any) -> Any:
+    return value if isinstance(value, list) else None
+
+
+_COERCERS: List[Tuple[Callable[[str], bool], Callable[[Any], Any]]] = [
+    (lambda t: t == "Boolean", _coerce_bool),
+    (lambda t: t in ("Int", "Long", "BigInteger"), _coerce_int),
+    (lambda t: t in ("Double", "BigDecimal"), _coerce_float),
+    (lambda t: t.startswith("String"), _coerce_string),
+    (lambda t: t.startswith("Map"), _coerce_map),
+    (lambda t: t.startswith("List"), _coerce_list),
+]
+
+
 def coerce_example(value: Any, type_str: str, enum: Optional[EnumTable]) -> Any:
     """Validate/convert an LLM supplied example against the field type; None when unusable."""
     if value is None or value == "":
         return None
-    t = type_str
     try:
         if enum is not None:
             names = {v.name for v in enum.values}
             return value if str(value) in names else None
-        if t == "Boolean":
-            if isinstance(value, bool):
-                return value
-            return {"true": True, "false": False}.get(str(value).lower())
-        if t in ("Int", "Long", "BigInteger"):
-            if isinstance(value, bool):
-                return None
-            return int(str(value).replace(",", ""))
-        if t in ("Double", "BigDecimal"):
-            if isinstance(value, bool):
-                return None
-            f = float(str(value).replace(",", ""))
-            return int(f) if f.is_integer() else f
-        if t.startswith("String"):
-            return str(value) if not isinstance(value, (dict, list)) else None
-        if t.startswith("Map"):
-            return value if isinstance(value, dict) else None
-        if t.startswith("List"):
-            return value if isinstance(value, list) else None
+        for type_matches, coerce in _COERCERS:
+            if type_matches(type_str):
+                return coerce(value)
     except (ValueError, TypeError):
         return None
     return value
+
+
+# ---------------------------------------------------------------------- #
+# scalar_example: heuristic example value for a scalar row, based on the
+# field's type and Persian/English naming conventions seen in banking APIs.
+# Each type family's name-matching heuristics live in their own function so
+# the family-to-family dispatch in scalar_example() stays short.
+# ---------------------------------------------------------------------- #
+def _int_example(n: str) -> Any:
+    if "amount" in n or "mablagh" in n or "price" in n or "balance" in n:
+        return 100000
+    if "count" in n or "size" in n or "page" in n:
+        return 1
+    if "code" in n:
+        return 1
+    return 1
+
+
+def _float_example(n: str) -> Any:
+    if "amount" in n or "price" in n or "balance" in n:
+        return 100000
+    return 19
+
+
+def _string_example(n: str) -> Any:
+    if "transactionid" in n or n.endswith("id") and "transaction" in n:
+        return _ID_SAMPLE
+    if "date" in n or "time" in n or "tarikh" in n:
+        return "1400/11/11 - 06:11:16"
+    if "iban" in n or "sheba" in n or "shaba" in n:
+        return "IR890570000198900015002802"
+    if "deposit" in n or "account" in n:
+        return "1.20.10504.1"
+    if "mobile" in n or "phone" in n:
+        return "09121234567"
+    if "national" in n or "melli" in n:
+        return "0012345678"
+    if "email" in n:
+        return "user@example.com"
+    if "key" in n:
+        return "key"
+    if "value" in n:
+        return "value"
+    if "title" in n or "name" in n or "desc" in n or "comment" in n:
+        return "شرح نمونه"
+    if "code" in n:
+        return "1"
+    if n.endswith("id") or "identifier" in n or "serial" in n or "number" in n:
+        return "12081651201"
+    return "string"
 
 
 def scalar_example(row: FieldRow, enums: Dict[str, EnumTable]) -> Any:
@@ -60,43 +139,11 @@ def scalar_example(row: FieldRow, enums: Dict[str, EnumTable]) -> Any:
     if t == "Boolean":
         return True
     if t in ("Int", "Long", "BigInteger"):
-        if "amount" in n or "mablagh" in n or "price" in n or "balance" in n:
-            return 100000
-        if "count" in n or "size" in n or "page" in n:
-            return 1
-        if "code" in n:
-            return 1
-        return 1
+        return _int_example(n)
     if t in ("Double", "BigDecimal"):
-        if "amount" in n or "price" in n or "balance" in n:
-            return 100000
-        return 19
+        return _float_example(n)
     if t.startswith("String"):
-        if "transactionid" in n or n.endswith("id") and "transaction" in n:
-            return _ID_SAMPLE
-        if "date" in n or "time" in n or "tarikh" in n:
-            return "1400/11/11 - 06:11:16"
-        if "iban" in n or "sheba" in n or "shaba" in n:
-            return "IR890570000198900015002802"
-        if "deposit" in n or "account" in n:
-            return "1.20.10504.1"
-        if "mobile" in n or "phone" in n:
-            return "09121234567"
-        if "national" in n or "melli" in n:
-            return "0012345678"
-        if "email" in n:
-            return "user@example.com"
-        if "key" in n:
-            return "key"
-        if "value" in n:
-            return "value"
-        if "title" in n or "name" in n or "desc" in n or "comment" in n:
-            return "شرح نمونه"
-        if "code" in n:
-            return "1"
-        if n.endswith("id") or "identifier" in n or "serial" in n or "number" in n:
-            return "12081651201"
-        return "string"
+        return _string_example(n)
     if t.startswith("Map"):
         return {"key": "value"}
     if t == "Object":
@@ -139,18 +186,14 @@ def _find(rows: Sequence[FieldRow], names: Sequence[str]) -> Optional[FieldRow]:
     return None
 
 
-def build_samples(response_rows: Sequence[FieldRow], tables: Sequence[TypeTable], enums: Dict[str, EnumTable],
-                  envelope_cfg: Dict[str, Any], success_code: Dict[str, Any], validation_error: Dict[str, Any],
-                  business_error: Optional[Dict[str, Any]], required_request_field: Optional[str]) -> (str, List[str]):
-    """Build (success_sample, [failure samples]) as pretty JSON strings."""
-    sb = SampleBuilder(tables, enums)
-    success_f = _find(response_rows, envelope_cfg.get("success", []))
-    code_f = _find(response_rows, envelope_cfg.get("code", []))
-    msg_f = _find(response_rows, envelope_cfg.get("message", []))
-    errors_f = _find(response_rows, envelope_cfg.get("errors", []))
-    data_f = _find(response_rows, envelope_cfg.get("data", []))
-
-    # ---- success
+# ---------------------------------------------------------------------- #
+# build_samples: one function per sample (success / validation failure /
+# business failure), each building the small envelope dict it owns instead
+# of one function interleaving all three.
+# ---------------------------------------------------------------------- #
+def _success_obj(sb: SampleBuilder, response_rows: Sequence[FieldRow], success_f: Optional[FieldRow],
+                 code_f: Optional[FieldRow], msg_f: Optional[FieldRow], errors_f: Optional[FieldRow],
+                 success_code: Dict[str, Any]) -> Dict[str, Any]:
     obj = sb.object_for_rows(response_rows)
     if success_f:
         obj[success_f.name] = True
@@ -160,45 +203,74 @@ def build_samples(response_rows: Sequence[FieldRow], tables: Sequence[TypeTable]
         obj[msg_f.name] = success_code.get("title", "عملیات با موفقیت انجام شد")
     if errors_f and errors_f.name in obj:
         del obj[errors_f.name]
-    success = json.dumps(obj, ensure_ascii=False, indent=2)
+    return obj
+
+
+def _validation_failure_obj(sb: SampleBuilder, success_f: Optional[FieldRow], code_f: Optional[FieldRow],
+                            msg_f: Optional[FieldRow], errors_f: Optional[FieldRow],
+                            validation_error: Dict[str, Any], required_request_field: Optional[str]) -> Dict[str, Any]:
+    fobj: Dict[str, Any] = {}
+    if code_f:
+        fobj[code_f.name] = validation_error.get("code", 1038)
+    if msg_f:
+        fobj[msg_f.name] = validation_error.get("title", "اطلاعات ورودی اشتباه است")
+    if success_f:
+        fobj[success_f.name] = False
+    if errors_f:
+        fobj[errors_f.name] = _validation_error_item(sb, errors_f, validation_error, required_request_field)
+    return fobj
+
+
+def _validation_error_item(sb: SampleBuilder, errors_f: FieldRow, validation_error: Dict[str, Any],
+                           required_request_field: Optional[str]) -> Any:
+    item = sb.value_for_row(errors_f)
+    if not (isinstance(item, list) and item and isinstance(item[0], dict)):
+        return item
+    err = item[0]
+    for k in list(err.keys()):
+        kl = k.lower()
+        if kl in ("code", "errorcode", "rscode"):
+            err[k] = validation_error.get("item_code", 2941)
+        elif kl in ("desc", "description", "message", "msg", "title"):
+            err[k] = validation_error.get("item_title", "مقداری برای پارامتر ورودی اجباری ارسال نشده است")
+        elif "param" in kl or "field" in kl or "path" in kl or "name" in kl:
+            err[k] = required_request_field or "TransactionId"
+    return [err]
+
+
+def _business_failure_obj(success_f: Optional[FieldRow], code_f: Optional[FieldRow], msg_f: Optional[FieldRow],
+                          business_error: Dict[str, Any]) -> Dict[str, Any]:
+    bobj: Dict[str, Any] = {}
+    if code_f:
+        bobj[code_f.name] = business_error.get("code")
+    if msg_f:
+        bobj[msg_f.name] = business_error.get("title", "")
+    if success_f:
+        bobj[success_f.name] = False
+    return bobj
+
+
+def build_samples(response_rows: Sequence[FieldRow], tables: Sequence[TypeTable], enums: Dict[str, EnumTable],
+                  envelope_cfg: Dict[str, Any], success_code: Dict[str, Any], validation_error: Dict[str, Any],
+                  business_error: Optional[Dict[str, Any]], required_request_field: Optional[str]) -> (str, List[str]):
+    """Build (success_sample, [failure samples]) as pretty JSON strings."""
+    sb = SampleBuilder(tables, enums)
+    success_f = _find(response_rows, envelope_cfg.get("success", []))
+    code_f = _find(response_rows, envelope_cfg.get("code", []))
+    msg_f = _find(response_rows, envelope_cfg.get("message", []))
+    errors_f = _find(response_rows, envelope_cfg.get("errors", []))
+
+    success = json.dumps(_success_obj(sb, response_rows, success_f, code_f, msg_f, errors_f, success_code),
+                         ensure_ascii=False, indent=2)
 
     failures: List[str] = []
-    envelope_names = {r.name for r in (success_f, code_f, msg_f, errors_f) if r}
-    # ---- validation failure
     if success_f or code_f or msg_f:
-        fobj: Dict[str, Any] = {}
-        if code_f:
-            fobj[code_f.name] = validation_error.get("code", 1038)
-        if msg_f:
-            fobj[msg_f.name] = validation_error.get("title", "اطلاعات ورودی اشتباه است")
-        if success_f:
-            fobj[success_f.name] = False
-        if errors_f:
-            item = sb.value_for_row(errors_f)
-            if isinstance(item, list) and item and isinstance(item[0], dict):
-                err = item[0]
-                for k in list(err.keys()):
-                    kl = k.lower()
-                    if kl in ("code", "errorcode", "rscode"):
-                        err[k] = validation_error.get("item_code", 2941)
-                    elif kl in ("desc", "description", "message", "msg", "title"):
-                        err[k] = validation_error.get("item_title", "مقداری برای پارامتر ورودی اجباری ارسال نشده است")
-                    elif "param" in kl or "field" in kl or "path" in kl or "name" in kl:
-                        err[k] = required_request_field or "TransactionId"
-                fobj[errors_f.name] = [err]
-            else:
-                fobj[errors_f.name] = item
-        failures.append(json.dumps(fobj, ensure_ascii=False, indent=2))
-        # ---- business failure
+        failures.append(json.dumps(
+            _validation_failure_obj(sb, success_f, code_f, msg_f, errors_f, validation_error, required_request_field),
+            ensure_ascii=False, indent=2))
         if business_error:
-            bobj: Dict[str, Any] = {}
-            if code_f:
-                bobj[code_f.name] = business_error.get("code")
-            if msg_f:
-                bobj[msg_f.name] = business_error.get("title", "")
-            if success_f:
-                bobj[success_f.name] = False
-            failures.append(json.dumps(bobj, ensure_ascii=False, indent=2))
+            failures.append(json.dumps(_business_failure_obj(success_f, code_f, msg_f, business_error),
+                                       ensure_ascii=False, indent=2))
     return success, failures
 
 
