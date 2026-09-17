@@ -265,25 +265,40 @@ class Analyzer:
                     budget_ok: Optional[Callable[[], bool]] = None) -> None:
         assert self.client is not None
         budget_ok = budget_ok or (lambda: True)
+        results, resp, error, aborted = self._request_results(batch, style, report, log, budget_ok)
+        if aborted:
+            return
+        if not results:
+            self._handle_empty_results(batch, style, report, log, budget_ok, error)
+            return
+        self._store_results(batch, results, resp, report, log)
+
+    def _request_results(self, batch: List[UnitStatus], style: str, report: AnalysisReport, log: Progress,
+                         budget_ok: Callable[[], bool]
+                         ) -> Tuple[Dict[str, Any], Any, Optional[str], bool]:
+        """Ask the model for this batch, retrying once on a non-truncated bad answer.
+
+        Returns ``(results, response, error, aborted)``; ``aborted`` marks a transport
+        failure that has already been reported, so the caller should simply stop.
+        """
         specs = [self._unit_spec(u.unit) for u in batch]
         user = build_user_prompt(specs, [u.unit.payload for u in batch], style)
         results: Dict[str, Any] = {}
         resp = None
         error: Optional[str] = None
-        status = "ok"
         truncated = False
         for attempt in range(2):
             if attempt > 0 and (truncated or not budget_ok()):
                 break  # a truncated answer is deterministic: retrying the same request is wasted
-            t0 = time.time()
+            started = time.time()
             try:
                 resp = self.client.complete(SYSTEM_PROMPT, user, json_mode=True)
             except LLMError as e:
-                self._record(report, batch, None, int((time.time() - t0) * 1000), "error", str(e))
+                self._record(report, batch, None, int((time.time() - started) * 1000), "error", str(e))
                 log(f"   ! {e}")
                 report.failed_units.extend(u.unit.unit_id for u in batch)
-                return
-            dur = int((time.time() - t0) * 1000)
+                return {}, None, str(e), True
+            duration_ms = int((time.time() - started) * 1000)
             truncated = bool(getattr(resp, "truncated", False))
             try:
                 results = self._parse_results(resp.text, batch)
@@ -293,37 +308,44 @@ class Analyzer:
                 status = "truncated" if truncated else "bad-json"
                 error = ("response truncated (raise llm.max_output_tokens or lower analysis.type_batch_tokens)"
                          if truncated else f"invalid JSON from model: {e}")
-            self._record(report, batch, resp, dur, status, error)
+            self._record(report, batch, resp, duration_ms, status, error)
             if results:
                 break
-        if not results:
-            if len(batch) > 1 and budget_ok():
-                half = len(batch) // 2
-                log(f"   ! {error}; splitting batch of {len(batch)} into {half} + {len(batch) - half}")
-                self._call_batch(batch[:half], style, report, log, budget_ok)
-                self._call_batch(batch[half:], style, report, log, budget_ok)
-            else:
-                log(f"   ! {error or 'no result'}")
-                report.failed_units.extend(u.unit.unit_id for u in batch)
-            return
+        return results, resp, error, False
+
+    def _handle_empty_results(self, batch: List[UnitStatus], style: str, report: AnalysisReport, log: Progress,
+                              budget_ok: Callable[[], bool], error: Optional[str]) -> None:
+        """Halve the batch and retry, or give up and mark every unit in it as failed."""
+        if len(batch) > 1 and budget_ok():
+            half = len(batch) // 2
+            log(f"   ! {error}; splitting batch of {len(batch)} into {half} + {len(batch) - half}")
+            self._call_batch(batch[:half], style, report, log, budget_ok)
+            self._call_batch(batch[half:], style, report, log, budget_ok)
+        else:
+            log(f"   ! {error or 'no result'}")
+            report.failed_units.extend(u.unit.unit_id for u in batch)
+
+    def _store_results(self, batch: List[UnitStatus], results: Dict[str, Any], resp: Any,
+                       report: AnalysisReport, log: Progress) -> None:
+        """Sanitize each unit's result and cache it, charging tokens by payload share."""
         in_tok = resp.input_tokens if resp else 0
         out_tok = resp.output_tokens if resp else 0
         total_payload = sum(max(1, u.unit.tokens) for u in batch)
         for u in batch:
-            r = results.get(u.unit.unit_id)
-            if not isinstance(r, dict):
+            result = results.get(u.unit.unit_id)
+            if not isinstance(result, dict):
                 report.failed_units.append(u.unit.unit_id)
                 log(f"   ! no result for {u.unit.unit_id}")
                 continue
             try:
-                r = self._sanitize(u.unit, r)
+                result = self._sanitize(u.unit, result)
             except (AttributeError, TypeError, ValueError) as e:
                 report.failed_units.append(u.unit.unit_id)
                 log(f"   ! unusable result for {u.unit.unit_id}: {e}")
                 continue
             share = max(1, u.unit.tokens) / total_payload
             self.store.cache_put(u.key, u.unit.kind, u.unit.unit_id, u.unit.hash, self.client.name, self.client.model,
-                                 self.prompt_version, r, int(in_tok * share), int(out_tok * share))
+                                 self.prompt_version, result, int(in_tok * share), int(out_tok * share))
             u.cached = True
             report.analysed_units += 1
         cache_read = resp.cache_read_tokens if resp else 0
