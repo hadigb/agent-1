@@ -122,62 +122,88 @@ class SpringFunctionalDetector:
                         pending_ref = call.method_refs[0]
         return out
 
-    def _make(self, t: TypeDecl, m: MethodDecl, jf: JavaFile, index: CodeIndex, ctx, http: str, path: str, ref: str,
-              param_types: Dict[str, TypeRef]) -> List[EndpointSpec]:
-        recv, mname = ref.split("::", 1)
-        handler_type: Optional[str] = None
-        if recv in param_types:
-            r = index.resolve(param_types[recv].name, ctx)
-            handler_type = r.qname if r.ok else None
-        elif recv in m.body.locals:
-            r = index.resolve(m.body.locals[recv], ctx)
-            handler_type = r.qname if r.ok else None
-        else:
-            ft = index.field_type(t.qname, recv)
-            if ft:
-                r = index.resolve(ft[0].name, ctx)
-                handler_type = r.qname if r.ok else None
-            elif recv[:1].isupper():
-                r = index.resolve(recv, ctx)
-                handler_type = r.qname if r.ok else None
-            elif recv == "this":
-                handler_type = t.qname
+    def _make(self, t: TypeDecl, m: MethodDecl, jf: JavaFile, index: CodeIndex, ctx: Any, http: str, path: str,
+              ref: str, param_types: Dict[str, TypeRef]) -> List[EndpointSpec]:
+        receiver, handler_name = ref.split("::", 1)
+        handler_type = self._resolve_handler_type(t, m, index, ctx, receiver, param_types)
+
         handler_q = CodeIndex.method_qname(t.qname, m)
-        body_type: Optional[TypeRef] = None
-        response: Optional[TypeRef] = None
-        hm: Optional[MethodDecl] = None
+        handler_method: Optional[MethodDecl] = None
         if handler_type:
-            found = index.find_method(handler_type, mname)
+            found = index.find_method(handler_type, handler_name)
             if found:
-                hm, owner = found[0]
-                handler_q = CodeIndex.method_qname(owner, hm)
-                if hm.body:
-                    for c in hm.body.calls:
-                        is_request_body = (c.name in ("bodyToMono", "bodyToFlux", "toMono", "toFlux")
-                                           or (c.name == "body" and c.argc == 1))
-                        if is_request_body and c.class_args and body_type is None:
-                            body_type = TypeRef(name=c.class_args[0])
-                            if c.name in ("bodyToFlux", "toFlux"):
-                                body_type = TypeRef(name="List", args=[body_type])
-                        if c.name in ("body", "bodyValue") and c.argc == 2 and c.class_args:
-                            response = TypeRef(name=c.class_args[-1])
-        params: List[ParamSpec] = []
-        if body_type is not None:
-            params.append(ParamSpec(name="body", location="body", java_name="body", type=body_type, required=True))
-        for pv in re.findall(r"\{([^}]+)\}", path):
-            params.append(ParamSpec(name=pv, location="path", java_name=pv, type=TypeRef(name="String"), required=True))
-        if hm and hm.body:
-            for c in hm.body.calls:
-                if c.name == "queryParam" and c.string_args:
-                    params.append(ParamSpec(name=c.string_args[0], location="query", java_name=c.string_args[0],
-                                            type=TypeRef(name="String")))
+                handler_method, owner = found[0]
+                handler_q = CodeIndex.method_qname(owner, handler_method)
+        body_type, response = self._body_and_response_types(handler_method)
+
         spec = EndpointSpec(http_method=http, path=path, framework="spring-functional", handler_qname=handler_q,
-                            type_qname=handler_type or t.qname, file_path=jf.path, params=params, body_type=body_type,
-                            response_type=response, summary=method_summary(hm) if hm else "",
-                            description=method_description(hm) if hm else "",
+                            type_qname=handler_type or t.qname, file_path=jf.path,
+                            params=self._collect_params(path, body_type, handler_method), body_type=body_type,
+                            response_type=response,
+                            summary=method_summary(handler_method) if handler_method else "",
+                            description=method_description(handler_method) if handler_method else "",
                             notes=["مسیر با RouterFunction تعریف شده است"])
         spec.id = spec.make_id()
         return [spec]
+
+    def _resolve_handler_type(self, t: TypeDecl, m: MethodDecl, index: CodeIndex, ctx: Any, receiver: str,
+                              param_types: Dict[str, TypeRef]) -> Optional[str]:
+        """Find the qualified type owning ``receiver`` in ``handler::method``.
+
+        Looks in the router method's parameters, then its locals, then the enclosing
+        type's fields, then treats a capitalised receiver as a type name itself.
+        """
+        def resolved(type_name: str) -> Optional[str]:
+            r = index.resolve(type_name, ctx)
+            return r.qname if r.ok else None
+
+        if receiver in param_types:
+            return resolved(param_types[receiver].name)
+        if receiver in m.body.locals:
+            return resolved(m.body.locals[receiver])
+        field = index.field_type(t.qname, receiver)
+        if field:
+            return resolved(field[0].name)
+        if receiver[:1].isupper():
+            return resolved(receiver)
+        if receiver == "this":
+            return t.qname
+        return None
+
+    @staticmethod
+    def _body_and_response_types(handler: Optional[MethodDecl]) -> Tuple[Optional[TypeRef], Optional[TypeRef]]:
+        """Infer request body and response types from the handler's reactive calls."""
+        body_type: Optional[TypeRef] = None
+        response: Optional[TypeRef] = None
+        if handler is None or not handler.body:
+            return body_type, response
+        for c in handler.body.calls:
+            is_request_body = (c.name in ("bodyToMono", "bodyToFlux", "toMono", "toFlux")
+                               or (c.name == "body" and c.argc == 1))
+            if is_request_body and c.class_args and body_type is None:
+                body_type = TypeRef(name=c.class_args[0])
+                if c.name in ("bodyToFlux", "toFlux"):
+                    body_type = TypeRef(name="List", args=[body_type])
+            if c.name in ("body", "bodyValue") and c.argc == 2 and c.class_args:
+                response = TypeRef(name=c.class_args[-1])
+        return body_type, response
+
+    @staticmethod
+    def _collect_params(path: str, body_type: Optional[TypeRef],
+                        handler: Optional[MethodDecl]) -> List[ParamSpec]:
+        """Body parameter, ``{placeholders}`` from the path, then observed query parameters."""
+        params: List[ParamSpec] = []
+        if body_type is not None:
+            params.append(ParamSpec(name="body", location="body", java_name="body", type=body_type, required=True))
+        for placeholder in re.findall(r"\{([^}]+)\}", path):
+            params.append(ParamSpec(name=placeholder, location="path", java_name=placeholder,
+                                    type=TypeRef(name="String"), required=True))
+        if handler and handler.body:
+            for c in handler.body.calls:
+                if c.name == "queryParam" and c.string_args:
+                    params.append(ParamSpec(name=c.string_args[0], location="query", java_name=c.string_args[0],
+                                            type=TypeRef(name="String")))
+        return params
 
 
 # ---------------------------------------------------------------------------- custom rules (config driven)
