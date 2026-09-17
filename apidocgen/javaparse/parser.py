@@ -14,7 +14,7 @@ recorded as an error and skipped, the rest of the file is still used.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .model import (
     Annotation, BodyInfo, CallSite, EnumConstant, FieldDecl, ImportDecl, JavaFile, Javadoc,
@@ -735,198 +735,268 @@ class JavaParser:
 # ---------------------------------------------------------------------- #
 # method body scanning
 # ---------------------------------------------------------------------- #
-def scan_body(toks: List[Token], src: str, open_i: int, close_i: int) -> BodyInfo:
-    info = BodyInfo()
-    info_type_mentions = set()
-    body = [t for t in toks[open_i + 1:close_i] if t.kind not in (COMMENT, JAVADOC)]
-    n = len(body)
+_OPEN_BRACKETS = ("(", "{", "[")
+_CLOSE_BRACKETS = (")", "}", "]")
+_CLOSER_FOR = {"(": ")", "{": "}", "[": "]"}
+_LOCAL_DECL_FOLLOWERS = ("=", ";", ":", ",")
+# Bodies with pathological amounts of text should not blow up the graph.
+_MAX_STRING_LITERALS = 300
 
-    def find_close(k: int) -> int:
-        """k is index in ``body`` of an opener; return index of matching closer."""
-        opener = body[k].text
-        closer = {"(": ")", "{": "}", "[": "]"}[opener]
+
+def _read_dotted_name(toks: List[Token], i: int) -> Tuple[List[str], int]:
+    """Read a ``Foo.Bar.Baz`` identifier chain at ``i``; return its parts and the index after it."""
+    parts: List[str] = []
+    j = i
+    while j < len(toks) and toks[j].kind == IDENT:
+        parts.append(toks[j].text)
+        j += 1
+        if j + 1 < len(toks) and toks[j].text == "." and toks[j + 1].kind == IDENT:
+            j += 1  # step over the dot and keep collecting
+            continue
+        break
+    return parts, j
+
+
+def _skip_generic_args(toks: List[Token], i: int) -> int:
+    """Return the index just past a balanced ``<...>`` block at ``i`` (``i`` itself if none)."""
+    if i >= len(toks) or toks[i].text != "<":
+        return i
+    depth = 0
+    j = i
+    while j < len(toks):
+        if toks[j].text == "<":
+            depth += 1
+        elif toks[j].text == ">":
+            depth -= 1
+            if depth == 0:
+                return j + 1
+        j += 1
+    return j  # unbalanced - treat the rest of the stream as consumed
+
+
+def _count_args(args: List[Token]) -> int:
+    """Count top-level comma-separated arguments in an already-extracted argument list."""
+    if not args:
+        return 0
+    count = 1
+    depth = 0
+    for a in args:
+        if a.text in _OPEN_BRACKETS:
+            depth += 1
+        elif a.text in _CLOSE_BRACKETS:
+            depth -= 1
+        elif a.text == "," and depth == 0:
+            count += 1
+    return count
+
+
+class _BodyScanner:
+    """Scans a method body's token slice for the facts the code graph needs.
+
+    Each ``_scan_*`` method handles one Java construct and returns the index to
+    continue scanning from, so the driver loop in :meth:`scan` stays flat.
+    """
+
+    def __init__(self, body: List[Token], src: str) -> None:
+        self.body = body
+        self.n = len(body)
+        self.src = src
+        self.info = BodyInfo()
+        self.type_mentions: Set[str] = set()
+
+    def scan(self) -> BodyInfo:
+        i = 0
+        while i < self.n:
+            t = self.body[i]
+            if t.kind == STRING:
+                if len(self.info.string_literals) < _MAX_STRING_LITERALS:
+                    self.info.string_literals.append(unquote_string(t.text))
+                i += 1
+            elif t.kind != IDENT:
+                i += 1
+            elif t.text == "new":
+                i = self._scan_new_expression(i)
+            elif t.text == "throw":
+                i = self._scan_throw_statement(i)
+            elif self._is_call_at(i):
+                i = self._scan_call_expression(i)
+            else:
+                i = self._scan_type_mention(i)
+        self.info.type_mentions = sorted(self.type_mentions)
+        return self.info
+
+    # ------------------------------------------------------------------ #
+    # helpers
+    # ------------------------------------------------------------------ #
+    def _at(self, i: int) -> Optional[Token]:
+        return self.body[i] if 0 <= i < self.n else None
+
+    def _text_at(self, i: int) -> str:
+        return self.body[i].text if 0 <= i < self.n else ""
+
+    def _find_close(self, k: int) -> int:
+        """``k`` is the index in ``body`` of an opener; return the index of its matching closer."""
+        opener = self.body[k].text
+        closer = _CLOSER_FOR[opener]
         depth = 0
-        j = k
-        while j < n:
-            tt = body[j].text
-            if body[j].kind == OP:
-                if tt == opener:
+        for j in range(k, self.n):
+            if self.body[j].kind == OP:
+                if self.body[j].text == opener:
                     depth += 1
-                elif tt == closer:
+                elif self.body[j].text == closer:
                     depth -= 1
                     if depth == 0:
                         return j
-            j += 1
-        return n - 1
+        return self.n - 1
 
-    i = 0
-    while i < n:
-        t = body[i]
-        if t.kind == STRING:
-            if len(info.string_literals) < 300:
-                info.string_literals.append(unquote_string(t.text))
-            i += 1
-            continue
-        if t.kind != IDENT:
-            i += 1
-            continue
-        nxt = body[i + 1] if i + 1 < n else None
-        prev = body[i - 1] if i > 0 else None
-        # object creation
-        if t.text == "new":
-            j = i + 1
-            parts = []
-            while j < n and body[j].kind == IDENT:
-                parts.append(body[j].text)
-                j += 1
-                if j < n and body[j].text == "." and j + 1 < n and body[j + 1].kind == IDENT:
-                    j += 1
+    def _is_call_at(self, i: int) -> bool:
+        return self._text_at(i + 1) == "(" and self.body[i].text not in _STOP_KEYWORDS
+
+    def _is_fresh_type_name(self, i: int) -> bool:
+        """A capitalised identifier that is not the tail of a ``foo.Bar`` selection."""
+        return self.body[i].text[:1].isupper() and self._text_at(i - 1) != "."
+
+    # ------------------------------------------------------------------ #
+    # constructs
+    # ------------------------------------------------------------------ #
+    def _scan_new_expression(self, i: int) -> int:
+        """``new Foo.Bar<T>(...)`` - records a creation and the type mention."""
+        parts, j = _read_dotted_name(self.body, i + 1)
+        if parts:
+            j = _skip_generic_args(self.body, j)
+            type_name = ".".join(parts)
+            if self._text_at(j) == "(":
+                self.info.creations.append(type_name)
+            self.type_mentions.add(type_name)
+        return max(j, i + 1)
+
+    def _scan_throw_statement(self, i: int) -> int:
+        """``throw ...;`` - records the thrown type, its raw args and any qualified refs."""
+        stmt = self.body[i + 1:self._end_of_statement(i + 1)]
+        site = ThrowSite(type_name=None, args_raw="", line=self.body[i].line)
+        if stmt and stmt[0].text == "new":
+            parts, k = _read_dotted_name(stmt, 1)
+            site.type_name = ".".join(parts) if parts else None
+            if k < len(stmt) and stmt[k].text == "(":
+                site.args_raw = self.src[stmt[k].start:stmt[-1].end]
+            if parts:
+                self.type_mentions.add(parts[-1])
+        elif stmt:
+            site.args_raw = self.src[stmt[0].start:stmt[-1].end]
+        site.refs = _qualified_refs(stmt)
+        self.info.throws.append(site)
+        # step by one so calls nested in the statement are still seen, e.g. new X(service.code())
+        return i + 1
+
+    def _end_of_statement(self, start: int) -> int:
+        """Index of the top-level ``;`` ending the statement at ``start`` (or the body's end)."""
+        depth = 0
+        j = start
+        while j < self.n:
+            text = self.body[j].text
+            if depth == 0 and text == ";":
+                break
+            if text in _OPEN_BRACKETS:
+                depth += 1
+            elif text in _CLOSE_BRACKETS:
+                depth -= 1
+            j += 1
+        return j
+
+    def _scan_call_expression(self, i: int) -> int:
+        """``recv.name(args)`` - records the call, its receiver chain and notable arguments."""
+        name_tok = self.body[i]
+        close = self._find_close(i + 1)
+        args = self.body[i + 2:close]
+        call = CallSite(name=name_tok.text, receiver=self._read_receiver(i),
+                        argc=_count_args(args), line=name_tok.line)
+        self._collect_arg_literals(call, args)
+        self.info.calls.append(call)
+        if self._is_fresh_type_name(i):
+            self.type_mentions.add(name_tok.text)
+        return i + 1  # continue scanning inside the arguments
+
+    def _read_receiver(self, i: int) -> List[str]:
+        """Walk backwards over the ``a.b.c`` chain qualifying the call at ``i``."""
+        receiver: List[str] = []
+        k = i - 1
+        if k < 0 or self.body[k].text != ".":
+            return receiver
+        k -= 1
+        while k >= 0:
+            tok = self.body[k]
+            if tok.kind == IDENT:
+                receiver.insert(0, tok.text)
+                prev = self._at(k - 2)
+                if self._text_at(k - 1) == "." and prev is not None and prev.kind == IDENT:
+                    k -= 2
                     continue
                 break
-            if parts:
-                # skip generic args
-                if j < n and body[j].text == "<":
-                    depth = 0
-                    while j < n:
-                        if body[j].text == "<":
-                            depth += 1
-                        elif body[j].text == ">":
-                            depth -= 1
-                            if depth == 0:
-                                j += 1
-                                break
-                        j += 1
-                tname = ".".join(parts)
-                if j < n and body[j].text == "(":
-                    info.creations.append(tname)
-                info_type_mentions.add(parts[-1] if len(parts) == 1 else tname)
-            i = max(j, i + 1)
-            continue
-        # throw statements
-        if t.text == "throw":
-            j = i + 1
-            depth = 0
-            end = j
-            while end < n:
-                tt = body[end].text
-                if depth == 0 and tt == ";":
-                    break
-                if tt in ("(", "{", "["):
-                    depth += 1
-                elif tt in (")", "}", "]"):
-                    depth -= 1
-                end += 1
-            stmt = body[j:end]
-            ts = ThrowSite(type_name=None, args_raw="", line=t.line)
-            if stmt and stmt[0].text == "new":
-                k = 1
-                parts = []
-                while k < len(stmt) and stmt[k].kind == IDENT:
-                    parts.append(stmt[k].text)
-                    k += 1
-                    if k < len(stmt) and stmt[k].text == "." and k + 1 < len(stmt) and stmt[k + 1].kind == IDENT:
-                        k += 1
-                        continue
-                    break
-                ts.type_name = ".".join(parts) if parts else None
-                if k < len(stmt) and stmt[k].text == "(":
-                    ts.args_raw = src[stmt[k].start:stmt[-1].end] if stmt else ""
-                if parts:
-                    info_type_mentions.add(parts[-1])
-            else:
-                ts.args_raw = src[stmt[0].start:stmt[-1].end] if stmt else ""
-            ts.refs = _qualified_refs(stmt)
-            info.throws.append(ts)
-            # also scan the statement for calls (e.g. new X(service.code()))
-            i += 1
-            continue
-        # method call
-        if nxt is not None and nxt.text == "(" and t.text not in _STOP_KEYWORDS:
-            receiver: List[str] = []
-            k = i - 1
-            if k >= 0 and body[k].text == ".":
-                k -= 1
-                while k >= 0:
-                    tk = body[k]
-                    if tk.kind == IDENT:
-                        receiver.insert(0, tk.text)
-                        if k - 1 >= 0 and body[k - 1].text == "." and k - 2 >= 0 and body[k - 2].kind == IDENT:
-                            k -= 2
-                            continue
-                        break
-                    if tk.text in (")", "]"):
-                        receiver.insert(0, "()")
-                        break
-                    if tk.text == ">":  # explicit generic call this.<T>foo()
-                        receiver.insert(0, "()")
-                        break
-                    break
-            close = find_close(i + 1)
-            args = body[i + 2:close]
-            argc = 0
-            depth = 0
-            if args:
-                argc = 1
-                for a in args:
-                    if a.text in ("(", "{", "["):
-                        depth += 1
-                    elif a.text in (")", "}", "]"):
-                        depth -= 1
-                    elif a.text == "," and depth == 0:
-                        argc += 1
-            cs = CallSite(name=t.text, receiver=receiver, argc=argc, line=t.line)
-            depth = 0
-            for idx, a in enumerate(args):
-                if a.text in ("(", "{", "["):
-                    depth += 1
-                elif a.text in (")", "}", "]"):
-                    depth -= 1
-                elif depth == 0:
-                    if a.kind == STRING:
-                        cs.string_args.append(unquote_string(a.text))
-                    elif a.text == "class" and idx >= 2 and args[idx - 1].text == "." and args[idx - 2].kind == IDENT:
-                        cs.class_args.append(args[idx - 2].text)
-                    elif a.text == "::" and idx >= 1 and idx + 1 < len(args):
-                        cs.method_refs.append(f"{args[idx - 1].text}::{args[idx + 1].text}")
-            info.calls.append(cs)
-            if t.text[:1].isupper() and (prev is None or prev.text != "."):
-                info_type_mentions.add(t.text)
-            i += 1  # continue scanning inside the arguments
-            continue
-        # qualified references & type mentions
-        if t.text[:1].isupper() and (prev is None or prev.text != "."):
-            info_type_mentions.add(t.text)
-            if nxt is not None and nxt.text == "." and i + 2 < n and body[i + 2].kind == IDENT:
-                after = body[i + 3].text if i + 3 < n else ""
-                if after != "(":
-                    ref = f"{t.text}.{body[i + 2].text}"
-                    if ref not in info.refs:
-                        info.refs.append(ref)
-            # local variable declaration:  Type name = / ; / :   (generics and arrays tolerated)
-            j = i + 1
-            if j < n and body[j].text == "<":
-                depth = 0
-                while j < n:
-                    if body[j].text == "<":
-                        depth += 1
-                    elif body[j].text == ">":
-                        depth -= 1
-                        if depth == 0:
-                            j += 1
-                            break
-                    j += 1
-            while j + 1 < n and body[j].text == "[" and body[j + 1].text == "]":
-                j += 2
-            if j + 1 < n and body[j].kind == IDENT and body[j].text not in _STOP_KEYWORDS \
-                    and body[j + 1].text in ("=", ";", ":", ","):
-                if body[j].text not in info.locals:
-                    info.locals[body[j].text] = t.text
-        elif t.text == "var" and nxt is not None and nxt.kind == IDENT and i + 3 < n and body[i + 2].text == "=" \
-                and body[i + 3].text == "new" and i + 4 < n and body[i + 4].kind == IDENT:
-            info.locals.setdefault(nxt.text, body[i + 4].text)
-        i += 1
-    info.type_mentions = sorted(info_type_mentions)
-    return info
+            # a call/index result, or an explicit generic call like this.<T>foo()
+            if tok.text in (")", "]", ">"):
+                receiver.insert(0, "()")
+            break
+        return receiver
+
+    def _collect_arg_literals(self, call: CallSite, args: List[Token]) -> None:
+        """Pick out string literals, ``X.class`` and ``handler::method`` top-level arguments."""
+        depth = 0
+        for idx, a in enumerate(args):
+            if a.text in _OPEN_BRACKETS:
+                depth += 1
+            elif a.text in _CLOSE_BRACKETS:
+                depth -= 1
+            elif depth == 0:
+                if a.kind == STRING:
+                    call.string_args.append(unquote_string(a.text))
+                elif a.text == "class" and idx >= 2 and args[idx - 1].text == "." and args[idx - 2].kind == IDENT:
+                    call.class_args.append(args[idx - 2].text)
+                elif a.text == "::" and idx >= 1 and idx + 1 < len(args):
+                    call.method_refs.append(f"{args[idx - 1].text}::{args[idx + 1].text}")
+
+    def _scan_type_mention(self, i: int) -> int:
+        """A bare identifier: a type mention plus ``Type.MEMBER`` refs and local declarations."""
+        t = self.body[i]
+        if self._is_fresh_type_name(i):
+            self.type_mentions.add(t.text)
+            self._record_qualified_ref(i)
+            self._record_local_decl(i)
+        elif t.text == "var" and self._text_at(i + 2) == "=" and self._text_at(i + 3) == "new":
+            name = self._at(i + 1)
+            declared = self._at(i + 4)
+            if name is not None and name.kind == IDENT and declared is not None and declared.kind == IDENT:
+                self.info.locals.setdefault(name.text, declared.text)
+        return i + 1
+
+    def _record_qualified_ref(self, i: int) -> None:
+        """``Type.MEMBER`` (not ``Type.method(``) is a constant/member reference worth keeping."""
+        member = self._at(i + 2)
+        if self._text_at(i + 1) != "." or member is None or member.kind != IDENT:
+            return
+        if self._text_at(i + 3) == "(":
+            return
+        ref = f"{self.body[i].text}.{member.text}"
+        if ref not in self.info.refs:
+            self.info.refs.append(ref)
+
+    def _record_local_decl(self, i: int) -> None:
+        """``Type name = / ; / : / ,`` - generics and array brackets tolerated."""
+        j = _skip_generic_args(self.body, i + 1)
+        while self._text_at(j) == "[" and self._text_at(j + 1) == "]":
+            j += 2
+        if j + 1 >= self.n:
+            return
+        name = self.body[j]
+        if name.kind == IDENT and name.text not in _STOP_KEYWORDS \
+                and self._text_at(j + 1) in _LOCAL_DECL_FOLLOWERS:
+            if name.text not in self.info.locals:
+                self.info.locals[name.text] = self.body[i].text
+
+
+def scan_body(toks: List[Token], src: str, open_i: int, close_i: int) -> BodyInfo:
+    """Scan the method body between ``open_i`` and ``close_i`` for code-graph facts."""
+    body = [t for t in toks[open_i + 1:close_i] if t.kind not in (COMMENT, JAVADOC)]
+    return _BodyScanner(body, src).scan()
 
 
 def _qualified_refs(stmt: List[Token]) -> List[str]:
