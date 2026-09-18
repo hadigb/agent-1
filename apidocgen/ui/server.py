@@ -78,18 +78,17 @@ class App:
         try:
             with self.session() as p:
                 stats = p.store.graph_stats()
-                usage = p.store.usage_totals()
-                cache = p.store.cache_stats()
                 last = p.store.get_meta("last_scan_at")
-                arch = Archive(p.cfg).entries()
-                return {"id": self.idx, "slug": self.slug, "name": self.name, "config": str(self.config_path),
-                        "root": self.root, "ok": True,
-                        "project_name": p.cfg.get("project", "name"), "paths": [str(x) for x in p.cfg.scan_paths],
-                        "endpoints": stats["endpoints"], "files": stats["files"], "symbols": stats["symbols"],
-                        "last_scan_at": float(last) if last else None, "usage": usage, "cache": cache,
-                        "documents": len(arch), "latest_document": arch[0]["file"] if arch else None,
-                        "llm": {"provider": p.cfg.get("llm", "provider"), "model": p.cfg.get("llm", "model")},
-                        "busy": self.lock.locked()}
+                return {
+                    "id": self.idx, "slug": self.slug, "name": self.name, "config": str(self.config_path),
+                    "root": self.root, "ok": True,
+                    "project_name": p.cfg.get("project", "name"), "paths": [str(x) for x in p.cfg.scan_paths],
+                    "endpoints": stats["endpoints"], "files": stats["files"], "symbols": stats["symbols"],
+                    "last_scan_at": float(last) if last else None,
+                    "llm": {"provider": p.cfg.get("llm", "provider"), "model": p.cfg.get("llm", "model")},
+                    "busy": self.lock.locked(),
+                    "failure_type": p.cfg.get("doc", "failure_type"),
+                }
         except Exception as e:  # pragma: no cover
             return {"id": self.idx, "slug": self.slug, "name": self.name, "config": str(self.config_path),
                     "root": self.root, "ok": False, "error": str(e)}
@@ -120,13 +119,13 @@ class App:
                 result: Dict[str, Any] = {}
                 if action in ("scan", "run"):
                     result["scan"] = do_scan(p, log, force=bool(options.get("force")))
-                if action in ("analyze", "run"):
+                if action in ("analyze", "run", "document"):
                     dry = bool(options.get("dry_run"))
                     client = None if dry else make_llm(p.cfg, options.get("provider"))
                     if options.get("model") and client is not None:
                         client.model = options["model"]
                     result["analyze"] = do_analyze(p, client, log, dry_run=dry, only=options.get("only"))
-                if action in ("render", "run"):
+                if action in ("render", "run", "document"):
                     result["render"] = do_render(p, log, only=options.get("only"), label=options.get("label", ""))
                 if action == "ucs":
                     dry = bool(options.get("dry_run"))
@@ -175,10 +174,15 @@ class Workspace:
                 prev.root = root
                 apps.append(prev)
             else:
-                apps.append(App(i, name, cp, root=root))
+                apps.append(App(i, name, cp, root=root, slug=e.get("slug") or ""))
         taken: set = set()
-        for a in apps:
-            a.slug = unique_slug(a.name, taken)
+        for a, e in zip(apps, self.registry.entries):
+            stored = (e.get("slug") or "").strip()
+            if stored and stored.casefold() not in taken:
+                a.slug = stored
+                taken.add(stored.casefold())
+            else:
+                a.slug = unique_slug(a.name, taken)
         self.apps = apps
 
     @staticmethod
@@ -223,9 +227,10 @@ class Workspace:
             return None
         return self.apps[idx] if 0 <= idx < len(self.apps) else None
 
-    def add_root(self, root: str) -> App:
+    def add_root(self, root: str, doc: Optional[Dict[str, Any]] = None,
+                 project: Optional[Dict[str, Any]] = None) -> App:
         with self.lock:
-            self.registry.add_root(root)
+            self.registry.add_root(root, doc=doc, project=project)
             self.reload()
             folder = str(Path(root).expanduser().resolve())
             for a in self.apps:
@@ -313,6 +318,8 @@ def make_handler(ws: Workspace):
             data = path.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", content_type or (mimetypes.guess_type(str(path))[0] or "application/octet-stream"))
+            if path.suffix in (".html", ".svg"):
+                self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             self.wfile.write(data)
@@ -354,6 +361,8 @@ def make_handler(ws: Workspace):
 
             if method == "GET" and not parts:
                 return self._file(STATIC / "index.html", "text/html; charset=utf-8")
+            if method == "GET" and parts == ["favicon.ico"]:
+                return self._file(STATIC / "favicon.svg", "image/svg+xml")
             if method == "GET" and parts[0] == "static" and len(parts) == 2:
                 return self._serve_static(parts[1])
             if parts[0] == "archive" and len(parts) == 3 and method == "GET":
@@ -404,7 +413,7 @@ def make_handler(ws: Workspace):
             if not folder:
                 return self._json({"error": "path is required"}, 400)
             try:
-                app = ws.add_root(folder)
+                app = ws.add_root(folder, doc=body.get("doc") or None, project=body.get("project") or None)
             except FileNotFoundError as e:
                 return self._json({"error": str(e)}, 404)
             except Exception as e:
@@ -468,11 +477,25 @@ def make_handler(ws: Workspace):
                 return self._json(data)
 
         def _r_graph(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            endpoint_id = (qs.get("endpoint") or [None])[0]
             with app.session() as p:
-                raw = p.store.get_meta("controller_graph") or "[]"
-                return self._json({"controllers": json.loads(raw), "endpoints": [
+                raw = json.loads(p.store.get_meta("controller_graph") or "[]")
+                if not raw:
+                    from ..services.scan_service import build_controller_graph
+                    raw = build_controller_graph(p)
+                    p.store.set_meta("controller_graph", json.dumps(raw, ensure_ascii=False))
+                endpoints = [
                     {"id": s.id, "method": s.http_method, "path": s.path, "handler": s.handler_qname}
-                    for s in p.endpoints()]})
+                    for s in p.endpoints()
+                ]
+                if endpoint_id:
+                    controllers = [item for item in raw if item.get("id") == endpoint_id]
+                else:
+                    controllers = [
+                        {key: item.get(key) for key in ("id", "method", "path", "handler", "file")}
+                        for item in raw
+                    ]
+                return self._json({"controllers": controllers, "endpoints": endpoints})
 
         def _r_ucs_list(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
             with app.session() as p:
@@ -486,8 +509,15 @@ def make_handler(ws: Workspace):
                 return self._json(doc)
 
         def _r_archive_list(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
+            endpoint_id = (qs.get("endpoint") or [None])[0]
             with app.session() as p:
-                return self._json({"entries": Archive(p.cfg).entries()})
+                entries = Archive(p.cfg).entries()
+                if endpoint_id:
+                    entries = [
+                        entry for entry in entries
+                        if any(item.get("id") == endpoint_id for item in entry.get("endpoints") or [])
+                    ]
+                return self._json({"entries": entries})
 
         def _r_archive_delete(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
             with app.session() as p:
@@ -500,7 +530,7 @@ def make_handler(ws: Workspace):
         def _r_jobs_create(self, app: App, qs: Dict[str, List[str]], params: List[str]) -> None:
             body = self._body()
             action = body.get("action")
-            if action not in ("scan", "analyze", "render", "run", "ucs"):
+            if action not in ("scan", "analyze", "render", "run", "ucs", "document"):
                 return self._json({"error": "unknown action"}, 400)
             job = app.start_job(action, body.get("options") or {})
             return self._json(self._job_view(job, full=True))

@@ -192,6 +192,7 @@ class MockClient(LLMClient):
                         "error_codes": [{"code": "1038", "title": "اطلاعات ورودی اشتباه است", "note": ""}],
                         "response_params": {p: f"توضیح خروجی {p}" for p in u.get("response_params", [])},
                         "response_fields_extra": [],
+                        "business_rules": ["شروط موجود در پیاده‌سازی سرویس رعایت می‌شود."],
                     }
         text = json.dumps({"results": results}, ensure_ascii=False)
         approx_in = len(system) // 4 + len(user) // 4

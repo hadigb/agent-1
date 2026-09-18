@@ -18,6 +18,7 @@ from .common import (
     method_description, method_summary, normalize_path, param_description, required_from_annotations,
     unwrap_response,
 )
+from .swagger import OPAQUE_RESPONSE_TYPES, extract_auth, swagger_response_type
 from .model import EndpointSpec, ParamSpec
 
 IGNORED_PARAM_TYPES = {
@@ -296,6 +297,11 @@ class AnnotationFrameworkDetector:
         params, body_type = self._params(t, work_method, full_paths[0], index)
         response = unwrap_response(work_method.return_type, self.wrappers or None) if self.wrappers \
             else unwrap_response(work_method.return_type)
+        if response is None or response.simple_name in OPAQUE_RESPONSE_TYPES:
+            swagger_type = swagger_response_type(work_method)
+            if swagger_type is not None:
+                response = swagger_type
+        auth = extract_auth(t, work_method)
 
         handler_q = CodeIndex.method_qname(owner.qname, m)
         impl_q, handler_q = self._resolve_impl_and_handler(t, m, owner, index, handler_q)
@@ -307,7 +313,8 @@ class AnnotationFrameworkDetector:
                                 response_type=response, consumes=consumes, produces=produces,
                                 summary=method_summary(m), description=method_description(m),
                                 deprecated=is_deprecated(m.annotations, m.javadoc) or is_deprecated(t.annotations, t.javadoc),
-                                impl_qname=impl_q, notes=list(notes), path_aliases=full_paths[1:])
+                                impl_qname=impl_q, notes=list(notes), path_aliases=full_paths[1:],
+                                auth=auth)
             spec.id = spec.make_id()
             specs.append(spec)
         return specs

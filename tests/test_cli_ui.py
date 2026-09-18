@@ -48,6 +48,9 @@ def test_ui_server_roundtrip(sample_project):
         assert "پروژه‌ها" in html and "/api/pick-folder" in html
         assert "تولید مستند" in html and "Finder" not in html
         assert "جستجوی سرویس" in html and "select2.min.js" in html
+        assert "scan-service" in html and 'id="cgraph"' in html
+        fav = urllib.request.urlopen(base + "/favicon.ico").read()
+        assert b"<svg" in fav
         slug = ws_info["apps"][0]["slug"]
         assert slug and slug != "0"
         from urllib.parse import quote
@@ -90,6 +93,32 @@ def test_ui_server_roundtrip(sample_project):
             f"{base}/archive/{quote(slug)}/{arch['entries'][0]['file']}"
         ).read().decode()
         assert "سرویس" in named_doc
+        graph = json.loads(urllib.request.urlopen(base + "/api/apps/0/graph").read())
+        assert graph["endpoints"]
+        assert all(not item.get("methods") for item in graph["controllers"])
+        eid = graph["endpoints"][0]["id"]
+        focused = json.loads(urllib.request.urlopen(
+            base + "/api/apps/0/graph?endpoint=" + quote(eid)
+        ).read())
+        assert focused["controllers"][0]["methods"]
+        assert any(method.get("source") for method in focused["controllers"][0]["methods"])
+        req = urllib.request.Request(
+            base + "/api/apps/0/jobs",
+            data=json.dumps({"action": "document", "options": {"only": [one], "label": "ai"}}).encode(),
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        job = json.loads(urllib.request.urlopen(req).read())
+        for _ in range(100):
+            j = json.loads(urllib.request.urlopen(f"{base}/api/apps/0/jobs/{job['id']}").read())
+            if j["status"] in ("done", "failed"):
+                break
+            time.sleep(0.2)
+        assert j["status"] == "done", j.get("error")
+        assert j["result"]["analyze"] and j["result"]["render"]["endpoints"] == 1
+        filtered = json.loads(urllib.request.urlopen(
+            base + "/api/apps/0/archive?endpoint=" + quote(one)
+        ).read())
+        assert filtered["entries"]
     finally:
         httpd.shutdown()
         httpd.server_close()
@@ -138,6 +167,8 @@ def test_ui_add_and_remove_project(tmp_path):
         assert added["name"] == "wallet" and added["slug"] == "wallet" and added["id"] == 0
         listed = json.loads(urllib.request.urlopen(base + "/api/workspace").read())
         assert len(listed["apps"]) == 1
+        yaml_text = (proj / "apidocgen.yaml").read_text(encoding="utf-8")
+        assert "wallet" in yaml_text
         dup = json.loads(urllib.request.urlopen(req).read())
         assert dup["id"] == 0
         listed = json.loads(urllib.request.urlopen(base + "/api/workspace").read())
@@ -160,3 +191,62 @@ def test_slugify_uses_project_name():
     taken = set()
     assert unique_slug("orders", taken) == "orders"
     assert unique_slug("orders", taken) == "orders-2"
+
+
+def test_add_project_collects_doc_config(tmp_path):
+    proj = tmp_path / "orders"
+    (proj / "src/main/java").mkdir(parents=True)
+    (proj / "src/main/java/A.java").write_text("package a; public class A {}")
+    ws = Workspace.load(None, None, registry_path=tmp_path / "apps.json")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(ws))
+    port = httpd.server_address[1]
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        base = f"http://127.0.0.1:{port}"
+        req = urllib.request.Request(
+            base + "/api/apps",
+            data=json.dumps({
+                "path": str(proj),
+                "project": {"name": "سفارش"},
+                "doc": {
+                    "title": "مستند سفارش",
+                    "organization": "داتین",
+                    "author": "تست",
+                    "version": "2.0",
+                    "failure_type": "ErrorBody",
+                },
+            }).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        added = json.loads(urllib.request.urlopen(req).read())
+        assert added["name"] == "سفارش"
+        text = (proj / "apidocgen.yaml").read_text(encoding="utf-8")
+        assert "مستند سفارش" in text and "داتین" in text and "ErrorBody" in text
+        assert "p-fail" in urllib.request.urlopen(base + "/").read().decode()
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
+def test_sqlite_registry_isolates_project_db(tmp_path):
+    from apidocgen.ui.registry import AppRegistry
+
+    root = tmp_path / "orders"
+    (root / "src/main/java").mkdir(parents=True)
+    (root / "src/main/java/A.java").write_text("package a; public class A {}")
+    store = tmp_path / "apps.db"
+    first = AppRegistry(store).add_root(
+        str(root),
+        doc={"title": "مستند سفارش", "failure_type": "ErrorBody"},
+        project={"name": "orders"},
+    )
+    assert store.exists()
+    yaml_text = (root / "apidocgen.yaml").read_text(encoding="utf-8")
+    assert "projects/orders/graph.db" in yaml_text.replace("\\", "/")
+    assert "مستند سفارش" in yaml_text and "ErrorBody" in yaml_text
+    restored = AppRegistry(store)
+    assert restored.entries[0]["slug"] == "orders"
+    assert restored.entries[0]["db"] == first["db"]
+    assert Path(first["db"]).as_posix().endswith("projects/orders/graph.db")

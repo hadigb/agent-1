@@ -217,7 +217,10 @@ def description_from_annotations(annotations: List[Annotation]) -> str:
     return ""
 
 
-_WIRE_NAME_ANNOTATIONS = ("JsonProperty", "SerializedName", "JsonAlias", "XmlElement", "XmlAttribute", "JsonbProperty")
+_WIRE_NAME_ANNOTATIONS = (
+    "Schema", "ApiModelProperty", "Parameter", "ApiParam",
+    "JsonProperty", "SerializedName", "JsonAlias", "XmlElement", "XmlAttribute", "JsonbProperty",
+)
 
 
 def wire_name(annotations: List[Annotation], java_name: str) -> str:

@@ -18,8 +18,7 @@ def _log(msg: str) -> None:
 
 
 def _load(args: argparse.Namespace) -> Project:
-    cfg = Config.load(args.config)
-    return Project(cfg)
+    return Project(Config.load(args.config))
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -34,54 +33,76 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    p = _load(args)
-    do_scan(p, _log, force=args.force)
+    do_scan(_load(args), _log, force=args.force)
     return 0
 
 
 def cmd_endpoints(args: argparse.Namespace) -> int:
-    p = _load(args)
-    eps = p.endpoints()
+    endpoints = _load(args).endpoints()
     if args.json:
-        print(json.dumps([e.to_dict() for e in eps], ensure_ascii=False, indent=1))
+        print(json.dumps([endpoint.to_dict() for endpoint in endpoints], ensure_ascii=False, indent=1))
         return 0
-    if not eps:
+    if not endpoints:
         print("no endpoints detected (run `apidocgen scan` first, or check detectors / custom rules)")
         return 0
-    w = max(len(e.id) for e in eps)
-    for e in eps:
-        body = e.body_type.canonical() if e.body_type else "-"
-        resp = e.response_type.canonical() if e.response_type else "-"
-        print(f"{e.id:<{w}}  [{e.framework}]  body={body}  response={resp}")
-        if args.verbose:
-            print(f"    handler: {e.handler_qname}")
-            for prm in e.params:
-                print(f"    - {prm.location:<7} {prm.name} : {prm.type.canonical()}{' *' if prm.required else ''}")
+    width = max(len(endpoint.id) for endpoint in endpoints)
+    for endpoint in endpoints:
+        body = endpoint.body_type.canonical() if endpoint.body_type else "-"
+        response = endpoint.response_type.canonical() if endpoint.response_type else "-"
+        print(f"{endpoint.id:<{width}}  [{endpoint.framework}]  body={body}  response={response}")
+        if not args.verbose:
+            continue
+        print(f"    handler: {endpoint.handler_qname}")
+        for param in endpoint.params:
+            required = " *" if param.required else ""
+            print(f"    - {param.location:<7} {param.name} : {param.type.canonical()}{required}")
     return 0
 
 
-_DOT_NODE_COLORS = {"type": "darkgreen", "method": "gray40", "field": "gray", "constant": "orange"}
-# Edge kinds worth showing in a default (non ``--all``) export.
-_INTERESTING_EDGE_KINDS = ("extends", "implements", "field_type", "returns", "param_type",
-                           "calls", "uses_const")
+_DOT_NODE_COLORS = {
+    "type": "darkgreen",
+    "method": "gray40",
+    "field": "gray",
+    "constant": "orange",
+}
+_INTERESTING_EDGE_KINDS = (
+    "extends", "implements", "field_type", "returns", "param_type", "calls", "uses_const",
+)
 _MAX_SYMBOL_CANDIDATES = 20
 
 
-def _graph_stats(p: Project, args: argparse.Namespace) -> int:
-    print(json.dumps(p.store.graph_stats(), ensure_ascii=False, indent=1))
+def _graph_stats(project: Project, args: argparse.Namespace) -> int:
+    print(json.dumps(project.store.graph_stats(), ensure_ascii=False, indent=1))
     return 0
 
 
-def _graph_export(p: Project, args: argparse.Namespace) -> int:
-    st = p.store
-    nodes = [{"id": s.qname, "kind": s.kind, "name": s.name, "type_kind": s.type_kind, "file": s.file_path,
-              "parent": s.parent, "line": s.start_line} for s in st.all_symbols()]
-    edges = [{"src": a, "dst": b, "kind": k, "meta": m} for a, b, k, m in st.all_edges()]
+def _graph_export(project: Project, args: argparse.Namespace) -> int:
+    store = project.store
+    nodes = [
+        {
+            "id": symbol.qname,
+            "kind": symbol.kind,
+            "name": symbol.name,
+            "type_kind": symbol.type_kind,
+            "file": symbol.file_path,
+            "parent": symbol.parent,
+            "line": symbol.start_line,
+        }
+        for symbol in store.all_symbols()
+    ]
+    edges = [
+        {"src": src, "dst": dest, "kind": kind, "meta": meta}
+        for src, dest, kind, meta in store.all_edges()
+    ]
     if args.format == "dot":
         text = _render_dot(nodes, edges, include_all=args.all)
     else:
-        text = json.dumps({"nodes": nodes, "edges": edges, "endpoints": [r.data for r in st.list_endpoints()]},
-                          ensure_ascii=False, indent=1)
+        payload = {
+            "nodes": nodes,
+            "edges": edges,
+            "endpoints": [row.data for row in store.list_endpoints()],
+        }
+        text = json.dumps(payload, ensure_ascii=False, indent=1)
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8")
         print(f"wrote {args.out} ({len(nodes)} nodes, {len(edges)} edges)")
@@ -92,42 +113,46 @@ def _graph_export(p: Project, args: argparse.Namespace) -> int:
 
 def _render_dot(nodes: List[dict], edges: List[dict], include_all: bool) -> str:
     lines = ["digraph code {", "  rankdir=LR; node [shape=box, fontsize=9];"]
-    for n in nodes:
-        if n["kind"] == "type" or include_all:
-            color = _DOT_NODE_COLORS[n["kind"]]
-            lines.append(f'  "{n["id"]}" [label="{n["name"]}", color="{color}"];')
-    for e in edges:
-        if not include_all and (e["dst"].startswith("ext:") or e["kind"] not in _INTERESTING_EDGE_KINDS):
+    for node in nodes:
+        if node["kind"] == "type" or include_all:
+            color = _DOT_NODE_COLORS[node["kind"]]
+            lines.append(f'  "{node["id"]}" [label="{node["name"]}", color="{color}"];')
+    for edge in edges:
+        if not include_all and (edge["dst"].startswith("ext:") or edge["kind"] not in _INTERESTING_EDGE_KINDS):
             continue
-        lines.append(f'  "{e["src"]}" -> "{e["dst"]}" [label="{e["kind"]}", fontsize=7];')
+        lines.append(f'  "{edge["src"]}" -> "{edge["dst"]}" [label="{edge["kind"]}", fontsize=7];')
     lines.append("}")
     return "\n".join(lines)
 
 
-def _graph_impact(p: Project, args: argparse.Namespace) -> int:
-    res = impact(p, args.files)
-    if not res:
+def _graph_impact(project: Project, args: argparse.Namespace) -> int:
+    result = impact(project, args.files)
+    if not result:
         print("no endpoint depends on the given files")
-    for eid, files in res.items():
-        print(f"{eid}\n    via " + ", ".join(files))
+    for endpoint_id, files in result.items():
+        print(f"{endpoint_id}\n    via " + ", ".join(files))
     return 0
 
 
-def _graph_deps(p: Project, args: argparse.Namespace) -> int:
-    st = p.store
-    symbol = args.symbol
-    sym = st.get_symbol(symbol)
-    if sym is None:
-        candidates = [s.qname for s in st.find_symbols(name_like=f"%{symbol}%")][:_MAX_SYMBOL_CANDIDATES]
+def _graph_deps(project: Project, args: argparse.Namespace) -> int:
+    store = project.store
+    symbol_name = args.symbol
+    symbol = store.get_symbol(symbol_name)
+    if symbol is None:
+        candidates = [
+            row.qname for row in store.find_symbols(name_like=f"%{symbol_name}%")
+        ][:_MAX_SYMBOL_CANDIDATES]
         print("symbol not found; candidates: " + ", ".join(candidates))
         return 1
-    print(f"{sym.kind} {sym.qname} ({sym.file_path}:{sym.start_line})")
+    print(f"{symbol.kind} {symbol.qname} ({symbol.file_path}:{symbol.start_line})")
     print("outgoing:")
-    for dst, kind, meta in st.edges_from(symbol):
-        print(f"  --{kind}--> {dst}" + (f" {meta}" if meta else ""))
+    for dest, kind, meta in store.edges_from(symbol_name):
+        extra = f" {meta}" if meta else ""
+        print(f"  --{kind}--> {dest}{extra}")
     print("incoming:")
-    for src, kind, meta in st.edges_to(symbol):
-        print(f"  <--{kind}-- {src}" + (f" {meta}" if meta else ""))
+    for src, kind, meta in store.edges_to(symbol_name):
+        extra = f" {meta}" if meta else ""
+        print(f"  <--{kind}-- {src}{extra}")
     return 0
 
 
@@ -146,108 +171,156 @@ def cmd_graph(args: argparse.Namespace) -> int:
     return handler(_load(args), args)
 
 
+def _maybe_override_model(client, model: Optional[str]):
+    if model and client is not None:
+        client.model = model
+    return client
+
+
 def cmd_analyze(args: argparse.Namespace) -> int:
-    p = _load(args)
+    project = _load(args)
     if args.scan:
-        do_scan(p, _log)
-    client = None if args.dry_run else make_llm(p.cfg, args.provider)
-    if args.model and client is not None:
-        client.model = args.model
-    res = do_analyze(p, client, _log, dry_run=args.dry_run, only=args.only, prune=args.prune)
+        do_scan(project, _log)
+    client = None if args.dry_run else make_llm(project.cfg, args.provider)
+    client = _maybe_override_model(client, args.model)
+    result = do_analyze(
+        project, client, _log, dry_run=args.dry_run, only=args.only, prune=args.prune,
+    )
     if args.json:
-        print(json.dumps(res, ensure_ascii=False, indent=1))
-    return 0 if not res.get("failed_units") else 2
+        print(json.dumps(result, ensure_ascii=False, indent=1))
+    return 0 if not result.get("failed_units") else 2
 
 
 def cmd_render(args: argparse.Namespace) -> int:
-    p = _load(args)
-    res = do_render(p, _log, out=args.out, only=args.only, archive=not args.no_archive, label=args.label or "")
+    do_render(
+        _load(args),
+        _log,
+        out=args.out,
+        only=args.only,
+        archive=not args.no_archive,
+        label=args.label or "",
+    )
     return 0
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    p = _load(args)
-    do_scan(p, _log)
-    client = None if args.no_llm else make_llm(p.cfg, args.provider)
-    if args.model and client is not None:
-        client.model = args.model
-    do_analyze(p, client, _log, dry_run=args.no_llm, only=args.only)
-    do_render(p, _log, out=args.out, only=args.only, label=args.label or "")
+    project = _load(args)
+    do_scan(project, _log)
+    client = None if args.no_llm else make_llm(project.cfg, args.provider)
+    client = _maybe_override_model(client, args.model)
+    do_analyze(project, client, _log, dry_run=args.no_llm, only=args.only)
+    do_render(project, _log, out=args.out, only=args.only, label=args.label or "")
     return 0
 
 
 def cmd_ucs(args: argparse.Namespace) -> int:
-    p = _load(args)
-    client = None if args.dry_run else make_llm(p.cfg, args.provider)
-    if args.model and client is not None:
-        client.model = args.model
-    res = do_ucs(p, client, _log, mode=args.mode, endpoint_id=args.endpoint, previous_analysis=args.previous or "",
-                 new_requirement=args.requirement or "", dry_run=args.dry_run, out=args.out)
+    project = _load(args)
+    client = None if args.dry_run else make_llm(project.cfg, args.provider)
+    client = _maybe_override_model(client, args.model)
+    result = do_ucs(
+        project,
+        client,
+        _log,
+        mode=args.mode,
+        endpoint_id=args.endpoint,
+        previous_analysis=args.previous or "",
+        new_requirement=args.requirement or "",
+        dry_run=args.dry_run,
+        out=args.out,
+    )
     if args.json:
-        print(json.dumps({k: v for k, v in res.items() if k != "html"}, ensure_ascii=False, indent=1))
-    return 0 if not res.get("failed") else 2
+        printable = {key: value for key, value in result.items() if key != "html"}
+        print(json.dumps(printable, ensure_ascii=False, indent=1))
+    return 0 if not result.get("failed") else 2
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    p = _load(args)
-    info = status_info(p)
+    info = status_info(_load(args))
     if args.json:
         print(json.dumps(info, ensure_ascii=False, indent=1, default=str))
         return 0
-    g, c, u = info["graph"], info["cache"], info["usage"]
+    graph, cache, usage = info["graph"], info["cache"], info["usage"]
     print(f"config:   {info['config']}\ndb:       {info['db']}")
-    print(f"graph:    {g['files']} files, {g['symbols']} symbols, {g['edges']} edges, {g['endpoints']} endpoints")
-    print(f"cache:    {c['entries']} analyses ({c['by_kind']}), {c['hits']} hits so far")
-    print(f"usage:    {u['calls']} LLM calls, {u['input_tokens']} input / {u['output_tokens']} output tokens, "
-          f"{u['cache_read_tokens']} prompt-cache read, {u['failed']} failed")
+    print(
+        f"graph:    {graph['files']} files, {graph['symbols']} symbols, "
+        f"{graph['edges']} edges, {graph['endpoints']} endpoints"
+    )
+    print(f"cache:    {cache['entries']} analyses ({cache['by_kind']}), {cache['hits']} hits so far")
+    print(
+        f"usage:    {usage['calls']} LLM calls, "
+        f"{usage['input_tokens']} input / {usage['output_tokens']} output tokens, "
+        f"{usage['cache_read_tokens']} prompt-cache read, {usage['failed']} failed"
+    )
     for row in info["usage_by_model"]:
-        print(f"          {row['provider']}/{row['model']}: {row['calls']} calls, {row['input_tokens']} in, {row['output_tokens']} out")
+        print(
+            f"          {row['provider']}/{row['model']}: {row['calls']} calls, "
+            f"{row['input_tokens']} in, {row['output_tokens']} out"
+        )
     if info["parse_errors"]:
         print(f"parse warnings in {len(info['parse_errors'])} files (see `apidocgen status --json`)")
     return 0
 
 
 def cmd_cache(args: argparse.Namespace) -> int:
-    p = _load(args)
+    project = _load(args)
     if args.cache_cmd == "stats":
-        print(json.dumps(p.store.cache_stats(), ensure_ascii=False, indent=1))
+        print(json.dumps(project.store.cache_stats(), ensure_ascii=False, indent=1))
     elif args.cache_cmd == "clear":
-        n = p.store.cache_clear(unit_kind=args.kind, unit_id=args.unit)
-        print(f"removed {n} cache entries")
+        removed = project.store.cache_clear(unit_kind=args.kind, unit_id=args.unit)
+        print(f"removed {removed} cache entries")
     elif args.cache_cmd == "prune":
         from .analysis.analyzer import Analyzer
 
-        an = Analyzer(p, None)
-        n = an.prune_cache(an.plan())
-        print(f"pruned {n} stale cache entries")
+        analyzer = Analyzer(project, None)
+        pruned = analyzer.prune_cache(analyzer.plan())
+        print(f"pruned {pruned} stale cache entries")
     return 0
 
 
 def cmd_discover(args: argparse.Namespace) -> int:
     from .analysis.discover import discover_endpoints, write_endpoints_file
 
-    p = _load(args)
-    client = make_llm(p.cfg, args.provider)
-    eps = discover_endpoints(p, client, class_regex=args.class_regex, progress=_log, min_confidence=args.min_confidence)
-    if not eps:
+    project = _load(args)
+    client = make_llm(project.cfg, args.provider)
+    endpoints = discover_endpoints(
+        project,
+        client,
+        class_regex=args.class_regex,
+        progress=_log,
+        min_confidence=args.min_confidence,
+    )
+    if not endpoints:
         print("nothing discovered")
         return 0
-    for e in eps:
-        print(f"  {e['method']} {e['path']}  <- {e['handler']}  (confidence {e.get('confidence', 1):.2f})")
-    out = Path(args.out) if args.out else (p.cfg.resolve_path(p.cfg.get("project", "endpoints_file")) or (p.cfg.root / "endpoints.yaml"))
-    n = write_endpoints_file(out, eps, merge=True)
-    print(f"wrote {n} new entries to {out}. Review the file, then set project.endpoints_file: {out.name} and re-run `apidocgen scan`.")
+    for endpoint in endpoints:
+        confidence = endpoint.get("confidence", 1)
+        print(
+            f"  {endpoint['method']} {endpoint['path']}  <- {endpoint['handler']}  "
+            f"(confidence {confidence:.2f})"
+        )
+    default_out = project.cfg.resolve_path(project.cfg.get("project", "endpoints_file"))
+    out_path = Path(args.out) if args.out else (default_out or (project.cfg.root / "endpoints.yaml"))
+    added = write_endpoints_file(out_path, endpoints, merge=True)
+    print(
+        f"wrote {added} new entries to {out_path}. Review the file, then set "
+        f"project.endpoints_file: {out_path.name} and re-run `apidocgen scan`."
+    )
     return 0
 
 
 def cmd_ui(args: argparse.Namespace) -> int:
     from .ui.server import serve
 
-    return serve(config=args.config, workspace=args.workspace, host=args.host, port=args.port, open_browser=not args.no_open)
+    return serve(
+        config=args.config,
+        workspace=args.workspace,
+        host=args.host,
+        port=args.port,
+        open_browser=not args.no_open,
+    )
 
 
 def _add_graph_command(subcommands: Any) -> None:
-    """``graph`` has its own nested subcommands (stats / export / impact / deps)."""
     graph = subcommands.add_parser("graph", help="code graph queries and export")
     queries = graph.add_subparsers(dest="graph_cmd", required=True)
 
@@ -268,7 +341,6 @@ def _add_graph_command(subcommands: Any) -> None:
 
 
 def _add_cache_command(subcommands: Any) -> None:
-    """``cache`` has its own nested subcommands (stats / clear / prune)."""
     cache = subcommands.add_parser("cache", help="manage the LLM analysis cache")
     actions = cache.add_subparsers(dest="cache_cmd", required=True)
 
@@ -284,9 +356,16 @@ def _add_cache_command(subcommands: Any) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="apidocgen", description="Scan Java code, keep a code graph and generate Persian API documents with cached LLM help.")
+    parser = argparse.ArgumentParser(
+        prog="apidocgen",
+        description="Scan Java code, keep a code graph and generate Persian API documents with cached LLM help.",
+    )
     parser.add_argument("--version", action="version", version=f"apidocgen {__version__}")
-    parser.add_argument("-c", "--config", default=None, help=f"path to {CONFIG_FILENAME} (default: ./{CONFIG_FILENAME})")
+    parser.add_argument(
+        "-c", "--config",
+        default=None,
+        help=f"path to {CONFIG_FILENAME} (default: ./{CONFIG_FILENAME})",
+    )
     subcommands = parser.add_subparsers(dest="cmd", required=True)
 
     init = subcommands.add_parser("init", help="write a commented configuration template")
@@ -311,11 +390,11 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--only", nargs="*", help="endpoint id patterns (fnmatch), e.g. 'POST /API/*'")
     analyze.add_argument("--provider", help="override llm.provider for this run")
     analyze.add_argument("--model", help="override llm.model for this run")
-    analyze.add_argument("--prune", action="store_true", help="drop cache entries for code that no longer exists in this form")
+    analyze.add_argument("--prune", action="store_true", help="drop cache entries for code that no longer exists")
     analyze.add_argument("--json", action="store_true")
     analyze.set_defaults(func=cmd_analyze)
 
-    render = subcommands.add_parser("render", help="render the HTML document from the graph and cached analyses (no LLM calls)")
+    render = subcommands.add_parser("render", help="render the HTML document from the graph and cached analyses")
     render.add_argument("--out")
     render.add_argument("--only", nargs="*")
     render.add_argument("--no-archive", action="store_true")
@@ -331,7 +410,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--label")
     run.set_defaults(func=cmd_run)
 
-    ucs = subcommands.add_parser("ucs", help="scan then produce use-case specifications (senior analyst agent)")
+    ucs = subcommands.add_parser("ucs", help="scan then produce use-case specifications")
     ucs.add_argument("--mode", choices=["new", "existing"], default="new")
     ucs.add_argument("--endpoint", help="endpoint id or path when mode=existing")
     ucs.add_argument("--previous", default="", help="previous analysis text (existing service)")
@@ -349,8 +428,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     _add_cache_command(subcommands)
 
-    discover = subcommands.add_parser("discover", help="LLM-assisted discovery of endpoints in classes without framework annotations")
-    discover.add_argument("--class-regex", default=r".*(Handler|Service|Resource|Api|Endpoint|Controller|Processor|Action)$")
+    discover = subcommands.add_parser(
+        "discover",
+        help="LLM-assisted discovery of endpoints in classes without framework annotations",
+    )
+    discover.add_argument(
+        "--class-regex",
+        default=r".*(Handler|Service|Resource|Api|Endpoint|Controller|Processor|Action)$",
+    )
     discover.add_argument("--min-confidence", type=float, default=0.5)
     discover.add_argument("--provider")
     discover.add_argument("--out", help="endpoints yaml to write (default: project.endpoints_file or ./endpoints.yaml)")
@@ -367,16 +452,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    ap = build_parser()
-    args = ap.parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     try:
         return int(args.func(args) or 0)
-    except FileNotFoundError as e:
-        print(f"error: {e}", file=sys.stderr)
+    except FileNotFoundError as error:
+        print(f"error: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         return 130
-    except BrokenPipeError:  # output piped into head etc.
+    except BrokenPipeError:
         return 0
 
 

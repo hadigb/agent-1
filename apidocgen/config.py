@@ -92,6 +92,7 @@ DEFAULTS: Dict[str, Any] = {
         "common_error_codes": [],
         "success_code": None,
         "validation_error": None,
+        "failure_type": None,              # optional project-wide error DTO (qname or simple name)
         "call_steps_file": None,
         "show_call_steps": False,
         "show_samples": True,
@@ -134,11 +135,11 @@ class Config:
             cur = cur[k]
         return cur
 
-    def resolve_path(self, p: Optional[str]) -> Optional[Path]:
-        if not p:
+    def resolve_path(self, value: Optional[str]) -> Optional[Path]:
+        if not value:
             return None
-        pp = Path(os.path.expanduser(str(p)))
-        return pp if pp.is_absolute() else (self.root / pp).resolve()
+        path = Path(os.path.expanduser(str(value)))
+        return path if path.is_absolute() else (self.root / path).resolve()
 
     @property
     def db_path(self) -> Path:
@@ -258,6 +259,7 @@ doc:
   common_headers: []
   common_error_codes: []
   success_code: null
+  failure_type: null               # کلاس خطای عمومی پروژه، مثلا BaseResponse
   show_call_steps: false
   show_samples: true
   show_error_table: true

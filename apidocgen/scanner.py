@@ -26,13 +26,13 @@ class ScanResult:
         return self.added + self.changed
 
 
-def _match_any(rel: str, patterns: Iterable[str]) -> bool:
-    rel_posix = rel.replace(os.sep, "/")
-    for pat in patterns:
-        if fnmatch.fnmatch(rel_posix, pat) or fnmatch.fnmatch("/" + rel_posix, pat):
+def _match_any(relative: str, patterns: Iterable[str]) -> bool:
+    posix_path = relative.replace(os.sep, "/")
+    for pattern in patterns:
+        if fnmatch.fnmatch(posix_path, pattern) or fnmatch.fnmatch("/" + posix_path, pattern):
             return True
         # allow "**/x/**" to also match a path that starts with "x/"
-        if pat.startswith("**/") and fnmatch.fnmatch(rel_posix, pat[3:]):
+        if pattern.startswith("**/") and fnmatch.fnmatch(posix_path, pattern[3:]):
             return True
     return False
 
@@ -53,81 +53,103 @@ def iter_source_files(cfg: Config) -> Iterable[Path]:
         if not root.exists():
             continue
         for dirpath, dirnames, filenames in os.walk(root, followlinks=follow):
-            rel_dir = os.path.relpath(dirpath, root)
-            rel_dir = "" if rel_dir == "." else rel_dir
-            # prune excluded directories early
-            keep: List[str] = []
-            for d in dirnames:
-                rel = os.path.join(rel_dir, d) if rel_dir else d
-                if _match_any(rel + "/", exclude) or _match_any(rel + "/x", exclude) or d in (".git", "node_modules"):
+            relative_dir = os.path.relpath(dirpath, root)
+            relative_dir = "" if relative_dir == "." else relative_dir
+            kept_dirs: List[str] = []
+            for dirname in dirnames:
+                relative = os.path.join(relative_dir, dirname) if relative_dir else dirname
+                skip_dir = (
+                    _match_any(relative + "/", exclude)
+                    or _match_any(relative + "/x", exclude)
+                    or dirname in (".git", "node_modules")
+                )
+                if not skip_dir:
+                    kept_dirs.append(dirname)
+            dirnames[:] = kept_dirs
+            for filename in filenames:
+                relative = os.path.join(relative_dir, filename) if relative_dir else filename
+                if not _match_any(relative, include) or _match_any(relative, exclude):
                     continue
-                keep.append(d)
-            dirnames[:] = keep
-            for fn in filenames:
-                rel = os.path.join(rel_dir, fn) if rel_dir else fn
-                if not _match_any(rel, include):
-                    continue
-                if _match_any(rel, exclude):
-                    continue
-                p = Path(dirpath) / fn
-                if p not in seen:
-                    seen.add(p)
-                    yield p
+                path = Path(dirpath) / filename
+                if path not in seen:
+                    seen.add(path)
+                    yield path
 
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def read_text(p: Path) -> str:
-    data = p.read_bytes()
-    for enc in ("utf-8-sig", "utf-8", "cp1256", "latin-1"):
+def read_text(path: Path) -> str:
+    data = path.read_bytes()
+    for encoding in ("utf-8-sig", "utf-8", "cp1256", "latin-1"):
         try:
-            return data.decode(enc)
+            return data.decode(encoding)
         except UnicodeDecodeError:
             continue
     return data.decode("utf-8", errors="replace")
 
 
-def scan_files(cfg: Config, store: GraphStore, progress: Optional[Callable[[str], None]] = None,
-               force: bool = False) -> ScanResult:
+def scan_files(
+    cfg: Config,
+    store: GraphStore,
+    progress: Optional[Callable[[str], None]] = None,
+    force: bool = False,
+) -> ScanResult:
     """Hash every source file; parse only new/changed ones; drop vanished ones."""
     result = ScanResult()
     known = store.file_hashes()
+    missing_source = set(store.paths_missing_source()) if not force else set()
     present: Set[str] = set()
-    missing_roots = [str(r) for r in cfg.scan_paths if r is not None and not r.exists()]
-    for r in missing_roots:
-        result.parse_errors[r] = "scan path not found - previously scanned files under it were kept"
-    for p in iter_source_files(cfg):
-        path = str(p)
-        present.add(path)
+    missing_roots = [str(root) for root in cfg.scan_paths if root is not None and not root.exists()]
+    for missing in missing_roots:
+        result.parse_errors[missing] = (
+            "scan path not found - previously scanned files under it were kept"
+        )
+
+    for path in iter_source_files(cfg):
+        path_str = str(path)
+        present.add(path_str)
         try:
-            data = p.read_bytes()
-        except OSError as e:
-            result.parse_errors[path] = f"unreadable: {e}"
+            data = path.read_bytes()
+        except OSError as error:
+            result.parse_errors[path_str] = f"unreadable: {error}"
             continue
-        sha = sha256_bytes(data)
-        if not force and known.get(path) == sha:
+        digest = sha256_bytes(data)
+        if not force and known.get(path_str) == digest:
+            if path_str in missing_source:
+                try:
+                    text = data.decode("utf-8-sig")
+                except UnicodeDecodeError:
+                    text = read_text(path)
+                store.update_file_source(path_str, text)
             result.unchanged += 1
             continue
         try:
             text = data.decode("utf-8-sig")
         except UnicodeDecodeError:
-            text = read_text(p)
-        jf = parse_java(text, path)
-        err = "; ".join(jf.errors) if jf.errors else None
-        if err:
-            result.parse_errors[path] = err
-        st = p.stat()
-        store.upsert_file(path, sha, st.st_size, st.st_mtime, jf, err)
-        if path in known:
-            result.changed.append(path)
+            text = read_text(path)
+        java_file = parse_java(text, path_str)
+        parse_error = "; ".join(java_file.errors) if java_file.errors else None
+        if parse_error:
+            result.parse_errors[path_str] = parse_error
+        stat = path.stat()
+        store.upsert_file(path_str, digest, stat.st_size, stat.st_mtime, java_file, parse_error, source=text)
+        if path_str in known:
+            result.changed.append(path_str)
         else:
-            result.added.append(path)
+            result.added.append(path_str)
         if progress:
-            progress(path)
-    removed = [p for p in known if p not in present
-               and not any(p.startswith(r.rstrip("/\\") + os.sep) or p == r for r in missing_roots)]
+            progress(path_str)
+
+    removed = [
+        known_path for known_path in known
+        if known_path not in present
+        and not any(
+            known_path.startswith(root.rstrip("/\\") + os.sep) or known_path == root
+            for root in missing_roots
+        )
+    ]
     if removed:
         store.delete_files(removed)
         result.removed = removed

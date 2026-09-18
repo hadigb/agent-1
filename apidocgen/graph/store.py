@@ -21,7 +21,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 from ..javaparse.model import JavaFile
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS files (
     package     TEXT,
     parsed_json TEXT,
     parse_error TEXT,
-    scanned_at  REAL NOT NULL
+    scanned_at  REAL NOT NULL,
+    source_text TEXT
 );
 
 CREATE TABLE IF NOT EXISTS symbols (
@@ -160,14 +161,16 @@ class GraphStore:
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.conn.executescript(_SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        cols = {row[1] for row in self.conn.execute("PRAGMA table_info(files)")}
+        if "source_text" not in cols:
+            self.conn.execute("ALTER TABLE files ADD COLUMN source_text TEXT")
         ver = self.get_meta("schema_version")
-        if ver is None:
+        if ver is None or int(ver) != SCHEMA_VERSION:
             self.set_meta("schema_version", str(SCHEMA_VERSION))
-        elif int(ver) != SCHEMA_VERSION:
-            # graph tables are derived data - drop and rebuild; keep the LLM cache (content addressed)
-            self.conn.executescript("DELETE FROM symbols; DELETE FROM edges; DELETE FROM endpoints; DELETE FROM files;")
-            self.set_meta("schema_version", str(SCHEMA_VERSION))
-            self.conn.commit()
+        self.conn.commit()
 
     def close(self) -> None:
         self.conn.close()
@@ -186,16 +189,17 @@ class GraphStore:
         return {r["path"]: r["sha256"] for r in self.conn.execute("SELECT path, sha256 FROM files")}
 
     def upsert_file(self, path: str, sha256: str, size: int, mtime: float, parsed: Optional[JavaFile],
-                    error: Optional[str]) -> bool:
+                    error: Optional[str], source: Optional[str] = None) -> bool:
         """Persist a parsed file. Returns False when the content hash is unchanged."""
         row = self.conn.execute("SELECT sha256 FROM files WHERE path=?", (path,)).fetchone()
         if row and row["sha256"] == sha256:
             return False
         self.conn.execute(
-            "INSERT OR REPLACE INTO files(path, sha256, size, mtime, package, parsed_json, parse_error, scanned_at)"
-            " VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO files(path, sha256, size, mtime, package, parsed_json, parse_error, scanned_at, source_text)"
+            " VALUES (?,?,?,?,?,?,?,?,?)",
             (path, sha256, size, mtime, parsed.package if parsed else None,
-             json.dumps(parsed.to_dict(), ensure_ascii=False) if parsed else None, error, time.time()),
+             json.dumps(parsed.to_dict(), ensure_ascii=False) if parsed else None, error, time.time(),
+             source),
         )
         return True
 
@@ -213,6 +217,18 @@ class GraphStore:
 
     def file_count(self) -> int:
         return self.conn.execute("SELECT COUNT(*) FROM files").fetchone()[0]
+
+    def file_source(self, path: str) -> Optional[str]:
+        row = self.conn.execute("SELECT source_text FROM files WHERE path=?", (path,)).fetchone()
+        return row["source_text"] if row else None
+
+    def paths_missing_source(self) -> List[str]:
+        return [r["path"] for r in self.conn.execute(
+            "SELECT path FROM files WHERE source_text IS NULL OR source_text = ''"
+        )]
+
+    def update_file_source(self, path: str, source: str) -> None:
+        self.conn.execute("UPDATE files SET source_text=? WHERE path=?", (source, path))
 
     def files_with_errors(self) -> List[Tuple[str, str]]:
         return [(r["path"], r["parse_error"]) for r in

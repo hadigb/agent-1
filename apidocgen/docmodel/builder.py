@@ -8,12 +8,14 @@ from typing import Any, Dict, List, Optional, Set
 
 from ..config import Config
 from ..detectors.model import EndpointSpec
+from ..detectors.swagger import auth_description
 from ..graph.index import CodeIndex
 from ..graph.store import GraphStore
 from ..javaparse.model import TypeRef
 from .errors import ErrorCatalog, ErrorRow, collect_endpoint_errors, merge_error_rows
 from .fields import FieldExpander
 from .model import EndpointDoc, EnumTable, FieldRow, TypeTable
+from .rules import collect_business_rules
 from .samples import build_samples, request_sample
 
 DEFAULT_CALL_STEPS = """<p>1- با استفاده از داده‌های موجود، رشته زیر را ایجاد نمایید. آیتم‌های موجود در این رشته با علامت # از یکدیگر جدا شده‌اند.</p>
@@ -120,6 +122,9 @@ class DocBuilder:
                          ("{body}", html.escape(body_sample)), ("{api_key}", "a8b40f20-da83-45ee-bf46-c1e4a9c717bf")):
             steps = steps.replace(key, val)
         doc.call_steps_html = steps
+        doc.auth_text = auth_description(spec.auth or {})
+        llm_rules = list(endpoint_analysis.get("business_rules") or [])
+        doc.business_rules = collect_business_rules(spec, self.index, self.store, doc.notes, llm_rules)
         return doc
 
     # ------------------------------------------------------------------ build() phases
@@ -166,8 +171,36 @@ class DocBuilder:
                 if t.qname not in {x.qname for x in tables}:
                     tables.append(t)
             visited |= resp_visited  # mutates the set shared with the request phase, in place
+        failure_name = self.cfg.get("doc", "failure_type") or self.cfg.get("analysis", "error_response_type")
+        if failure_name and ctx is not None:
+            fail_rows, fail_root = self._failure_rows(str(failure_name), ctx, tables, enums, visited)
+            if fail_root and fail_root == resp_root:
+                doc.failure_rows = []
+            else:
+                doc.failure_rows = fail_rows
         doc.response_type_name = self.index.types[resp_root].name if resp_root else (spec.response_type.canonical() if spec.response_type else "")
         return resp_root
+
+    def _failure_rows(self, type_name: str, ctx, tables: List[TypeTable], enums: Dict[str, EnumTable],
+                      visited: Set[str]):
+        resolved = self.index.resolve(type_name, ctx)
+        qname = resolved.qname if resolved.ok else None
+        if not qname:
+            for candidate, names in self.index.simple.items():
+                if candidate == type_name.rsplit(".", 1)[-1] and len(names) == 1:
+                    qname = names[0]
+                    break
+        if not qname or qname not in self.index.types:
+            return [], None
+        ref = TypeRef(name=qname)
+        fail_visited = set(visited)
+        fail_tables: List[TypeTable] = []
+        rows, root = self.expander.expand(ref, ctx, "response", fail_visited, fail_tables, enums)
+        for table in fail_tables:
+            if table.qname not in {x.qname for x in tables}:
+                table.side = "failure"
+                tables.append(table)
+        return rows, root
 
     def _build_error_rows(self, spec: EndpointSpec, endpoint_analysis: Dict[str, Any],
                           overrides: Dict[str, Any]) -> List[ErrorRow]:
@@ -220,6 +253,14 @@ class DocBuilder:
                          default=p.default, java_type=p.type.canonical())
             rows.append(r)
             seen[key] = r
+        for header_name in (spec.auth or {}).get("headers") or []:
+            if header_name.lower() in seen:
+                seen[header_name.lower()].required = True
+                continue
+            r = FieldRow(name=header_name, java_name=header_name, type_str="String", required=True,
+                         description="هدر احراز هویت", code_description="هدر احراز هویت", location="header")
+            rows.append(r)
+            seen[header_name.lower()] = r
         return rows
 
     def _apply_type_analyses(self, doc: EndpointDoc, body_root: Optional[str], resp_root: Optional[str],
@@ -304,6 +345,11 @@ class DocBuilder:
                                               business, first_required)
             doc.success_sample = success
             doc.failure_samples = failures
+        if doc.failure_rows:
+            _ok, fail_samples = build_samples(doc.failure_rows, doc.nested_tables, doc.enum_tables, self.envelope,
+                                              success_cfg, validation, business, first_required)
+            if fail_samples:
+                doc.failure_samples = fail_samples
         if samples_ov.get("success"):
             doc.success_sample = samples_ov["success"]
         if samples_ov.get("failures"):

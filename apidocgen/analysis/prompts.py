@@ -50,7 +50,8 @@ Output schemas
   "notes": [ "<Persian bullet notes: validation rules, conditional fields, ordering/balance rules, side effects>" ],
   "error_codes": [ { "code": "<code>", "title": "<Persian message>", "note": "<Persian condition, optional>" } ],
   "response_params": { "<response field name>": "<Persian description>", ... },
-  "response_fields_extra": [ { "name": "<name>", "type": "<String|Int|Long|Boolean|List<...>|Class>", "description": "<Persian>" } ]
+  "response_fields_extra": [ { "name": "<name>", "type": "<String|Int|Long|Boolean|List<...>|Class>", "description": "<Persian>" } ],
+  "business_rules": [ "<Persian: an executable if/validation/throw condition the caller must know>" ]
 }
   - "params" covers body, header, query, path, form and cookie fields, using only the exact supplied keys.
     "response_params" uses only the supplied response keys. Nested keys are fully qualified Type.field keys;
@@ -61,6 +62,8 @@ Output schemas
   - "response_fields_extra" is only for endpoints whose response type could not be resolved statically (e.g. a
     servlet writing JSON by hand); otherwise return an empty list.
   - Leave a value empty ("" / [] / {}) when there is no basis for it. Do not pad.
+  - "business_rules" lists only conditions that the implementation actually enforces (if/validate/throw).
+    Skip TODOs, comments, and configuration that is not executed.
 
 3) For a unit of kind "intro" (an overview of all services of one system):
 { "intro_html": "<2-4 short Persian paragraphs as HTML <p> elements: what the system offers, how services relate

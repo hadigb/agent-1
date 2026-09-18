@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>apidocgen</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/favicon.svg">
 <style>
 :root {
   --green: #2C673E; --green-2: #3d8a55; --green-soft: #e3efe7; --orange: #E28B3C; --orange-soft: #fbead9;
@@ -85,6 +87,53 @@ iframe.doc { width: 100%; min-height: 70vh; border: 1px solid var(--border); bor
 .arch-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .arch-item:last-child { border-bottom: none; }
 .toast { position: fixed; bottom: 18px; left: 18px; background: var(--panel); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow); }
+.modal-back { position: fixed; inset: 0; background: rgba(17,22,20,.45); z-index: 90; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto; }
+.modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; width: min(560px, 100%); box-shadow: 0 18px 50px rgba(0,0,0,.2); }
+.modal h2 { margin: 0 0 6px; }
+.modal .fields { display: grid; gap: 10px; margin: 16px 0; }
+.modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
+.tree .ep { cursor: pointer; border-radius: 6px; }
+.tree .ep:hover, .tree .ep.sel { background: var(--green-soft); }
+.meth { padding: 4px 6px; border-radius: 6px; }
+.meth.has-src { cursor: help; }
+.meth.has-src:hover { background: var(--green-soft); }
+.meth .q { word-break: break-all; }
+.graph-card > b, .graph-card > .muted, .graph-card > .scan-ep { direction: rtl; text-align: right; unicode-bidi: isolate; display: block; }
+.scan-ep { margin: 10px 0 14px; }
+.ep-opt { display: flex; gap: 8px; align-items: center; direction: ltr; }
+.ep-opt .p { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+#cgraph {
+  direction: ltr; text-align: left; unicode-bidi: isolate;
+  overflow: auto; max-height: calc(100vh - 280px);
+}
+#cgraph ul { padding: 4px 0 8px; border: none; }
+#cgraph summary {
+  direction: ltr; text-align: left; display: flex; align-items: center; gap: 8px;
+}
+#cgraph .meth {
+  --d: 0;
+  display: block;
+  padding: 3px 8px 3px calc(10px + var(--d) * 18px);
+  position: relative;
+}
+#cgraph .meth::before {
+  content: "";
+  position: absolute; top: 0; bottom: 50%;
+  left: calc(16px + (var(--d) - 1) * 18px);
+  width: 12px;
+  border-left: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+#cgraph .meth.d0::before { content: none; border: none; }
+#cgraph .meth .q { word-break: break-word; overflow-wrap: anywhere; direction: ltr; text-align: left; }
+#cgraph .empty { direction: rtl; text-align: center; unicode-bidi: isolate; }
+.meth-tip {
+  position: fixed; z-index: 120; max-width: min(560px, 86vw); max-height: 280px;
+  overflow: auto; margin: 0; padding: 10px 12px; border-radius: 8px;
+  background: var(--panel); color: var(--text); border: 1px solid var(--green);
+  box-shadow: 0 10px 28px rgba(0,0,0,.18); font-size: 11px; line-height: 1.45;
+  white-space: pre-wrap; direction: ltr; text-align: left;
+}
 @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
 </style>
 <link rel="stylesheet" href="/static/select2.min.css">
@@ -99,6 +148,8 @@ iframe.doc { width: 100%; min-height: 70vh; border: 1px solid var(--border); bor
   font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; direction: ltr; text-align: left;
 }
 .select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--muted); direction: rtl; text-align: right; font-family: inherit; }
+#menu-scan .select2-selection__rendered { direction: rtl; text-align: right; font-family: inherit; padding: 0 14px 0 36px; }
+#menu-scan .select2-selection__rendered .ep-opt { direction: ltr; }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
   height: 40px; width: 28px; left: 6px; right: auto; top: 1px;
 }
@@ -196,15 +247,13 @@ iframe.doc { width: 100%; min-height: 70vh; border: 1px solid var(--border); bor
         </div>
       </div>
       <div class="cards" id="scan-stats"></div>
-      <div class="grid2">
-        <div class="card">
-          <b>سرویس‌ها</b>
-          <div class="tree" id="tree"><div class="empty">ابتدا اسکن کنید.</div></div>
-        </div>
-        <div class="card">
-          <b>گراف متدها از کنترلر</b>
-          <div class="tree" id="cgraph"><div class="empty">پس از اسکن، زنجیرهٔ فراخوانی از هر کنترلر اینجا دیده می‌شود.</div></div>
-        </div>
+      <div class="card graph-card">
+        <b>گراف متدها از سرویس</b>
+        <div class="muted" style="font-size:12px;margin:4px 0 8px">سرویس را انتخاب کنید. نشانگر را روی متد نگه دارید تا کد دیده شود.</div>
+        <label class="scan-ep">سرویس
+          <select id="scan-service"><option value=""></option></select>
+        </label>
+        <div class="tree" id="cgraph"><div class="empty">سرویس را از فهرست بالا انتخاب کنید.</div></div>
       </div>
       <div class="card" id="jobs-mini"><div class="muted">هنوز کاری اجرا نشده است.</div></div>
     </section>
@@ -238,24 +287,45 @@ iframe.doc { width: 100%; min-height: 70vh; border: 1px solid var(--border); bor
     <section id="menu-docs" hidden>
       <div class="card">
         <b>تولید مستند</b>
-        <p class="muted">از سرویس‌هایی که قبلاً اسکن شده‌اند انتخاب کنید تا مستند HTML جدید ساخته شود.</p>
-        <div class="toolbar">
-          <input type="text" id="doc-search" placeholder="جستجوی سرویس…" autocomplete="off">
-          <button type="button" id="b-docs-all">همه</button>
-          <button type="button" id="b-docs-none">هیچ‌کدام</button>
-          <button id="b-docs" class="primary">تولید مستند</button>
+        <p class="muted">ابتدا سرویس را انتخاب کنید. اگر مستند قبلی باشد نمایش داده می‌شود. تولید مجدد نسخهٔ قبلی را با تاریخ جدید بایگانی می‌کند و متن را با کمک AI می‌سازد.</p>
+        <label>سرویس
+          <select id="doc-service"><option value=""></option></select>
+        </label>
+        <div class="toolbar" style="margin-top:12px">
+          <button id="b-docs" class="primary">تولید مستند با AI</button>
         </div>
-        <div class="svc-list" id="doc-services"><div class="empty">ابتدا اسکن کنید.</div></div>
       </div>
       <iframe class="doc" id="doc-frame" hidden></iframe>
       <div class="card" id="docs-log" hidden><div class="log" id="docs-log-body"></div></div>
       <div class="card">
-        <b>مستندهای قبلی</b>
-        <div id="doc-archive"><div class="muted">هنوز مستندی ساخته نشده است.</div></div>
+        <b>نسخه‌های این سرویس</b>
+        <div id="doc-archive"><div class="muted">سرویس را انتخاب کنید.</div></div>
       </div>
     </section>
   </main>
 </section>
+
+<div class="modal-back" id="project-modal" hidden>
+  <form class="modal" id="project-form">
+    <h2>اطلاعات پروژه</h2>
+    <div class="muted">پوشه انتخاب شد. مقادیر مستند را کامل کنید.</div>
+    <div class="fields">
+      <label>نام پروژه <input id="p-name" name="proj_name" required></label>
+      <label>عنوان مستند <input id="p-title" name="title"></label>
+      <label>نام سامانه <input id="p-system" name="system_name"></label>
+      <label>سازمان <input id="p-org" name="organization"></label>
+      <label>طبقه‌بندی <input id="p-class" name="classification" value="عمومی"></label>
+      <label>تهیه‌کننده <input id="p-author" name="author"></label>
+      <label>نسخه <input id="p-version" name="version" value="1.0"></label>
+      <label>آدرس پایه سرویس‌ها <input id="p-base" name="base_url" placeholder="http://[IP]:[PORT]"></label>
+      <label>کلاس خطای عمومی پروژه <input id="p-fail" name="failure_type" placeholder="مثال: BaseResponse یا com.app.ErrorResponse"></label>
+    </div>
+    <div class="actions">
+      <button type="button" id="project-cancel">انصراف</button>
+      <button class="primary" type="submit">ایجاد پروژه</button>
+    </div>
+  </form>
+</div>
 
 <script src="/static/jquery.min.js"></script>
 <script src="/static/select2.min.js"></script>
@@ -264,7 +334,7 @@ jQuery.noConflict();
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n = x => (x ?? 0).toLocaleString('fa-IR');
-let apps = [], current = null, menu = 'scan', pollTimer = null, lastScan = null;
+let apps = [], current = null, menu = 'scan', pollTimer = null, lastScan = null, selectedEndpoint = null, pendingFolder = '', scanSelectQuiet = false;
 
 const applyTheme = t => { document.documentElement.dataset.theme = t; $('#theme-btn').textContent = t === 'dark' ? '☀️' : '🌙'; };
 try { applyTheme(localStorage.getItem('theme') || 'light'); } catch (e) { applyTheme('light'); }
@@ -372,8 +442,18 @@ async function addProject() {
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.statusText);
     if (j.cancelled || !j.path) return;
-    await api('/api/apps', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: j.path})});
-    await loadWorkspace();
+    const folderName = j.path.replace(/[\\/]+$/, '').split(/[\\/]/).pop();
+    pendingFolder = j.path;
+    $('#p-name').value = folderName;
+    $('#p-title').value = 'مستندات API — ' + folderName;
+    $('#p-system').value = folderName;
+    $('#p-org').value = '';
+    $('#p-class').value = 'عمومی';
+    $('#p-author').value = '';
+    $('#p-version').value = '1.0';
+    $('#p-base').value = 'http://[IP]:[PORT]';
+    $('#p-fail').value = '';
+    $('#project-modal').hidden = false;
   } catch (e) {
     alert(e.message);
   } finally {
@@ -382,6 +462,30 @@ async function addProject() {
   }
 }
 $('#b-add').onclick = addProject;
+$('#project-cancel').onclick = () => { $('#project-modal').hidden = true; pendingFolder = ''; };
+$('#project-form').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const body = {
+    path: pendingFolder,
+    project: { name: $('#p-name').value.trim() },
+    doc: {
+      title: $('#p-title').value.trim(),
+      system_name: $('#p-system').value.trim(),
+      organization: $('#p-org').value.trim(),
+      classification: $('#p-class').value.trim() || 'عمومی',
+      author: $('#p-author').value.trim(),
+      version: $('#p-version').value.trim() || '1.0',
+      base_url: $('#p-base').value.trim(),
+      failure_type: $('#p-fail').value.trim() || null
+    }
+  };
+  try {
+    await api('/api/apps', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    $('#project-modal').hidden = true;
+    pendingFolder = '';
+    await loadWorkspace();
+  } catch (e) { alert(e.message); }
+};
 
 async function removeApp(key, name) {
   if (!confirm('«' + name + '» از لیست برداشته شود؟ فایل‌های پروژه پاک نمی‌شوند.')) return;
@@ -414,25 +518,143 @@ async function loadScan() {
   try {
     const g = await api(appPath('/graph'));
     lastScan = g;
-    renderTree(g.endpoints || []);
-    renderGraph(g.controllers || []);
+    renderScanSelect(g.endpoints || []);
     $('#scan-stats').innerHTML = `
       <div class="card"><div class="stat">${n((g.endpoints||[]).length)}<small>سرویس</small></div></div>
-      <div class="card"><div class="stat">${n((g.controllers||[]).reduce((s,c)=>s+(c.methods||[]).length,0))}<small>متد از کنترلر</small></div></div>
       <div class="card"><div class="stat">${n(current.files)}<small>فایل (هش پایدار)</small></div></div>`;
+    if (selectedEndpoint) await loadEndpointGraph(selectedEndpoint);
+    else $('#cgraph').innerHTML = '<div class="empty">سرویس را از فهرست بالا انتخاب کنید.</div>';
   } catch (e) {
-    $('#tree').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    $('#cgraph').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
   }
 }
-function renderTree(list) {
-  const box = $('#tree');
-  if (!list.length) { box.innerHTML = '<div class="empty">اندپوینتی نیست. اسکن کنید.</div>'; return; }
-  box.innerHTML = '<ul>' + list.map(e => `<li class="ep"><span class="badge ${['GET','POST','PUT','DELETE','PATCH'].includes(e.method)?e.method:'other'}">${esc(e.method)}</span><span class="p">${esc(e.path)}</span></li>`).join('') + '</ul>';
+function formatEndpointOption(opt) {
+  if (!opt.id) return opt.text;
+  const space = String(opt.id).indexOf(' ');
+  const method = space > 0 ? String(opt.id).slice(0, space) : '';
+  const path = space > 0 ? String(opt.id).slice(space + 1) : String(opt.id);
+  const meth = ['GET','POST','PUT','DELETE','PATCH'].includes(method) ? method : 'other';
+  return jQuery(`<span class="ep-opt"><span class="badge ${meth}">${esc(method)}</span><span class="p">${esc(path)}</span></span>`);
+}
+function enhanceScanSelect() {
+  if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+  const el = jQuery('#scan-service');
+  if (!el.length) return;
+  if (el.hasClass('select2-hidden-accessible')) el.select2('destroy');
+  el.select2({
+    dir: 'rtl',
+    width: '100%',
+    placeholder: 'جستجوی سرویس…',
+    allowClear: true,
+    templateResult: formatEndpointOption,
+    templateSelection: formatEndpointOption,
+    language: { noResults: () => 'موردی پیدا نشد', searching: () => 'جستجو…' }
+  });
+  el.off('change.scan').on('change.scan', () => {
+    if (scanSelectQuiet) return;
+    const id = el.val();
+    if (id) loadEndpointGraph(id);
+    else {
+      selectedEndpoint = null;
+      hideMethTip();
+      $('#cgraph').innerHTML = '<div class="empty">سرویس را از فهرست بالا انتخاب کنید.</div>';
+    }
+  });
+}
+function renderScanSelect(list) {
+  const sel = $('#scan-service');
+  if (typeof jQuery !== 'undefined' && jQuery.fn.select2 && jQuery(sel).hasClass('select2-hidden-accessible')) {
+    jQuery(sel).select2('destroy');
+  }
+  sel.innerHTML = '<option value=""></option>';
+  (list || []).forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.id;
+    o.textContent = e.id;
+    sel.appendChild(o);
+  });
+  if (selectedEndpoint) sel.value = selectedEndpoint;
+  enhanceScanSelect();
+}
+async function loadEndpointGraph(endpointId) {
+  selectedEndpoint = endpointId;
+  if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+    const el = jQuery('#scan-service');
+    if (el.length && String(el.val() || '') !== String(endpointId)) {
+      scanSelectQuiet = true;
+      el.val(endpointId).trigger('change');
+      scanSelectQuiet = false;
+    }
+  } else if ($('#scan-service')) {
+    $('#scan-service').value = endpointId;
+  }
+  const box = $('#cgraph');
+  box.innerHTML = '<div class="empty">در حال بارگذاری گراف…</div>';
+  try {
+    const g = await api(appPath('/graph?endpoint=' + encodeURIComponent(endpointId)));
+    renderGraph(g.controllers || []);
+  } catch (e) {
+    box.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+function hideMethTip() {
+  const tip = $('#meth-tip');
+  if (tip) tip.hidden = true;
+}
+function showMethTip(el, source) {
+  let tip = $('#meth-tip');
+  if (!tip) {
+    tip = document.createElement('pre');
+    tip.id = 'meth-tip';
+    tip.className = 'meth-tip mono';
+    tip.onmouseenter = () => { tip.hidden = false; };
+    tip.onmouseleave = hideMethTip;
+    document.body.appendChild(tip);
+  }
+  tip.textContent = source;
+  tip.hidden = false;
+  const rect = el.getBoundingClientRect();
+  const pad = 8;
+  const width = Math.min(560, window.innerWidth - 24);
+  let left = rect.left;
+  if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
+  if (left < 12) left = 12;
+  tip.style.width = width + 'px';
+  tip.style.left = left + 'px';
+  tip.style.top = (rect.bottom + pad) + 'px';
+  const tipRect = tip.getBoundingClientRect();
+  if (tipRect.bottom > window.innerHeight - 8) {
+    tip.style.top = Math.max(8, rect.top - tipRect.height - pad) + 'px';
+  }
+}
+function shortQname(qname) {
+  const text = String(qname || '');
+  const hash = text.indexOf('#');
+  if (hash < 0) return text.split('.').pop() || text;
+  return (text.slice(0, hash).split('.').pop() || '') + text.slice(hash);
 }
 function renderGraph(controllers) {
+  hideMethTip();
   const box = $('#cgraph');
-  if (!controllers.length) { box.innerHTML = '<div class="empty">گراف خالی است.</div>'; return; }
-  box.innerHTML = controllers.map(c => `<details open><summary><span class="badge ${['GET','POST','PUT','DELETE','PATCH'].includes(c.method)?c.method:'other'}">${esc(c.method)}</span> <span class="mono">${esc(c.path)}</span></summary><ul>${(c.methods||[]).map(m => `<li class="meth mono">${'— '.repeat(m.depth||0)}${esc(m.qname)}</li>`).join('')}</ul></details>`).join('');
+  if (!controllers.length) { box.innerHTML = '<div class="empty">گراف این سرویس خالی است.</div>'; return; }
+  const methods = [];
+  box.innerHTML = controllers.map(c => `<details open><summary><span class="badge ${['GET','POST','PUT','DELETE','PATCH'].includes(c.method)?c.method:'other'}">${esc(c.method)}</span> <span class="mono">${esc(c.path)}</span></summary><ul>${(c.methods||[]).map(m => {
+    methods.push(m);
+    const depth = m.depth || 0;
+    const cls = (m.source ? 'meth has-src' : 'meth') + ' d' + depth;
+    return `<li class="${cls}" style="--d:${depth}"><div class="mono q" title="${esc(m.qname)}">${esc(shortQname(m.qname))}</div></li>`;
+  }).join('')}</ul></details>`).join('');
+  box.scrollLeft = 0;
+  box.querySelectorAll('.meth').forEach((el, i) => {
+    const src = methods[i] && methods[i].source;
+    if (!src) return;
+    el.onmouseenter = () => showMethTip(el, src);
+    el.onmouseleave = (ev) => {
+      const tip = $('#meth-tip');
+      if (tip && (ev.relatedTarget === tip || tip.contains(ev.relatedTarget))) return;
+      hideMethTip();
+    };
+  });
 }
 
 document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => {
@@ -487,7 +709,7 @@ function pollJob(id, action) {
         $('#ucs-frame').hidden = false;
         $('#ucs-frame').srcdoc = j.result.ucs.html;
       }
-    } else if (action === 'render') {
+    } else if (action === 'render' || action === 'document') {
       $('#docs-log').hidden = false; $('#docs-log-body').textContent = log;
       const file = j.result && j.result.render && j.result.render.archive && j.result.render.archive.file;
       if (file) {
@@ -513,83 +735,81 @@ $('#b-ucs').onclick = () => {
   });
 };
 
-function selectedServices() {
-  return [...document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]:checked')].map(el => el.value);
-}
-function filterDocServices() {
-  const q = ($('#doc-search').value || '').trim().toLowerCase();
-  const rows = [...document.querySelectorAll('#doc-services .svc-pick')];
-  let shown = 0;
-  rows.forEach(row => {
-    const hit = !q || (row.textContent || '').toLowerCase().includes(q);
-    row.hidden = !hit;
-    if (hit) shown += 1;
+function enhanceDocSelect() {
+  if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+  const el = jQuery('#doc-service');
+  if (!el.length) return;
+  if (el.hasClass('select2-hidden-accessible')) el.select2('destroy');
+  el.select2({
+    dir: 'rtl',
+    width: '100%',
+    placeholder: 'جستجوی سرویس…',
+    allowClear: true,
+    language: { noResults: () => 'موردی پیدا نشد', searching: () => 'جستجو…' }
   });
-  let empty = $('#doc-services .empty-filter');
-  if (rows.length && q && !shown) {
-    if (!empty) {
-      empty = document.createElement('div');
-      empty.className = 'empty empty-filter';
-      empty.textContent = 'سرویسی با این جستجو پیدا نشد.';
-      $('#doc-services').appendChild(empty);
-    }
-    empty.hidden = false;
-  } else if (empty) empty.hidden = true;
+  el.off('change.doc').on('change.doc', () => onDocServiceChanged());
 }
 async function loadDocs() {
   if (!current || !current.ok) return;
+  const sel = $('#doc-service');
+  const keep = sel.value;
+  if (typeof jQuery !== 'undefined' && jQuery.fn.select2 && jQuery(sel).hasClass('select2-hidden-accessible')) {
+    jQuery(sel).select2('destroy');
+  }
+  sel.innerHTML = '<option value=""></option>';
   try {
     const eps = await api(appPath('/endpoints'));
-    const box = $('#doc-services');
-    const list = eps.list || [];
-    if (!list.length) {
-      box.innerHTML = '<div class="empty">سرویسی از اسکن قبلی نیست. ابتدا اسکن کنید.</div>';
-    } else {
-      const keep = new Set([...document.querySelectorAll('#doc-services input[type=checkbox]:checked')].map(el => el.value));
-      box.innerHTML = list.map(e => {
-        const meth = ['GET','POST','PUT','DELETE','PATCH'].includes(e.method) ? e.method : 'other';
-        const title = e.summary ? ` <span class="muted">${esc(e.summary)}</span>` : '';
-        const checked = keep.has(e.id) ? ' checked' : '';
-        return `<div class="svc-pick"><label><input type="checkbox" value="${esc(e.id)}"${checked}>
-          <span class="badge ${meth}">${esc(e.method)}</span><span class="p">${esc(e.path)}</span>${title}</label></div>`;
-      }).join('');
-      filterDocServices();
-    }
-    const arch = await api(appPath('/archive'));
-    const wrap = $('#doc-archive');
+    (eps.list || []).forEach(e => {
+      const o = document.createElement('option'); o.value = e.id; o.textContent = e.id; sel.appendChild(o);
+    });
+    if (keep) sel.value = keep;
+  } catch (e) {}
+  enhanceDocSelect();
+  await onDocServiceChanged();
+}
+async function onDocServiceChanged() {
+  const id = (typeof jQuery !== 'undefined' ? jQuery('#doc-service').val() : $('#doc-service').value) || '';
+  const wrap = $('#doc-archive');
+  $('#doc-frame').hidden = true;
+  if (!id) {
+    wrap.innerHTML = '<div class="muted">سرویس را انتخاب کنید.</div>';
+    return;
+  }
+  try {
+    const arch = await api(appPath('/archive?endpoint=' + encodeURIComponent(id)));
     const entries = arch.entries || [];
     if (!entries.length) {
-      wrap.innerHTML = '<div class="muted">هنوز مستندی ساخته نشده است.</div>';
-    } else {
-      wrap.innerHTML = entries.map(en => {
-        const label = en.label ? esc(en.label) : 'بدون برچسب';
-        const when = en.created_jalali || en.created_iso || '';
-        const href = '/archive/' + encodeURIComponent(appKey(current)) + '/' + encodeURIComponent(en.file);
-        return `<div class="arch-item"><div class="grow"><b>${label}</b>
-          <div class="muted">${esc(when)} · ${n(en.endpoint_count)} سرویس</div></div>
-          <button type="button" data-doc="${esc(href)}">مشاهده</button></div>`;
-      }).join('');
-      wrap.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => {
-        $('#doc-frame').hidden = false;
-        $('#doc-frame').src = b.dataset.doc;
-      });
+      wrap.innerHTML = '<div class="muted">برای این سرویس هنوز مستندی ساخته نشده است.</div>';
+      return;
     }
+    wrap.innerHTML = entries.map(en => {
+      const when = en.created_jalali || en.created_iso || '';
+      const href = '/archive/' + encodeURIComponent(appKey(current)) + '/' + encodeURIComponent(en.file);
+      return `<div class="arch-item"><div class="grow"><b>${esc(when)}</b>
+        <div class="muted">${esc(en.version || '')} · ${n(en.endpoint_count)} سرویس</div></div>
+        <button type="button" data-doc="${esc(href)}">مشاهده</button></div>`;
+    }).join('');
+    wrap.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => {
+      $('#doc-frame').hidden = false;
+      $('#doc-frame').src = b.dataset.doc;
+    });
+    const latest = wrap.querySelector('[data-doc]');
+    if (latest) latest.click();
   } catch (e) {
-    $('#doc-services').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    wrap.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
   }
 }
-$('#b-docs-all').onclick = () => document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]').forEach(el => { el.checked = true; });
-$('#b-docs-none').onclick = () => document.querySelectorAll('#doc-services .svc-pick:not([hidden]) input[type=checkbox]').forEach(el => { el.checked = false; });
-$('#doc-search').oninput = filterDocServices;
 $('#b-docs').onclick = () => {
-  const only = selectedServices();
-  if (!only.length) { alert('حداقل یک سرویس را انتخاب کنید.'); return; }
-  startJob('render', { only, label: 'انتخابی' });
+  const only = [(typeof jQuery !== 'undefined' ? jQuery('#doc-service').val() : $('#doc-service').value)].filter(Boolean);
+  if (!only.length) { alert('ابتدا سرویس را انتخاب کنید.'); return; }
+  const when = new Date().toLocaleString('fa-IR');
+  startJob('document', { only, label: 'نسخه ' + when });
 };
 
 window.addEventListener('hashchange', route);
+window.addEventListener('scroll', hideMethTip, true);
 loadWorkspace().then(route);
-setInterval(() => { if (!document.hidden) loadWorkspace(); }, 15000);
+setInterval(() => { if (!document.hidden && current && current.busy) loadWorkspace(); }, 15000);
 </script>
 </body>
 </html>

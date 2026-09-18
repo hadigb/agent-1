@@ -12,6 +12,7 @@ class EnumValue:
     name: str
     label: str = ""        # Persian label (from code or LLM)
     code: Optional[str] = None
+    wire: str = ""         # value sent on the wire
 
 
 @dataclass
@@ -81,6 +82,9 @@ class EndpointDoc:
     response_type_name: str = ""
     analysis_status: str = "none"  # none | cached | stale | fresh
     anchor: str = ""
+    auth_text: str = ""
+    business_rules: List[str] = field(default_factory=list)
+    failure_rows: List[FieldRow] = field(default_factory=list)
 
     def doc_hash_source(self) -> str:
         """Text whose hash identifies the documented content (for change-log detection)."""

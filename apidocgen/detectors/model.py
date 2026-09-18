@@ -53,6 +53,7 @@ class EndpointSpec:
     notes: List[str] = field(default_factory=list)
     path_aliases: List[str] = field(default_factory=list)
     id: str = ""
+    auth: Dict[str, Any] = field(default_factory=dict)
 
     def make_id(self) -> str:
         return f"{self.http_method} {self.path}"
@@ -67,6 +68,7 @@ class EndpointSpec:
             "consumes": self.consumes, "produces": self.produces, "summary": self.summary,
             "description": self.description, "deprecated": self.deprecated, "impl_qname": self.impl_qname,
             "notes": self.notes, "path_aliases": self.path_aliases,
+            "auth": self.auth,
         }
 
     @staticmethod
@@ -78,6 +80,7 @@ class EndpointSpec:
                          response_type=TypeRef.from_dict(d["response_type"]) if d.get("response_type") else None,
                          consumes=d.get("consumes", []), produces=d.get("produces", []), summary=d.get("summary", ""),
                          description=d.get("description", ""), deprecated=d.get("deprecated", False),
-                         impl_qname=d.get("impl_qname"), notes=d.get("notes", []), path_aliases=d.get("path_aliases", []))
+                         impl_qname=d.get("impl_qname"), notes=d.get("notes", []), path_aliases=d.get("path_aliases", []),
+                         auth=d.get("auth") or {})
         e.id = d.get("id", "") or e.make_id()
         return e

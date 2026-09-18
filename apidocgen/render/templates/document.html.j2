@@ -116,9 +116,18 @@ ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-botto
 {%- endmacro %}
 {% macro enum_table(e) -%}
 <table class="enum">
-  <tr><th>{{ 'کد' if e.values and e.values[0].code else 'ردیف' }}</th><th>مقدار</th>{% if e.values|selectattr('label')|list %}<th>شرح</th>{% endif %}</tr>
-  {% set has_label = e.values|selectattr('label')|list %}
-  {% for v in e.values %}<tr><td class="code">{{ v.code if v.code else loop.index }}</td><td class="ltr">{{ v.name }}</td>{% if has_label %}<td>{{ v.label }}</td>{% endif %}</tr>{% endfor %}
+  <tr>
+    <th>{{ 'کد' if e.values and e.values[0].code else 'ردیف' }}</th>
+    <th>نام ثابت</th>
+    <th>مقدار ارسالی</th>
+    <th>شرح</th>
+  </tr>
+  {% for v in e.values %}<tr>
+    <td class="code">{{ v.code if v.code else loop.index }}</td>
+    <td class="ltr">{{ v.name }}</td>
+    <td class="ltr">{{ v.wire or v.name }}</td>
+    <td>{{ v.label }}</td>
+  </tr>{% endfor %}
 </table>
 {%- endmacro %}
 {% macro field_row(r, doc) -%}
@@ -212,6 +221,9 @@ ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-botto
     <colgroup><col class="c-group"><col class="c-name"><col class="c-type"><col class="c-desc"></colgroup>
     <tr><td class="group">آدرس</td><td colspan="3" class="addr">{{ d.address }}</td></tr>
     <tr><td class="group">متد</td><td colspan="3" class="addr">{{ d.http_method }}</td></tr>
+    {% if d.auth_text %}
+    <tr><td class="group">احراز هویت</td><td colspan="3">{{ d.auth_text }}</td></tr>
+    {% endif %}
     <tr><th></th><th>نام فیلد (موارد ستاره‌دار ضروری می‌باشند)</th><th>نوع فیلد</th><th>توضیحات</th></tr>
     {% if d.header_rows %}
     {% for r in d.header_rows %}
@@ -249,12 +261,28 @@ ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-botto
     {% else %}
     <tr><td class="group">پارامترهای پاسخ</td><td colspan="3" class="muted">—</td></tr>
     {% endif %}
+    {% if d.failure_rows %}
+    {% for r in d.failure_rows %}
+    <tr>{% if loop.first %}<td class="group" rowspan="{{ d.failure_rows|length }}">پارامترهای پاسخ ناموفق</td>{% endif %}
+      <td class="name">{{ r.name }}</td><td class="type">{{ r.type_str }}</td>
+      <td class="desc">{{ r.description or r.code_description }}{% if r.enum_qname and r.enum_qname in d.enum_tables %}{{ enum_table(d.enum_tables[r.enum_qname]) }}{% endif %}</td></tr>
+    {% endfor %}
+    {% endif %}
   </table>
 
   {% for t in d.response_tables %}
   <table class="tbl" id="{{ d.anchor }}-{{ t.name }}">
     <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
-    <tr><th colspan="3">{{ t.name }} – {{ 'خروجی ناموفق' if t.name.lower().startswith('error') else 'خروجی موفق' }} - جدول شماره {{ d.response_table_numbers[t.qname] }}{% if t.description %} ({{ t.description }}){% endif %}</th></tr>
+    <tr><th colspan="3">{{ t.name }} – خروجی موفق - جدول شماره {{ d.response_table_numbers[t.qname] }}{% if t.description %} ({{ t.description }}){% endif %}</th></tr>
+    <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
+    {% for r in t.fields %}{{ field_row(r, d) }}{% endfor %}
+  </table>
+  {% endfor %}
+
+  {% for t in d.failure_tables %}
+  <table class="tbl" id="{{ d.anchor }}-{{ t.name }}">
+    <colgroup><col class="c-name" style="width:30%"><col class="c-type" style="width:14%"><col class="c-desc" style="width:56%"></colgroup>
+    <tr><th colspan="3">{{ t.name }} – خروجی ناموفق - جدول شماره {{ d.response_table_numbers[t.qname] }}{% if t.description %} ({{ t.description }}){% endif %}</th></tr>
     <tr><th>نام</th><th>نوع فیلد</th><th>توضیحات</th></tr>
     {% for r in t.fields %}{{ field_row(r, d) }}{% endfor %}
   </table>
@@ -263,6 +291,11 @@ ul.notes { padding-right: 22px; margin: 4px 0 10px; } ul.notes li { margin-botto
   {% if d.notes %}
   <h4>نکات:</h4>
   <ul class="notes">{% for n in d.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if d.business_rules %}
+  <h4 id="{{ d.anchor }}-rules">شروط کسب‌وکار:</h4>
+  <ul class="notes">{% for n in d.business_rules %}<li>{{ n }}</li>{% endfor %}</ul>
   {% endif %}
 
   {% if meta.show_samples and d.success_sample %}

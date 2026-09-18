@@ -31,7 +31,7 @@ from ..graph.store import GraphStore
 from ..javaparse.model import FieldDecl, MethodDecl, TypeDecl
 from ..util.tokens import estimate_tokens, truncate_to_tokens
 
-PROMPT_VERSION = "2"
+PROMPT_VERSION = "3"
 
 
 def normalize(text: str) -> str:

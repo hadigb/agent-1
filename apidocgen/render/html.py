@@ -136,8 +136,9 @@ class HtmlRenderer:
             tables_index.append({"number": table_no, "title": f"ورودی و خروجی {doc.title}", "anchor": f"{doc.anchor}-tbl"})
             doc.request_tables = [t for t in doc.nested_tables if t.side == "request"]  # type: ignore[attr-defined]
             doc.response_tables = [t for t in doc.nested_tables if t.side == "response"]  # type: ignore[attr-defined]
+            doc.failure_tables = [t for t in doc.nested_tables if t.side == "failure"]  # type: ignore[attr-defined]
             nums: Dict[str, int] = {}
-            for t in doc.response_tables:  # type: ignore[attr-defined]
+            for t in doc.response_tables + doc.failure_tables:  # type: ignore[attr-defined]
                 table_no += 1
                 nums[t.qname] = table_no
                 tables_index.append({"number": table_no, "title": f"{t.name} – {doc.title}", "anchor": f"{doc.anchor}-{t.name}"})
@@ -151,6 +152,8 @@ class HtmlRenderer:
                 extra = endpoint_analyses[doc.spec.id].get("response_fields_extra") or []
             doc.response_extra = extra if not doc.response_rows else []  # type: ignore[attr-defined]
             toc = [{"title": "پارامترهای ورودی و خروجی سرویس", "anchor": f"{doc.anchor}-params"}]
+            if doc.business_rules:
+                toc.append({"title": "شروط کسب‌وکار", "anchor": f"{doc.anchor}-rules"})
             if show_samples and doc.success_sample:
                 toc.append({"title": "ساختار خروجی موفق", "anchor": f"{doc.anchor}-success"})
                 if doc.failure_samples:

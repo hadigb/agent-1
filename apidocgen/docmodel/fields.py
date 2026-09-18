@@ -8,6 +8,7 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 from ..detectors.common import (
     description_from_annotations, is_ignored_field, required_from_annotations, wire_name,
 )
+from ..detectors.constants import expand_constants
 from ..graph.index import CodeIndex, ResolveContext
 from ..javaparse.model import Annotation, FieldDecl, TypeDecl, TypeRef, find_annotation
 from .model import EnumTable, EnumValue, FieldRow, TypeTable
@@ -158,7 +159,8 @@ class FieldExpander:
             req = required_from_annotations(f.annotations, ftype)
             desc = self.field_description(f) or record_doc.get(f.name, "")
             desc = self._with_date_hint(desc, ftype)
-            name = self._document_field_name(f.annotations, f.name, strategy)
+            owner_type = self.index.types.get(owner)
+            name = self._document_field_name(f.annotations, f.name, strategy, owner_type)
             rows.append(FieldRow(name=name, java_name=f.name, type_str=type_str, required=bool(req),
                                  code_description=desc, description=desc, location=location, enum_qname=enum,
                                  nested_qname=nested, is_list=is_list, owner_qname=owner, java_type=ftype.canonical()))
@@ -170,13 +172,20 @@ class FieldExpander:
             return (desc + " (تاریخ)").strip()
         return desc
 
-    @staticmethod
-    def _document_field_name(annotations: List[Annotation], java_name: str, strategy: Optional[str]) -> str:
-        """The wire name for the field: an explicit @JsonProperty/@SerializedName wins outright,
-        otherwise the class's naming strategy (if any) is applied to the Java field name."""
-        if any(a.simple_name in ("JsonProperty", "SerializedName") for a in annotations):
-            return wire_name(annotations, java_name)
-        return apply_naming(wire_name(annotations, java_name), strategy)
+    def _document_field_name(self, annotations: List[Annotation], java_name: str, strategy: Optional[str],
+                             owner: Optional[TypeDecl] = None) -> str:
+        """Wire name: Swagger/Jackson annotations win; constants like ``UserInfoConstants.X`` are expanded."""
+        explicit = any(a.simple_name in (
+            "Schema", "ApiModelProperty", "Parameter", "ApiParam", "JsonProperty", "SerializedName",
+        ) for a in annotations)
+        name = wire_name(annotations, java_name)
+        if owner is not None:
+            expanded = expand_constants(name, owner, self.index)
+            if isinstance(expanded, str) and expanded:
+                name = expanded
+        if explicit:
+            return name
+        return apply_naming(name, strategy)
 
     def enum_table(self, qname: str) -> EnumTable:
         t = self.index.types[qname]
@@ -192,7 +201,14 @@ class FieldExpander:
                     code = a.rstrip("lL")
             if not label:
                 label = (c.javadoc.text if c.javadoc else "") or c.comment
-            et.values.append(EnumValue(name=c.name, label=label, code=code))
+            wire = c.name
+            for a in c.annotations:
+                if a.simple_name in ("JsonProperty", "SerializedName", "Schema", "ApiModelProperty"):
+                    explicit = a.get_str("value", "name")
+                    if explicit:
+                        wire = str(expand_constants(explicit, t, self.index))
+                        break
+            et.values.append(EnumValue(name=c.name, label=label, code=code, wire=wire))
         return et
 
     # ------------------------------------------------------------------ closure

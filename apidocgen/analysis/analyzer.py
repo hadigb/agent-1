@@ -98,60 +98,75 @@ class Analyzer:
 
     # ------------------------------------------------------------------ selection
     def select_specs(self, only: Optional[List[str]] = None) -> List[EndpointSpec]:
-        specs = self.project.endpoints()
-        inc = self.cfg.get("doc", "include", default=[]) or []
-        exc = self.cfg.get("doc", "exclude", default=[]) or []
-        out: List[EndpointSpec] = []
-        for s in specs:
-            if s.http_method == "?":
+        include = self.cfg.get("doc", "include", default=[]) or []
+        exclude = self.cfg.get("doc", "exclude", default=[]) or []
+        selected: List[EndpointSpec] = []
+        for spec in self.project.endpoints():
+            if spec.http_method == "?":
                 continue
-            if inc and not any(fnmatch.fnmatch(s.id, p) for p in inc):
+            if include and not any(fnmatch.fnmatch(spec.id, pattern) for pattern in include):
                 continue
-            if exc and any(fnmatch.fnmatch(s.id, p) for p in exc):
+            if exclude and any(fnmatch.fnmatch(spec.id, pattern) for pattern in exclude):
                 continue
-            if only and not any(fnmatch.fnmatch(s.id, p) or p in s.id for p in only):
+            if only and not any(fnmatch.fnmatch(spec.id, pattern) or pattern in spec.id for pattern in only):
                 continue
-            out.append(s)
+            selected.append(spec)
+        return self._sort_specs(selected)
+
+    def _sort_specs(self, specs: List[EndpointSpec]) -> List[EndpointSpec]:
         order = self.cfg.get("doc", "endpoint_order", default="path")
         if order == "source":
-            out.sort(key=lambda s: (s.file_path, s.handler_qname))
+            specs.sort(key=lambda spec: (spec.file_path, spec.handler_qname))
         elif order == "config":
             wanted = list(self.cfg.get("doc", "order", default=[]) or [])
-            pos = {eid: i for i, eid in enumerate(wanted)}
-            out.sort(key=lambda s: (pos.get(s.id, len(pos)), s.path.lower(), s.http_method))
+            position = {endpoint_id: index for index, endpoint_id in enumerate(wanted)}
+            specs.sort(key=lambda spec: (position.get(spec.id, len(position)), spec.path.lower(), spec.http_method))
         else:
-            out.sort(key=lambda s: (s.path.lower(), s.http_method))
-        return out
+            specs.sort(key=lambda spec: (spec.path.lower(), spec.http_method))
+        return specs
 
     # ------------------------------------------------------------------ planning
     def plan(self, only: Optional[List[str]] = None) -> AnalysisPlan:
         plan = AnalysisPlan()
         plan.specs = self.select_specs(only)
         type_seen: Dict[str, TypeUnit] = {}
-        for i, spec in enumerate(plan.specs, 1):
-            doc = self.doc_builder.build(spec, i)
+        for number, spec in enumerate(plan.specs, 1):
+            doc = self.doc_builder.build(spec, number)
             plan.docs[spec.id] = doc
-            for q in doc.type_closure:
-                if q not in self.project.index.types:
+            for type_qname in doc.type_closure:
+                if type_qname not in self.project.index.types:
                     continue
-                if q not in type_seen:
-                    type_seen[q] = self.units.type_unit(q)
-                type_seen[q].used_by.append(spec.id)
-            eu = self.units.endpoint_unit(spec, doc)
-            key = cache_key("endpoint", eu.hash, self.prompt_version, self.model_for_key)
-            plan.endpoint_units.append(UnitStatus(unit=eu, key=key, cached=self.store.cache_get(key) is not None))
-        for q, tu in type_seen.items():
-            key = cache_key("type", tu.hash, self.prompt_version, self.model_for_key)
-            plan.type_units.append(UnitStatus(unit=tu, key=key, cached=self.store.cache_get(key) is not None))
+                if type_qname not in type_seen:
+                    type_seen[type_qname] = self.units.type_unit(type_qname)
+                type_seen[type_qname].used_by.append(spec.id)
+            endpoint_unit = self.units.endpoint_unit(spec, doc)
+            key = cache_key("endpoint", endpoint_unit.hash, self.prompt_version, self.model_for_key)
+            plan.endpoint_units.append(UnitStatus(
+                unit=endpoint_unit,
+                key=key,
+                cached=self.store.cache_get(key) is not None,
+            ))
+        for type_unit in type_seen.values():
+            key = cache_key("type", type_unit.hash, self.prompt_version, self.model_for_key)
+            plan.type_units.append(UnitStatus(
+                unit=type_unit,
+                key=key,
+                cached=self.store.cache_get(key) is not None,
+            ))
         if self.cfg.get("doc", "intro_llm", default=False) and not self.cfg.get("doc", "intro_file") and plan.specs:
-            iu = self.units.intro_unit(plan.specs, plan.docs)
-            key = cache_key("intro", iu.hash, self.prompt_version, self.model_for_key)
-            plan.intro_unit = UnitStatus(unit=iu, key=key, cached=self.store.cache_get(key) is not None)
-        hits = [u.key for u in plan.all_units if u.cached]
+            intro_unit = self.units.intro_unit(plan.specs, plan.docs)
+            key = cache_key("intro", intro_unit.hash, self.prompt_version, self.model_for_key)
+            plan.intro_unit = UnitStatus(
+                unit=intro_unit,
+                key=key,
+                cached=self.store.cache_get(key) is not None,
+            )
+        hits = [unit.key for unit in plan.all_units if unit.cached]
         if hits:
             try:
                 self.store.cache_touch(hits)
-            except Exception:  # statistics only - never fail a plan because another process holds the db
+            except Exception:
+                # statistics only - never fail a plan because another process holds the db
                 pass
         return plan
 
@@ -224,13 +239,25 @@ class Analyzer:
             batches.append(cur)
         return batches
 
-    def _unit_spec(self, u: Any) -> Dict[str, Any]:
-        if isinstance(u, TypeUnit):
-            return {"id": u.unit_id, "kind": "type", "name": u.name, "fields": u.field_names, "enum_values": u.enum_names}
-        if isinstance(u, IntroUnit):
-            return {"id": u.unit_id, "kind": "intro", "name": u.name}
-        return {"id": u.unit_id, "kind": "endpoint", "name": u.name, "params": u.param_names,
-                "response_params": u.response_names, "types": u.type_names}
+    def _unit_spec(self, unit: Any) -> Dict[str, Any]:
+        if isinstance(unit, TypeUnit):
+            return {
+                "id": unit.unit_id,
+                "kind": "type",
+                "name": unit.name,
+                "fields": unit.field_names,
+                "enum_values": unit.enum_names,
+            }
+        if isinstance(unit, IntroUnit):
+            return {"id": unit.unit_id, "kind": "intro", "name": unit.name}
+        return {
+            "id": unit.unit_id,
+            "kind": "endpoint",
+            "name": unit.name,
+            "params": unit.param_names,
+            "response_params": unit.response_names,
+            "types": unit.type_names,
+        }
 
     def _record(self, report: AnalysisReport, batch: List[UnitStatus], resp, dur_ms: int, status: str,
                 error: Optional[str]) -> None:
@@ -360,76 +387,110 @@ class Analyzer:
         return Analyzer._sanitize_endpoint(unit, r)
 
     @staticmethod
-    def _sanitize_type(r: Dict[str, Any]) -> Dict[str, Any]:
-        fields = r.get("fields") or {}
+    def _sanitize_type(raw: Dict[str, Any]) -> Dict[str, Any]:
+        fields = raw.get("fields") or {}
         if not isinstance(fields, dict):
             raise ValueError("'fields' must be an object")
         clean: Dict[str, Any] = {}
-        for k, v in fields.items():
-            if isinstance(v, str):
-                v = {"description": v}
-            if isinstance(v, dict):
-                clean[k] = {"description": str(v.get("description", "") or ""), "example": v.get("example")}
-        enum_values = r.get("enum_values") or {}
+        for name, value in fields.items():
+            if isinstance(value, str):
+                value = {"description": value}
+            if isinstance(value, dict):
+                clean[name] = {
+                    "description": str(value.get("description", "") or ""),
+                    "example": value.get("example"),
+                }
+        enum_values = raw.get("enum_values") or {}
         if not isinstance(enum_values, dict):
             enum_values = {}
-        return {"description": str(r.get("description", "") or ""), "fields": clean,
-                "enum_values": {str(k): str(v) for k, v in enum_values.items()}}
+        return {
+            "description": str(raw.get("description", "") or ""),
+            "fields": clean,
+            "enum_values": {str(key): str(value) for key, value in enum_values.items()},
+        }
 
     @staticmethod
-    def _sanitize_endpoint(unit: Any, r: Dict[str, Any]) -> Dict[str, Any]:
-        params = r.get("params") if isinstance(r.get("params"), dict) else {}
-        resp_params = r.get("response_params") if isinstance(r.get("response_params"), dict) else {}
-        notes = r.get("notes") if isinstance(r.get("notes"), list) else ([r["notes"]] if isinstance(r.get("notes"), str) else [])
-        error_codes = r.get("error_codes") if isinstance(r.get("error_codes"), list) else []
-        extra = r.get("response_fields_extra") if isinstance(r.get("response_fields_extra"), list) else []
+    def _param_descriptions(raw: Any, allowed_names: List[str]) -> Dict[str, str]:
+        if not isinstance(raw, dict):
+            return {}
+        descriptions: Dict[str, str] = {}
+        for name, value in raw.items():
+            if name not in allowed_names:
+                continue
+            if isinstance(value, dict):
+                descriptions[str(name)] = str(value.get("description", "") or "")
+            else:
+                descriptions[str(name)] = str(value)
+        return descriptions
+
+    @staticmethod
+    def _sanitize_endpoint(unit: Any, raw: Dict[str, Any]) -> Dict[str, Any]:
+        notes = raw.get("notes")
+        if isinstance(notes, list):
+            note_list = notes
+        elif isinstance(notes, str):
+            note_list = [notes]
+        else:
+            note_list = []
+        error_codes = raw.get("error_codes") if isinstance(raw.get("error_codes"), list) else []
+        extra = raw.get("response_fields_extra") if isinstance(raw.get("response_fields_extra"), list) else []
         return {
-            "title": str(r.get("title", "") or ""),
-            "summary": str(r.get("summary", "") or ""),
-            "description": str(r.get("description", "") or ""),
-            "params": {str(k): (str(v.get("description", "") or "") if isinstance(v, dict) else str(v)) for k, v in params.items() if k in unit.param_names},
-            "notes": [str(n) for n in notes if n],
-            "error_codes": [{"code": str(e.get("code", "")), "title": str(e.get("title", "") or ""), "note": str(e.get("note", "") or "")}
-                            for e in error_codes if isinstance(e, dict) and e.get("code")],
-            "response_params": {str(k): (str(v.get("description", "") or "") if isinstance(v, dict) else str(v)) for k, v in resp_params.items() if k in unit.response_names},
-            "response_fields_extra": [e for e in extra if isinstance(e, dict) and e.get("name")],
+            "title": str(raw.get("title", "") or ""),
+            "summary": str(raw.get("summary", "") or ""),
+            "description": str(raw.get("description", "") or ""),
+            "params": Analyzer._param_descriptions(raw.get("params"), unit.param_names),
+            "notes": [str(note) for note in note_list if note],
+            "error_codes": [
+                {
+                    "code": str(error.get("code", "")),
+                    "title": str(error.get("title", "") or ""),
+                    "note": str(error.get("note", "") or ""),
+                }
+                for error in error_codes
+                if isinstance(error, dict) and error.get("code")
+            ],
+            "response_params": Analyzer._param_descriptions(raw.get("response_params"), unit.response_names),
+            "response_fields_extra": [
+                item for item in extra if isinstance(item, dict) and item.get("name")
+            ],
+            "business_rules": [str(rule) for rule in (raw.get("business_rules") or []) if rule],
         }
 
     # ------------------------------------------------------------------ results for rendering
     def results_for(self, spec: EndpointSpec, doc: EndpointDoc) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Any], str]:
         """Return (type analyses by qname, endpoint analysis, status) using cache (+stale fallback)."""
         stale_ok = bool(self.cfg.get("analysis", "stale_fallback", default=True))
-        type_res: Dict[str, Dict[str, Any]] = {}
+        type_analyses: Dict[str, Dict[str, Any]] = {}
         status = "cached"
         any_missing = False
-        for q in doc.type_closure:
-            if q not in self.project.index.types:
+        for type_qname in doc.type_closure:
+            if type_qname not in self.project.index.types:
                 continue
-            tu = self.units.type_unit(q)
-            key = cache_key("type", tu.hash, self.prompt_version, self.model_for_key)
-            r = self.store.cache_get(key)
-            if r is None and stale_ok:
-                r = self.store.cache_latest_for_unit("type", q)
-                if r is not None:
+            type_unit = self.units.type_unit(type_qname)
+            key = cache_key("type", type_unit.hash, self.prompt_version, self.model_for_key)
+            cached = self.store.cache_get(key)
+            if cached is None and stale_ok:
+                cached = self.store.cache_latest_for_unit("type", type_qname)
+                if cached is not None:
                     status = "stale"
-            if r is None:
+            if cached is None:
                 any_missing = True
             else:
-                type_res[q] = r
-        eu = self.units.endpoint_unit(spec, doc)
-        key = cache_key("endpoint", eu.hash, self.prompt_version, self.model_for_key)
-        ep = self.store.cache_get(key)
-        if ep is None and stale_ok:
-            ep = self.store.cache_latest_for_unit("endpoint", spec.id)
-            if ep is not None:
+                type_analyses[type_qname] = cached
+        endpoint_unit = self.units.endpoint_unit(spec, doc)
+        key = cache_key("endpoint", endpoint_unit.hash, self.prompt_version, self.model_for_key)
+        endpoint_analysis = self.store.cache_get(key)
+        if endpoint_analysis is None and stale_ok:
+            endpoint_analysis = self.store.cache_latest_for_unit("endpoint", spec.id)
+            if endpoint_analysis is not None:
                 status = "stale"
-        if ep is None:
+        if endpoint_analysis is None:
             any_missing = True
-        if any_missing and not type_res and ep is None:
+        if any_missing and not type_analyses and endpoint_analysis is None:
             status = "none"
         elif any_missing:
             status = "partial" if status == "cached" else status
-        return type_res, ep or {}, status
+        return type_analyses, endpoint_analysis or {}, status
 
     def build_doc(self, spec: EndpointSpec, number: int) -> EndpointDoc:
         base = self.doc_builder.build(spec, number)
